@@ -43,3 +43,8 @@ test-output
 .typeschema-cache
 *.cpuprofile
 examples/tmp/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
