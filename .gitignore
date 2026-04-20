@@ -3,7 +3,9 @@ node_modules
 
 # output
 out
-dist
+# dist/ is git-ignored upstream; re-enabled on cognovis/mira-adapters
+# branch so consumers can install via bun add github:cognovis/codegen#<branch>
+# dist
 *.tgz
 
 # code coverage
