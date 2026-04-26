@@ -110,7 +110,7 @@ describe("scanNodeModulesPackage: nested path preferred over flat wrong-version"
     const pflegegradUrl = "http://fhir.de/StructureDefinition/observation-de-pflegegrad" as CanonicalUrl;
 
     beforeAll(async () => {
-        tempDir = join(process.cwd(), ".test-tmp-transitive-version-mismatch-" + Date.now());
+        tempDir = join(process.cwd(), `.test-tmp-transitive-version-mismatch-${Date.now()}`);
         await mkdir(tempDir, { recursive: true });
 
         // Set up flat path: de.basisprofil.r4 at version 1.6.0-ballot2 (wrong version)
