@@ -1,6 +1,6 @@
 {
   "name": "@atomic-ehr/codegen",
-  "version": "0.0.13",
+  "version": "2026.04.2",
   "description": "Code generation tools for FHIR resources and TypeSchema definitions",
   "keywords": [
     "fhir",

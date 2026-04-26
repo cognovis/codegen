@@ -17,7 +17,12 @@ import { spawn } from 'child_process';
 import * as util from 'util';
 import Mustache from 'mustache';
 
-// src/utils/common-log.ts
+var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
+  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
+}) : x)(function(x) {
+  if (typeof require !== "undefined") return require.apply(this, arguments);
+  throw Error('Dynamic require of "' + x + '" is not supported');
+});
 var LEVEL_PRIORITY = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3, SILENT: 4 };
 function mkLogger(opts = {}) {
   const prefix = opts.prefix ?? "";
@@ -2368,44 +2373,69 @@ var scanNodeModulesPackageDir = async (pkgDir, pkg, logger) => {
   }
   return resources;
 };
+var findCandidateNodeModulesPaths = (computedPath) => {
+  const candidates = [];
+  if (existsSync(computedPath)) candidates.push(computedPath);
+  const cacheRoot = join(computedPath, "..", "..", "..");
+  if (!existsSync(cacheRoot)) return candidates;
+  let entries;
+  try {
+    entries = __require("fs").readdirSync(cacheRoot);
+  } catch {
+    return candidates;
+  }
+  for (const entry of entries) {
+    const candidate = join(cacheRoot, entry, "node", "node_modules");
+    if (candidate === computedPath) continue;
+    if (existsSync(candidate)) candidates.push(candidate);
+  }
+  return candidates;
+};
 var scanNodeModulesPackage = async (nodeModulesPath, pkg, logger) => {
-  const flatPkgDir = join(nodeModulesPath, pkg.name);
-  if (!existsSync(flatPkgDir)) return [];
-  const flatVersion = await readPackageDirVersion(flatPkgDir);
-  const versionMatches = flatVersion === pkg.version;
-  let chosenDir = flatPkgDir;
-  let chosenSource = "flat";
-  if (!versionMatches) {
+  const candidatePaths = findCandidateNodeModulesPaths(nodeModulesPath);
+  if (candidatePaths.length === 0) return [];
+  let chosenDir;
+  let chosenSource = "";
+  let chosenFlatVersion;
+  outer: for (const candidate of candidatePaths) {
+    const flatPkgDir = join(candidate, pkg.name);
+    if (!existsSync(flatPkgDir)) continue;
+    const flatVersion = await readPackageDirVersion(flatPkgDir);
+    if (flatVersion === pkg.version) {
+      chosenDir = flatPkgDir;
+      chosenSource = candidate === nodeModulesPath ? "flat" : `flat (sibling-cache)`;
+      chosenFlatVersion = flatVersion;
+      break;
+    }
     let parentDirNames;
     try {
-      parentDirNames = await readdir(nodeModulesPath);
+      parentDirNames = await readdir(candidate);
     } catch {
       parentDirNames = [];
     }
     for (const parentDir of parentDirNames) {
-      const nestedPkgDir = join(nodeModulesPath, parentDir, "node_modules", pkg.name);
+      const nestedPkgDir = join(candidate, parentDir, "node_modules", pkg.name);
       if (!existsSync(nestedPkgDir)) continue;
       const nestedVersion = await readPackageDirVersion(nestedPkgDir);
       if (nestedVersion === pkg.version) {
         chosenDir = nestedPkgDir;
-        chosenSource = `nested (${parentDir}/node_modules/${pkg.name})`;
-        break;
+        chosenSource = `nested (${parentDir}/node_modules/${pkg.name}${candidate === nodeModulesPath ? "" : ", sibling-cache"})`;
+        chosenFlatVersion = flatVersion;
+        break outer;
       }
     }
+    if (!chosenDir) {
+      chosenDir = flatPkgDir;
+      chosenSource = `flat path (version mismatch: flat=${flatVersion ?? "unknown"}, requested=${pkg.version})`;
+      chosenFlatVersion = flatVersion;
+    }
   }
+  if (!chosenDir) return [];
   const resources = await scanNodeModulesPackageDir(chosenDir, pkg, logger);
   if (resources.length > 0) {
-    let sourceDetail;
-    if (chosenDir !== flatPkgDir) {
-      sourceDetail = chosenSource;
-    } else if (flatVersion !== pkg.version) {
-      sourceDetail = `flat path (version mismatch: flat=${flatVersion ?? "unknown"}, requested=${pkg.version})`;
-    } else {
-      sourceDetail = chosenSource;
-    }
     logger?.warn(
       "#canonicalManagerFallback",
-      `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager (likely due to invalid .index.json entries). Falling back to direct directory scan (${sourceDetail}): ${resources.length} resources found.`
+      `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager (likely due to invalid .index.json entries or addTgzPackage cache mismatch). Falling back to direct directory scan (${chosenSource}, flat-version=${chosenFlatVersion ?? "unknown"}): ${resources.length} resources found.`
     );
   }
   return resources;

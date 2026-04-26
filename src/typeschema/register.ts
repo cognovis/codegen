@@ -474,71 +474,120 @@ const scanNodeModulesPackageDir = async (
 };
 
 /**
+ * Find candidate node_modules paths to scan for a package.
+ *
+ * The codegen-7y9 fix computed a single `nodeModulesPath` based on the focusedPackages
+ * SHA-256 hash. That works when CanonicalManager was initialised with all packages up-front
+ * (registerFromPackageMetas case). It FAILS when packages are added later via
+ * addTgzPackage / addLocalPackage (APIBuilder.localTgzPackage path) — those calls do NOT
+ * change the canonical-manager's cache hash, so the directory the codegen computes does
+ * not exist and the fallback is silently disabled.
+ *
+ * Workaround: if the computed path doesn't exist, scan ALL sibling cache record directories
+ * under the codegen-cache/canonical-manager-cache root and try each one. Return paths in
+ * insertion order so the most recently used cache record (likely the active one) is tried first.
+ */
+const findCandidateNodeModulesPaths = (computedPath: string): string[] => {
+    const candidates: string[] = [];
+    if (existsSync(computedPath)) candidates.push(computedPath);
+
+    // The canonical-manager-cache root is the parent of the cache hash dir's grandparent.
+    // computedPath = <root>/<hash>/node/node_modules → cacheRoot = <root>
+    const cacheRoot = join(computedPath, "..", "..", "..");
+    if (!existsSync(cacheRoot)) return candidates;
+
+    let entries: string[];
+    try {
+        entries = require("node:fs").readdirSync(cacheRoot);
+    } catch {
+        return candidates;
+    }
+    for (const entry of entries) {
+        const candidate = join(cacheRoot, entry, "node", "node_modules");
+        if (candidate === computedPath) continue;
+        if (existsSync(candidate)) candidates.push(candidate);
+    }
+    return candidates;
+};
+
+/**
  * Scans node_modules for a package, preferring an exact version match.
  *
- * Strategy:
+ * Strategy (per candidate cache directory):
  * 1. Check the flat top-level path (nodeModulesPath/<pkg.name>/).
  *    If its package.json version matches the requested version → use it.
  * 2. If the flat path holds a DIFFERENT version, scan all sibling package directories
  *    for nested paths (nodeModulesPath/<parentDir>/node_modules/<pkg.name>/) and
  *    return the first one whose version matches the requested version.
- * 3. If no exact-version nested path is found → fall back to the flat path content
+ * 3. If no exact-version match anywhere → fall back to the flat path content
  *    (graceful degradation; preserves the original vrq fix behaviour).
+ *
+ * Across multiple cache directories: tries each until resources are found. This handles
+ * the APIBuilder.localTgzPackage case where the computed cache hash does not reflect
+ * later addTgzPackage calls.
  */
 const scanNodeModulesPackage = async (
     nodeModulesPath: string,
     pkg: PackageMeta,
     logger?: CodegenLog,
 ): Promise<FocusedResource[]> => {
-    const flatPkgDir = join(nodeModulesPath, pkg.name);
-    if (!existsSync(flatPkgDir)) return [];
+    const candidatePaths = findCandidateNodeModulesPaths(nodeModulesPath);
+    if (candidatePaths.length === 0) return [];
 
-    // Step 1: Check whether the flat top-level path already has the correct version.
-    const flatVersion = await readPackageDirVersion(flatPkgDir);
-    const versionMatches = flatVersion === pkg.version;
+    let chosenDir: string | undefined;
+    let chosenSource = "";
+    let chosenFlatVersion: string | undefined;
 
-    let chosenDir = flatPkgDir;
-    let chosenSource = "flat";
+    // Try each candidate cache directory (computed first, then siblings).
+    outer: for (const candidate of candidatePaths) {
+        const flatPkgDir = join(candidate, pkg.name);
+        if (!existsSync(flatPkgDir)) continue;
 
-    if (!versionMatches) {
-        // Step 2: Scan sibling directories for a nested copy with the exact version.
-        // e.g. nodeModulesPath/kbv.basis/node_modules/de.basisprofil.r4/
+        const flatVersion = await readPackageDirVersion(flatPkgDir);
+        if (flatVersion === pkg.version) {
+            chosenDir = flatPkgDir;
+            chosenSource = candidate === nodeModulesPath ? "flat" : `flat (sibling-cache)`;
+            chosenFlatVersion = flatVersion;
+            break;
+        }
+
+        // Scan sibling parent directories for a nested copy with the exact version.
         let parentDirNames: string[];
         try {
-            parentDirNames = await readdir(nodeModulesPath);
+            parentDirNames = await readdir(candidate);
         } catch {
             parentDirNames = [];
         }
-
         for (const parentDir of parentDirNames) {
-            const nestedPkgDir = join(nodeModulesPath, parentDir, "node_modules", pkg.name);
+            const nestedPkgDir = join(candidate, parentDir, "node_modules", pkg.name);
             if (!existsSync(nestedPkgDir)) continue;
             const nestedVersion = await readPackageDirVersion(nestedPkgDir);
             if (nestedVersion === pkg.version) {
                 chosenDir = nestedPkgDir;
-                chosenSource = `nested (${parentDir}/node_modules/${pkg.name})`;
-                break;
+                chosenSource = `nested (${parentDir}/node_modules/${pkg.name}${candidate === nodeModulesPath ? "" : ", sibling-cache"})`;
+                chosenFlatVersion = flatVersion;
+                break outer;
             }
         }
-        // Step 3: If still no match, chosenDir stays as flatPkgDir (graceful degradation).
+
+        // Remember the flat dir as a graceful-degradation fallback if no exact match found.
+        if (!chosenDir) {
+            chosenDir = flatPkgDir;
+            chosenSource = `flat path (version mismatch: flat=${flatVersion ?? "unknown"}, requested=${pkg.version})`;
+            chosenFlatVersion = flatVersion;
+        }
     }
+
+    if (!chosenDir) return [];
 
     const resources = await scanNodeModulesPackageDir(chosenDir, pkg, logger);
 
     if (resources.length > 0) {
-        let sourceDetail: string;
-        if (chosenDir !== flatPkgDir) {
-            sourceDetail = chosenSource;
-        } else if (flatVersion !== pkg.version) {
-            sourceDetail = `flat path (version mismatch: flat=${flatVersion ?? "unknown"}, requested=${pkg.version})`;
-        } else {
-            sourceDetail = chosenSource;
-        }
         logger?.warn(
             "#canonicalManagerFallback",
             `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager ` +
-                `(likely due to invalid .index.json entries). ` +
-                `Falling back to direct directory scan (${sourceDetail}): ${resources.length} resources found.`,
+                `(likely due to invalid .index.json entries or addTgzPackage cache mismatch). ` +
+                `Falling back to direct directory scan (${chosenSource}, flat-version=${chosenFlatVersion ?? "unknown"}): ${resources.length} resources found.`,
         );
     }
     return resources;

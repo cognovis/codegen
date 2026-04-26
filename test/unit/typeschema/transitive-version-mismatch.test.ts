@@ -207,3 +207,100 @@ describe("scanNodeModulesPackage: nested path preferred over flat wrong-version"
         ).toBe("1.5.4");
     }, 60000);
 });
+
+/**
+ * Regression test for codegen-pkt: APIBuilder.localTgzPackage cache-key mismatch.
+ *
+ * Scenario:
+ * - User calls `new APIBuilder().fromPackage("hl7.fhir.r4.core", "4.0.1")
+ *                                 .fromPackage("de.basisprofil.r4", "1.6.0-ballot2")
+ *                                 .localTgzPackage(some.tgz)`.
+ * - Internally, the manager is constructed with only the fromPackage entries.
+ * - Then addTgzPackage(some.tgz) is called → adds packages to the cache record but
+ *   does NOT change the canonical-manager's cache hash.
+ * - Codegen however computes nodeModulesPath from ALL focusedPackages (including those
+ *   from the tgz). The hash diverges from the canonical-manager's actual cache directory.
+ * - The computed nodeModulesPath does not exist → fallback never triggers → resources
+ *   for transitive deps remain 0 → resolveFs returns undefined → "Base resource not found".
+ *
+ * Fix: scanNodeModulesPackage now scans sibling cache directories under
+ * <workdir>/canonical-manager-cache/ when the computed path does not exist. This recovers
+ * the actual cache regardless of how the canonical-manager hash was derived.
+ */
+describe("scanNodeModulesPackage: cache-key mismatch fallback (codegen-pkt)", () => {
+    let workdirRoot: string;
+    let cacheRoot: string;
+    let actualCacheDir: string;
+    let computedNodeModulesPath: string;
+
+    const pflegegradUrl = "http://fhir.de/StructureDefinition/observation-de-pflegegrad" as CanonicalUrl;
+
+    beforeAll(async () => {
+        // Set up a synthetic codegen-cache layout that mimics the bug:
+        //   workdirRoot/
+        //     ACTUAL-HASH-FROM-CANONICAL-MANAGER/
+        //       node/node_modules/de.basisprofil.r4/   ← real package data is here
+        //     COMPUTED-HASH-FROM-CODEGEN/              ← (does not exist; codegen would compute this)
+        workdirRoot = join(process.cwd(), `.test-tmp-pkt-${Date.now()}`);
+        cacheRoot = join(workdirRoot, "canonical-manager-cache");
+        actualCacheDir = join(cacheRoot, "actual-cache-hash-abcdef123456");
+        computedNodeModulesPath = join(cacheRoot, "computed-cache-hash-fedcba654321", "node", "node_modules");
+
+        const realPkgDir = join(actualCacheDir, "node", "node_modules", "de.basisprofil.r4");
+        await mkdir(realPkgDir, { recursive: true });
+        await writeFile(
+            join(realPkgDir, "package.json"),
+            JSON.stringify({ name: "de.basisprofil.r4", version: "1.6.0-ballot2" }),
+        );
+        await writeFile(
+            join(realPkgDir, "StructureDefinition-actual-cache.json"),
+            JSON.stringify({
+                resourceType: "StructureDefinition",
+                url: pflegegradUrl,
+                version: "1.6.0-ballot",
+                name: "ObservationDePflegegrad",
+                kind: "resource",
+                abstract: false,
+                status: "active",
+                type: "Observation",
+                baseDefinition: "http://hl7.org/fhir/StructureDefinition/Observation",
+                derivation: "constraint",
+            }),
+        );
+    }, 30000);
+
+    afterAll(async () => {
+        if (workdirRoot && existsSync(workdirRoot)) {
+            await rm(workdirRoot, { recursive: true, force: true });
+        }
+    });
+
+    it("scans sibling cache directories when computed nodeModulesPath does not exist", async () => {
+        // Sanity check: computed path does NOT exist (mirroring the bug).
+        expect(existsSync(computedNodeModulesPath)).toBe(false);
+        // Sanity check: real package data EXISTS at the actual cache hash directory.
+        expect(existsSync(join(actualCacheDir, "node", "node_modules", "de.basisprofil.r4"))).toBe(true);
+
+        // Use a real CanonicalManager — but with a focusedPackages list whose hash does not
+        // match the actual cache directory. We pass nodeModulesPath as the (non-existent)
+        // computed path. The fix must scan sibling cache hashes and find the real one.
+        const manager = CanonicalManager({
+            packages: ["de.basisprofil.r4@1.6.0-ballot2"],
+            workingDir: ".codegen-cache/canonical-manager-cache",
+            registry: "https://packages.simplifier.net",
+        });
+        await manager.init();
+
+        const register = await registerFromManager(manager, {
+            focusedPackages: [basisprofilNew],
+            nodeModulesPath: computedNodeModulesPath,
+        });
+
+        const resolved = register.resolveFs(basisprofilNew, pflegegradUrl);
+        expect(
+            resolved,
+            "pflegegrad must resolve from sibling cache directory when computed path does not exist",
+        ).toBeDefined();
+        expect(resolved!.version, "should have loaded from the actual cache, version 1.6.0-ballot").toBe("1.6.0-ballot");
+    }, 60000);
+});
