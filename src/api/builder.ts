@@ -167,7 +167,7 @@ export class APIBuilder {
                 registry: userOpts.registry,
                 dropCache: userOpts.dropCanonicalManagerCache,
                 preprocessPackage: userOpts.preprocessPackage,
-                ignorePackageIndex: userOpts.ignorePackageIndex,
+                // ignorePackageIndex is not yet supported by @atomic-ehr/fhir-canonical-manager
             });
         this.logger = userOpts.logger ?? mkLogger({ prefix: "api" });
         this.options = opts;
