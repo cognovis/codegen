@@ -9,4 +9,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Versioned canonical resolution** for cross-package base types — packages with broken `.index.json` (e.g. `de.basisprofil.r4@1.5.4`) now fall back to direct directory scan via node_modules, enabling KBV profiles with versioned base type references to resolve correctly
+- **Transitive package version resolution** in canonical resolver — when a top-level package requires a different version of a transitive dependency than what nested packages expect, the resolver now correctly scans nested `node_modules/<parent>/node_modules/<dep>/` paths to find the correct version, fixing resolution failures for profiles like KBV_PR_Base_Observation_Care_Level that depend on versioned base types
