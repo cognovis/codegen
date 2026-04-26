@@ -24,7 +24,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { existsSync } from "node:fs";
-import { cp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { CanonicalManager } from "@atomic-ehr/fhir-canonical-manager";
 import type { CanonicalUrl } from "@root/typeschema/types";
@@ -50,9 +50,7 @@ describe("Integration: 1.6.0-ballot2 top-level + kbv.basis@1.8.0 (codegen-7y9)",
     let register: Register;
 
     beforeAll(async () => {
-        register = await registerFromPackageMetas([basisprofilNew, kbvPkg], {
-            registry: "https://packages.simplifier.net",
-        });
+        register = await registerFromPackageMetas([basisprofilNew, kbvPkg], {});
     }, 120000);
 
     it("resolves observation-de-pflegegrad from kbv.basis context without throwing", () => {
@@ -101,12 +99,6 @@ describe("Integration: 1.6.0-ballot2 top-level + kbv.basis@1.8.0 (codegen-7y9)",
 describe("scanNodeModulesPackage: nested path preferred over flat wrong-version", () => {
     let tempDir: string;
 
-    // Real package data paths (from codegen 1.5.4 + kbv.basis cache, already downloaded)
-    const REAL_CACHE_154 = join(
-        process.cwd(),
-        ".codegen-cache/canonical-manager-cache/ea1701c1997c0dae99123aa0a7f5e067ace35b494c1f4638888aed16d63d5655/node/node_modules",
-    );
-
     const pflegegradUrl = "http://fhir.de/StructureDefinition/observation-de-pflegegrad" as CanonicalUrl;
 
     beforeAll(async () => {
@@ -144,32 +136,22 @@ describe("scanNodeModulesPackage: nested path preferred over flat wrong-version"
             join(nestedDir, "package.json"),
             JSON.stringify({ name: "de.basisprofil.r4", version: "1.5.4" }),
         );
-        // Copy the real 1.5.4 pflegegrad resource if the cache exists, otherwise create a stub
-        const realPflegegrad = join(
-            REAL_CACHE_154,
-            "de.basisprofil.r4",
-            "StructureDefinition-observation-de-pflegegrad.json",
+        // Stub with 1.5.4 version field
+        await writeFile(
+            join(nestedDir, "StructureDefinition-observation-de-pflegegrad.json"),
+            JSON.stringify({
+                resourceType: "StructureDefinition",
+                url: pflegegradUrl,
+                version: "1.5.4",
+                name: "ObservationDePflegegrad",
+                kind: "resource",
+                abstract: false,
+                status: "active",
+                type: "Observation",
+                baseDefinition: "http://hl7.org/fhir/StructureDefinition/Observation",
+                derivation: "constraint",
+            }),
         );
-        if (existsSync(realPflegegrad)) {
-            await cp(realPflegegrad, join(nestedDir, "StructureDefinition-observation-de-pflegegrad.json"));
-        } else {
-            // Stub with 1.5.4 version field
-            await writeFile(
-                join(nestedDir, "StructureDefinition-observation-de-pflegegrad.json"),
-                JSON.stringify({
-                    resourceType: "StructureDefinition",
-                    url: pflegegradUrl,
-                    version: "1.5.4",
-                    name: "ObservationDePflegegrad",
-                    kind: "resource",
-                    abstract: false,
-                    status: "active",
-                    type: "Observation",
-                    baseDefinition: "http://hl7.org/fhir/StructureDefinition/Observation",
-                    derivation: "constraint",
-                }),
-            );
-        }
 
         // Also set up a minimal kbv.basis dir in the flat path so manager can find it
         const kbvDir = join(tempDir, "kbv.basis");

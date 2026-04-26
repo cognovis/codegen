@@ -526,24 +526,20 @@ const scanNodeModulesPackage = async (
     const resources = await scanNodeModulesPackageDir(chosenDir, pkg, logger);
 
     if (resources.length > 0) {
-        if (!versionMatches && chosenSource === "flat") {
-            logger?.warn(
-                "#canonicalManagerFallback",
-                `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager ` +
-                    `(likely due to invalid .index.json entries). ` +
-                    `Falling back to direct directory scan of flat path (version mismatch: ` +
-                    `flat=${flatVersion ?? "unknown"}, requested=${pkg.version}): ` +
-                    `${resources.length} resources found.`,
-            );
+        let sourceDetail: string;
+        if (chosenDir !== flatPkgDir) {
+            sourceDetail = chosenSource;
+        } else if (flatVersion !== pkg.version) {
+            sourceDetail = `flat path (version mismatch: flat=${flatVersion ?? "unknown"}, requested=${pkg.version})`;
         } else {
-            logger?.warn(
-                "#canonicalManagerFallback",
-                `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager ` +
-                    `(likely due to invalid .index.json entries). ` +
-                    `Falling back to direct directory scan (${chosenSource}): ` +
-                    `${resources.length} resources found.`,
-            );
+            sourceDetail = chosenSource;
         }
+        logger?.warn(
+            "#canonicalManagerFallback",
+            `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager ` +
+                `(likely due to invalid .index.json entries). ` +
+                `Falling back to direct directory scan (${sourceDetail}): ${resources.length} resources found.`,
+        );
     }
     return resources;
 };
