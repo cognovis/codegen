@@ -2330,9 +2330,18 @@ var computeNodeModulesPath = (packageNames, workingDir) => {
   const cacheKey = computeCanonicalManagerCacheKey(packageNames);
   return join(process.cwd(), workingDir, cacheKey, "node", "node_modules");
 };
-var scanNodeModulesPackage = async (nodeModulesPath, pkg, logger) => {
-  const pkgDir = join(nodeModulesPath, pkg.name);
-  if (!existsSync(pkgDir)) return [];
+var readPackageDirVersion = async (pkgDir) => {
+  const pkgJsonPath = join(pkgDir, "package.json");
+  if (!existsSync(pkgJsonPath)) return void 0;
+  try {
+    const content = await readFile(pkgJsonPath, "utf-8");
+    const parsed = JSON.parse(content);
+    return typeof parsed.version === "string" ? parsed.version : void 0;
+  } catch {
+    return void 0;
+  }
+};
+var scanNodeModulesPackageDir = async (pkgDir, pkg, logger) => {
   const resources = [];
   let fileNames;
   try {
@@ -2354,16 +2363,49 @@ var scanNodeModulesPackage = async (nodeModulesPath, pkg, logger) => {
       if (!(isStructureDefinition(resource) || isValueSet(resource) || isCodeSystem(resource))) continue;
       resources.push(resource);
     } catch (err) {
-      logger?.dryWarn(
-        "#canonicalManagerFallback",
-        `Skipping ${name} in ${packageMetaToFhir(pkg)}: ${err}`
-      );
+      logger?.dryWarn("#canonicalManagerFallback", `Skipping ${name} in ${packageMetaToFhir(pkg)}: ${err}`);
     }
   }
+  return resources;
+};
+var scanNodeModulesPackage = async (nodeModulesPath, pkg, logger) => {
+  const flatPkgDir = join(nodeModulesPath, pkg.name);
+  if (!existsSync(flatPkgDir)) return [];
+  const flatVersion = await readPackageDirVersion(flatPkgDir);
+  const versionMatches = flatVersion === pkg.version;
+  let chosenDir = flatPkgDir;
+  let chosenSource = "flat";
+  if (!versionMatches) {
+    let parentDirNames;
+    try {
+      parentDirNames = await readdir(nodeModulesPath);
+    } catch {
+      parentDirNames = [];
+    }
+    for (const parentDir of parentDirNames) {
+      const nestedPkgDir = join(nodeModulesPath, parentDir, "node_modules", pkg.name);
+      if (!existsSync(nestedPkgDir)) continue;
+      const nestedVersion = await readPackageDirVersion(nestedPkgDir);
+      if (nestedVersion === pkg.version) {
+        chosenDir = nestedPkgDir;
+        chosenSource = `nested (${parentDir}/node_modules/${pkg.name})`;
+        break;
+      }
+    }
+  }
+  const resources = await scanNodeModulesPackageDir(chosenDir, pkg, logger);
   if (resources.length > 0) {
+    let sourceDetail;
+    if (chosenDir !== flatPkgDir) {
+      sourceDetail = chosenSource;
+    } else if (flatVersion !== pkg.version) {
+      sourceDetail = `flat path (version mismatch: flat=${flatVersion ?? "unknown"}, requested=${pkg.version})`;
+    } else {
+      sourceDetail = chosenSource;
+    }
     logger?.warn(
       "#canonicalManagerFallback",
-      `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager (likely due to invalid .index.json entries). Falling back to direct directory scan: ${resources.length} resources found.`
+      `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager (likely due to invalid .index.json entries). Falling back to direct directory scan (${sourceDetail}): ${resources.length} resources found.`
     );
   }
   return resources;
