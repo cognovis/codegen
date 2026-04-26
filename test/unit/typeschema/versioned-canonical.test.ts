@@ -40,8 +40,7 @@ describe("Versioned canonical resolution (codegen-vrq)", () => {
         });
 
         it("strips |version suffix before lookup — versioned canonical resolves to the same schema", () => {
-            const versioned =
-                "http://fhir.de/StructureDefinition/observation-de-pflegegrad|1.5.4" as CanonicalUrl;
+            const versioned = "http://fhir.de/StructureDefinition/observation-de-pflegegrad|1.5.4" as CanonicalUrl;
             const clean = "http://fhir.de/StructureDefinition/observation-de-pflegegrad" as CanonicalUrl;
 
             // ensureSpecializationCanonicalUrl must strip the |version suffix
@@ -84,10 +83,7 @@ describe("Versioned canonical resolution (codegen-vrq)", () => {
             expect(careLevel!.base, "care level must have a base definition").toBeDefined();
             const strippedBase = register.ensureSpecializationCanonicalUrl(careLevel!.base!);
             const baseResolved = register.resolveFs(kbvPkg, strippedBase);
-            expect(
-                baseResolved,
-                `Base type '${strippedBase}' (from '${careLevel!.base}') must resolve`,
-            ).toBeDefined();
+            expect(baseResolved, `Base type '${strippedBase}' (from '${careLevel!.base}') must resolve`).toBeDefined();
         });
 
         it("resolves base type chain for KBV vitalsign profiles with versioned de.basisprofil.r4 references", () => {

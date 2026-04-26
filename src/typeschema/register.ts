@@ -418,14 +418,32 @@ const computeNodeModulesPath = (packageNames: string[], workingDir: string): str
  * node_modules when the manager reports 0 resources for a focused package.
  * This mirrors what the canonical manager's own `scanDirectoryForResources` does.
  */
-const scanNodeModulesPackage = async (
-    nodeModulesPath: string,
+
+/**
+ * Reads the version from a package directory's package.json.
+ * Returns undefined if the file cannot be read or parsed.
+ */
+const readPackageDirVersion = async (pkgDir: string): Promise<string | undefined> => {
+    const pkgJsonPath = join(pkgDir, "package.json");
+    if (!existsSync(pkgJsonPath)) return undefined;
+    try {
+        const content = await readFile(pkgJsonPath, "utf-8");
+        const parsed = JSON.parse(content) as Record<string, unknown>;
+        return typeof parsed.version === "string" ? parsed.version : undefined;
+    } catch {
+        return undefined;
+    }
+};
+
+/**
+ * Scans a single package directory and returns all FHIR resources found.
+ * Does not check version — callers must verify the directory holds the correct version.
+ */
+const scanNodeModulesPackageDir = async (
+    pkgDir: string,
     pkg: PackageMeta,
     logger?: CodegenLog,
 ): Promise<FocusedResource[]> => {
-    const pkgDir = join(nodeModulesPath, pkg.name);
-    if (!existsSync(pkgDir)) return [];
-
     const resources: FocusedResource[] = [];
     let fileNames: string[];
     try {
@@ -449,20 +467,83 @@ const scanNodeModulesPackage = async (
             if (!(isStructureDefinition(resource) || isValueSet(resource) || isCodeSystem(resource))) continue;
             resources.push(resource as unknown as FocusedResource);
         } catch (err) {
-            logger?.dryWarn(
-                "#canonicalManagerFallback",
-                `Skipping ${name} in ${packageMetaToFhir(pkg)}: ${err}`,
-            );
+            logger?.dryWarn("#canonicalManagerFallback", `Skipping ${name} in ${packageMetaToFhir(pkg)}: ${err}`);
         }
     }
+    return resources;
+};
+
+/**
+ * Scans node_modules for a package, preferring an exact version match.
+ *
+ * Strategy:
+ * 1. Check the flat top-level path (nodeModulesPath/<pkg.name>/).
+ *    If its package.json version matches the requested version → use it.
+ * 2. If the flat path holds a DIFFERENT version, scan all sibling package directories
+ *    for nested paths (nodeModulesPath/<parentDir>/node_modules/<pkg.name>/) and
+ *    return the first one whose version matches the requested version.
+ * 3. If no exact-version nested path is found → fall back to the flat path content
+ *    (graceful degradation; preserves the original vrq fix behaviour).
+ */
+const scanNodeModulesPackage = async (
+    nodeModulesPath: string,
+    pkg: PackageMeta,
+    logger?: CodegenLog,
+): Promise<FocusedResource[]> => {
+    const flatPkgDir = join(nodeModulesPath, pkg.name);
+    if (!existsSync(flatPkgDir)) return [];
+
+    // Step 1: Check whether the flat top-level path already has the correct version.
+    const flatVersion = await readPackageDirVersion(flatPkgDir);
+    const versionMatches = flatVersion === pkg.version;
+
+    let chosenDir = flatPkgDir;
+    let chosenSource = "flat";
+
+    if (!versionMatches) {
+        // Step 2: Scan sibling directories for a nested copy with the exact version.
+        // e.g. nodeModulesPath/kbv.basis/node_modules/de.basisprofil.r4/
+        let parentDirNames: string[];
+        try {
+            parentDirNames = await readdir(nodeModulesPath);
+        } catch {
+            parentDirNames = [];
+        }
+
+        for (const parentDir of parentDirNames) {
+            const nestedPkgDir = join(nodeModulesPath, parentDir, "node_modules", pkg.name);
+            if (!existsSync(nestedPkgDir)) continue;
+            const nestedVersion = await readPackageDirVersion(nestedPkgDir);
+            if (nestedVersion === pkg.version) {
+                chosenDir = nestedPkgDir;
+                chosenSource = `nested (${parentDir}/node_modules/${pkg.name})`;
+                break;
+            }
+        }
+        // Step 3: If still no match, chosenDir stays as flatPkgDir (graceful degradation).
+    }
+
+    const resources = await scanNodeModulesPackageDir(chosenDir, pkg, logger);
 
     if (resources.length > 0) {
-        logger?.warn(
-            "#canonicalManagerFallback",
-            `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager ` +
-                `(likely due to invalid .index.json entries). ` +
-                `Falling back to direct directory scan: ${resources.length} resources found.`,
-        );
+        if (!versionMatches && chosenSource === "flat") {
+            logger?.warn(
+                "#canonicalManagerFallback",
+                `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager ` +
+                    `(likely due to invalid .index.json entries). ` +
+                    `Falling back to direct directory scan of flat path (version mismatch: ` +
+                    `flat=${flatVersion ?? "unknown"}, requested=${pkg.version}): ` +
+                    `${resources.length} resources found.`,
+            );
+        } else {
+            logger?.warn(
+                "#canonicalManagerFallback",
+                `Package ${packageMetaToFhir(pkg)} had 0 resources in canonical manager ` +
+                    `(likely due to invalid .index.json entries). ` +
+                    `Falling back to direct directory scan (${chosenSource}): ` +
+                    `${resources.length} resources found.`,
+            );
+        }
     }
     return resources;
 };
