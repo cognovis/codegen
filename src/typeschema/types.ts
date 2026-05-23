@@ -108,6 +108,7 @@ export type ValueSetIdentifier = { kind: "value-set" } & IdentifierBase;
 export type NestedIdentifier = { kind: "nested" } & IdentifierBase;
 export type BindingIdentifier = { kind: "binding" } & IdentifierBase;
 export type ProfileIdentifier = { kind: "profile" } & IdentifierBase;
+export type SnapshotProfileIdentifier = { kind: "profile-snapshot" } & IdentifierBase;
 export type LogicalIdentifier = { kind: "logical" } & IdentifierBase;
 
 export type Identifier =
@@ -117,6 +118,7 @@ export type Identifier =
     | BindingIdentifier
     | ValueSetIdentifier
     | ProfileIdentifier
+    | SnapshotProfileIdentifier
     | LogicalIdentifier;
 
 export type TypeIdentifier = Identifier | NestedIdentifier;
@@ -145,6 +147,15 @@ export const isProfileIdentifier = (id: TypeIdentifier | undefined): id is Profi
     return id?.kind === "profile";
 };
 
+export const isSnapshotProfileIdentifier = (id: TypeIdentifier | undefined): id is SnapshotProfileIdentifier => {
+    return id?.kind === "profile-snapshot";
+};
+
+export const snapshotIdentifier = (id: ProfileIdentifier): SnapshotProfileIdentifier => ({
+    ...id,
+    kind: "profile-snapshot",
+});
+
 export const isSpecializationIdentifier = (
     id: TypeIdentifier | undefined,
 ): id is ResourceIdentifier | ComplexTypeIdentifier | LogicalIdentifier => {
@@ -167,7 +178,8 @@ export type TypeSchema =
     | PrimitiveTypeSchema
     | ValueSetTypeSchema
     | BindingTypeSchema
-    | ProfileTypeSchema;
+    | ProfileTypeSchema
+    | SnapshotProfileTypeSchema;
 
 type TypeSchemaGuardInput = TypeSchema | NestedTypeSchema | undefined;
 
@@ -211,17 +223,37 @@ export const isValueSetTypeSchema = (schema: TypeSchemaGuardInput): schema is Va
     return schema?.identifier.kind === "value-set";
 };
 
-interface PrimitiveTypeSchema {
+export interface PrimitiveTypeSchema {
     identifier: PrimitiveIdentifier;
     description?: string;
     base: TypeIdentifier;
     dependencies?: TypeIdentifier[];
 }
 
+export type GenericParam = {
+    typeVar: string;
+    constraint: TypeIdentifier;
+    /** Path from this schema down to the typeFamily-rooted field that introduces the param.
+     *  Single segment for a direct introduce (e.g. `["outcome"]` on `BundleEntryResponse`);
+     *  carrier fields are prepended as the param surfaces through passthrough (e.g.
+     *  `["response", "outcome"]` on `BundleEntry`, `["entry", "response", "outcome"]` on
+     *  `Bundle`). Used to align passthrough args across nesting hops. */
+    path: string[];
+};
+
+/** Generic params a schema exposes — populated during index build (after
+ *  `populateTypeFamily`). Each param either binds directly to a field whose type is a
+ *  type-family root (e.g. `BundleEntry.resource: Resource` → T extends Resource) or
+ *  is inherited from a generic-bearing field's target (passthrough). */
+export type GenericInfo = {
+    params: GenericParam[];
+};
+
 export interface NestedTypeSchema {
     identifier: NestedIdentifier;
     base: TypeIdentifier;
     fields: Record<string, Field>;
+    generic?: GenericInfo;
 }
 
 export interface ProfileTypeSchema {
@@ -233,6 +265,21 @@ export interface ProfileTypeSchema {
     dependencies?: TypeIdentifier[];
     nested?: NestedTypeSchema[];
 }
+
+/** Flattened profile. */
+export interface SnapshotProfileTypeSchema {
+    identifier: SnapshotProfileIdentifier;
+    base: TypeIdentifier;
+    description?: string;
+    fields: Record<string, Field>;
+    extensions?: ProfileExtension[];
+    dependencies?: TypeIdentifier[];
+    nested?: NestedTypeSchema[];
+}
+
+export const isSnapshotProfileTypeSchema = (s: TypeSchemaGuardInput): s is SnapshotProfileTypeSchema => {
+    return s?.identifier.kind === "profile-snapshot";
+};
 
 export interface FieldSlicing {
     discriminator?: FS.FHIRSchemaDiscriminator[];
@@ -299,6 +346,7 @@ type SpecializationTypeSchemaBody = {
     dependencies?: Identifier[];
     /** Transitive children grouped by kind (e.g. Resource → { resources: [DomainResource, Patient, …] }) */
     typeFamily?: TypeFamily;
+    generic?: GenericInfo;
 };
 
 export type TypeFamily = {

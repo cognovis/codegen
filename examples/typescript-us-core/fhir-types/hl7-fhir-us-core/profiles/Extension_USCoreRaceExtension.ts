@@ -18,6 +18,7 @@ export type USCoreRaceExtension_Extension_TextSliceFlatAll = USCoreRaceExtension
 
 import {
     isRawExtensionInput,
+    applyFixedValue,
     applySliceMatch,
     matchesValue,
     setArraySlice,
@@ -73,11 +74,14 @@ export class USCoreRaceExtensionProfile {
         return profile;
     }
 
+    static is (resource: unknown) : resource is Extension {
+        if (typeof resource !== "object" || resource === null) return false;
+        return (resource as { url?: string }).url === USCoreRaceExtensionProfile.canonicalUrl;
+    }
+
     static apply (resource: Extension) : USCoreRaceExtensionProfile {
         resource.url = USCoreRaceExtensionProfile.canonicalUrl;
-        Object.assign(resource, {
-            url: "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race",
-        })
+        applyFixedValue(resource, "url", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race");
         return new USCoreRaceExtensionProfile(resource);
     }
 

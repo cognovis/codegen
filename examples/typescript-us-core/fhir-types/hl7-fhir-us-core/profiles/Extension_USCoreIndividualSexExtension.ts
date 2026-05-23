@@ -6,6 +6,7 @@ import type { Coding } from "../../hl7-fhir-r4-core/Coding";
 import type { Extension } from "../../hl7-fhir-r4-core/Extension";
 
 import {
+    applyFixedValue,
     validateRequired,
     validateExcluded,
     validateFixedValue,
@@ -38,11 +39,14 @@ export class USCoreIndividualSexExtensionProfile {
         return profile;
     }
 
+    static is (resource: unknown) : resource is Extension {
+        if (typeof resource !== "object" || resource === null) return false;
+        return (resource as { url?: string }).url === USCoreIndividualSexExtensionProfile.canonicalUrl;
+    }
+
     static apply (resource: Extension) : USCoreIndividualSexExtensionProfile {
         resource.url = USCoreIndividualSexExtensionProfile.canonicalUrl;
-        Object.assign(resource, {
-            url: "http://hl7.org/fhir/us/core/StructureDefinition/us-core-individual-sex",
-        })
+        applyFixedValue(resource, "url", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-individual-sex");
         return new USCoreIndividualSexExtensionProfile(resource);
     }
 

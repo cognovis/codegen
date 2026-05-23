@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.05.0] — 2026-05-23
+
+### Fixed
+
+- **TypeScript profile fixed-value application** (codegen-vwd) — generated `apply()` methods now use a fixed-value merge helper instead of replacing fixed fields wholesale, so compatible caller-provided secondary `CodeableConcept.coding` entries are preserved.
+- **Placeholder-only ValueSet enum validation** (codegen-vwd) — ValueSet expansions that only contain the placeholder code `UNK` no longer generate enum validation constraints.
+
 ## [2026.04.2] — 2026-04-26
 
 ### Fixed

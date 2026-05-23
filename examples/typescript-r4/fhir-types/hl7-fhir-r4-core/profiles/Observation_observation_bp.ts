@@ -21,6 +21,7 @@ export type Observation_bp_Component_DiastolicBPSliceFlatAll = Observation_bp_Co
 
 import {
     ensureProfile,
+    applyFixedValue,
     applySliceMatch,
     matchesValue,
     setArraySlice,
@@ -76,11 +77,16 @@ export class observation_bpProfile {
         return profile;
     }
 
+    static is (resource: unknown) : resource is Observation {
+        if (typeof resource !== "object" || resource === null) return false;
+        const r = resource as { resourceType?: string; meta?: { profile?: string[] } };
+        if (r.resourceType !== "Observation") return false;
+        return (r.meta?.profile ?? []).includes(observation_bpProfile.canonicalUrl);
+    }
+
     static apply (resource: Observation) : observation_bpProfile {
         ensureProfile(resource, observation_bpProfile.canonicalUrl);
-        Object.assign(resource, {
-            code: {"coding":[{"code":"85354-9","system":"http://loinc.org"}]},
-        })
+        applyFixedValue(resource, "code", {"coding":[{"code":"85354-9","system":"http://loinc.org"}]});
         resource.category = ensureSliceDefaults(
             [...(resource.category ?? [])],
             observation_bpProfile.VSCatSliceMatch,

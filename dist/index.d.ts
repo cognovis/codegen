@@ -67,7 +67,7 @@ interface Identifier extends Element {
 interface Reference<T extends string = string> extends Element {
     display?: string;
     identifier?: Identifier;
-    reference?: `${T}/${string}`;
+    reference?: `${T}/${string}` | `http://${string}` | `https://${string}` | `urn:uuid:${string}` | `urn:oid:${string}` | `#${string}`;
     type?: string;
 }
 
@@ -913,7 +913,7 @@ type LoggerOptions<T extends string> = {
     level?: LogLevel;
 };
 
-type CodegenTag = "#binding" | "#largeValueSet" | "#fieldTypeNotFound" | "#skipCanonical" | "#duplicateSchema" | "#duplicateCanonical" | "#resolveBase" | "#resolveCollisionMiss" | "#canonicalManagerFallback";
+type CodegenTag = "#binding" | "#largeValueSet" | "#placeholderValueSet" | "#fieldTypeNotFound" | "#skipCanonical" | "#duplicateSchema" | "#duplicateCanonical" | "#resolveBase" | "#resolveCollisionMiss" | "#canonicalManagerFallback";
 type CodegenLog = Log<CodegenTag>;
 type CodegenLogManager = LogManager<CodegenTag>;
 declare const mkCodegenLogger: (opts?: LoggerOptions<CodegenTag>) => LogManager<CodegenTag>;
@@ -1100,12 +1100,17 @@ interface APIBuilderOptions {
 type GenerationReport = {
     success: boolean;
     outputDir: string;
-    filesGenerated: Record<string, string>;
+    /** Generated files nested by generator name, then by path: `filesGenerated[generator][path] = content`. */
+    filesGenerated: Record<string, Record<string, string>>;
     errors: string[];
     warnings: string[];
     duration: number;
 };
-declare const prettyReport: (report: GenerationReport) => string;
+interface PrettyReportOptions {
+    /** When a generator produces more than this many files, aggregate them by directory instead of listing each file. */
+    fileLimit?: number;
+}
+declare const prettyReport: (report: GenerationReport, options?: PrettyReportOptions) => string;
 interface LocalStructureDefinitionConfig {
     package: PackageMeta;
     path: string;

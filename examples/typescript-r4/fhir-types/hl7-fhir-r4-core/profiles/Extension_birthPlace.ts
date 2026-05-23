@@ -6,6 +6,7 @@ import type { Address } from "../../hl7-fhir-r4-core/Address";
 import type { Extension } from "../../hl7-fhir-r4-core/Extension";
 
 import {
+    applyFixedValue,
     validateRequired,
     validateExcluded,
     validateFixedValue,
@@ -38,11 +39,14 @@ export class birthPlaceProfile {
         return profile;
     }
 
+    static is (resource: unknown) : resource is Extension {
+        if (typeof resource !== "object" || resource === null) return false;
+        return (resource as { url?: string }).url === birthPlaceProfile.canonicalUrl;
+    }
+
     static apply (resource: Extension) : birthPlaceProfile {
         resource.url = birthPlaceProfile.canonicalUrl;
-        Object.assign(resource, {
-            url: "http://hl7.org/fhir/StructureDefinition/patient-birthPlace",
-        })
+        applyFixedValue(resource, "url", "http://hl7.org/fhir/StructureDefinition/patient-birthPlace");
         return new birthPlaceProfile(resource);
     }
 

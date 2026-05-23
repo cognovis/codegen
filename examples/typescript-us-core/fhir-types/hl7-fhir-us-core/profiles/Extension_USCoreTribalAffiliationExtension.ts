@@ -15,6 +15,7 @@ export type USCoreTribalAffiliationExtension_Extension_IsEnrolledSliceFlatAll = 
 
 import {
     isRawExtensionInput,
+    applyFixedValue,
     applySliceMatch,
     matchesValue,
     setArraySlice,
@@ -66,11 +67,14 @@ export class USCoreTribalAffiliationExtensionProfile {
         return profile;
     }
 
+    static is (resource: unknown) : resource is Extension {
+        if (typeof resource !== "object" || resource === null) return false;
+        return (resource as { url?: string }).url === USCoreTribalAffiliationExtensionProfile.canonicalUrl;
+    }
+
     static apply (resource: Extension) : USCoreTribalAffiliationExtensionProfile {
         resource.url = USCoreTribalAffiliationExtensionProfile.canonicalUrl;
-        Object.assign(resource, {
-            url: "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation",
-        })
+        applyFixedValue(resource, "url", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation");
         return new USCoreTribalAffiliationExtensionProfile(resource);
     }
 

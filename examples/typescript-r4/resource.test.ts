@@ -120,3 +120,59 @@ test("Bundle with resources", () => {
     expect(bundle.entry).toHaveLength(2);
     expect(bundle).toMatchSnapshot();
 });
+
+test("Bundle<T> narrows entry resources without type predicates", () => {
+    // A bundle carrying only Patients and Observations
+    const patient = createPatient();
+    assert(patient.id);
+    const observation = createObservation(patient.id);
+    const bundle: Bundle<Patient | Observation> = {
+        resourceType: "Bundle",
+        type: "transaction",
+        entry: [
+            { fullUrl: `urn:uuid:${patient.id}`, resource: patient },
+            { fullUrl: `urn:uuid:${observation.id}`, resource: observation },
+        ],
+    };
+
+    // TS 5.5+ infers the type predicate from the discriminated union — no explicit `r is Observation` needed
+    const observations: Observation[] = (bundle.entry ?? [])
+        .map((e) => e.resource)
+        .filter((r) => r?.resourceType === "Observation");
+
+    expect(observations).toHaveLength(1);
+    expect(observations[0]!.id).toBe("glucose-obs-1");
+});
+
+test("Bundle<T> entry type is BundleEntry<T>", () => {
+    const patient = createPatient();
+    const entry: BundleEntry<Patient> = { fullUrl: `urn:uuid:${patient.id}`, resource: patient };
+    // resource is narrowed to Patient, not Resource
+    expect(entry.resource?.resourceType).toBe("Patient");
+});
+
+test("Bundle defaults to Bundle<Resource> (backwards compatible)", () => {
+    const patient = createPatient();
+    // No type param — entry.resource is Resource | undefined (original behaviour)
+    const bundle: Bundle = {
+        resourceType: "Bundle",
+        type: "collection",
+        entry: [{ fullUrl: `urn:uuid:${patient.id}`, resource: patient }],
+    };
+    expect(bundle.entry).toHaveLength(1);
+});
+
+test("Reference accepts all FHIR literal reference forms", () => {
+    // Relative reference — still narrowed to the typed form
+    const relative: Observation["subject"] = { reference: "Patient/123" };
+    // Bundle placeholder — common in transaction bundles
+    const urnUuid: Observation["subject"] = { reference: "urn:uuid:a1b2c3d4-e5f6-7890-abcd-ef0123456789" };
+    // OID reference
+    const urnOid: Observation["subject"] = { reference: "urn:oid:2.16.840.1.113883.2.4.6.3" };
+    // Absolute URL
+    const absolute: Observation["subject"] = { reference: "https://example.org/fhir/Patient/123" };
+    // Fragment reference to a contained resource
+    const fragment: Observation["subject"] = { reference: "#contained-1" };
+
+    expect([relative, urnUuid, urnOid, absolute, fragment]).toHaveLength(5);
+});

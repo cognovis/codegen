@@ -15,6 +15,7 @@ export type Observation_bodyweight_Category_VSCatSliceFlatAll = Observation_body
 
 import {
     ensureProfile,
+    applyFixedValue,
     applySliceMatch,
     matchesValue,
     setArraySlice,
@@ -61,11 +62,16 @@ export class observation_bodyweightProfile {
         return profile;
     }
 
+    static is (resource: unknown) : resource is Observation {
+        if (typeof resource !== "object" || resource === null) return false;
+        const r = resource as { resourceType?: string; meta?: { profile?: string[] } };
+        if (r.resourceType !== "Observation") return false;
+        return (r.meta?.profile ?? []).includes(observation_bodyweightProfile.canonicalUrl);
+    }
+
     static apply (resource: Observation) : observation_bodyweightProfile {
         ensureProfile(resource, observation_bodyweightProfile.canonicalUrl);
-        Object.assign(resource, {
-            code: {"coding":[{"code":"29463-7","system":"http://loinc.org"}]},
-        })
+        applyFixedValue(resource, "code", {"coding":[{"code":"29463-7","system":"http://loinc.org"}]});
         resource.category = ensureSliceDefaults(
             [...(resource.category ?? [])],
             observation_bodyweightProfile.VSCatSliceMatch,

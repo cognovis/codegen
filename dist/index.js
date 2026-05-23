@@ -388,6 +388,13 @@ var isPrimitiveIdentifier = (id) => {
 var isNestedIdentifier = (id) => {
   return id?.kind === "nested";
 };
+var isSnapshotProfileIdentifier = (id) => {
+  return id?.kind === "profile-snapshot";
+};
+var snapshotIdentifier = (id) => ({
+  ...id,
+  kind: "profile-snapshot"
+});
 var concatIdentifiers = (...sources) => {
   const entries = sources.filter((s) => s !== void 0).flatMap((s) => s.map((id) => [id.url, id]));
   if (entries.length === 0) return void 0;
@@ -420,6 +427,9 @@ var isBindingSchema = (schema) => {
 };
 var isValueSetTypeSchema = (schema) => {
   return schema?.identifier.kind === "value-set";
+};
+var isSnapshotProfileTypeSchema = (s) => {
+  return s?.identifier.kind === "profile-snapshot";
 };
 var extractExtensionDeps = (ext) => [
   ...ext.valueFieldTypes ?? [],
@@ -874,6 +884,101 @@ var populateTypeFamily = (schemas) => {
     if (Object.keys(family).length > 0) schema.typeFamily = family;
   }
 };
+var collectGenericContributions = (schema, resolveType) => {
+  const contributions = [];
+  for (const [fieldName, field] of Object.entries(schema.fields ?? {})) {
+    if (isChoiceDeclarationField(field) || !field.type) continue;
+    const target = resolveType(field.type);
+    if (!target) continue;
+    if (isNestedTypeSchema(target)) {
+      const params = target.generic?.params;
+      if (params?.length) contributions.push({ kind: "passthrough", fieldName, params });
+    } else if (isSpecializationTypeSchema(target)) {
+      const params = target.generic?.params;
+      if (params?.length) {
+        contributions.push({ kind: "passthrough", fieldName, params });
+      } else if ((target.typeFamily?.resources?.length ?? 0) > 0) {
+        contributions.push({ kind: "introduce", fieldName, constraint: field.type });
+      }
+    }
+  }
+  return contributions;
+};
+var samePath = (a, b) => a.length === b.length && a.every((s, i) => s === b[i]);
+var leafOf = (path) => path[path.length - 1] ?? "";
+var renderGenericParams = (contributions) => {
+  const raw = [];
+  for (const c of contributions) {
+    if (c.kind === "introduce") {
+      const path = [c.fieldName];
+      if (!raw.find((r) => leafOf(r.path) === leafOf(path))) {
+        raw.push({ path, constraint: c.constraint });
+      }
+    } else {
+      for (const np of c.params) {
+        const path = [c.fieldName, ...np.path];
+        if (!raw.find((r) => leafOf(r.path) === leafOf(path))) {
+          raw.push({ path, constraint: np.constraint });
+        }
+      }
+    }
+  }
+  if (raw.length === 0) return [];
+  return raw.map((r, i) => ({
+    typeVar: raw.length === 1 ? "T" : `T${i + 1}`,
+    constraint: r.constraint,
+    path: r.path
+  }));
+};
+var populateGeneric = (schemas, resolveType) => {
+  const carriers = [];
+  for (const schema of schemas) {
+    if (isSpecializationTypeSchema(schema)) {
+      carriers.push(schema);
+      for (const nested of schema.nested ?? []) carriers.push(nested);
+    } else if (isProfileTypeSchema(schema)) {
+      for (const nested of schema.nested ?? []) carriers.push(nested);
+    }
+  }
+  for (const c of carriers) c.generic = void 0;
+  const sameParams = (a, b) => {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      const x = a[i];
+      const y = b[i];
+      if (x.typeVar !== y.typeVar || !samePath(x.path, y.path) || x.constraint.url !== y.constraint.url)
+        return false;
+    }
+    return true;
+  };
+  let changed = true;
+  let iter = 0;
+  while (changed && iter++ <= carriers.length) {
+    changed = false;
+    for (const c of carriers) {
+      const newParams = renderGenericParams(collectGenericContributions(c, resolveType));
+      const oldParams = c.generic?.params ?? [];
+      if (sameParams(oldParams, newParams)) continue;
+      c.generic = newParams.length > 0 ? { params: newParams } : void 0;
+      changed = true;
+    }
+  }
+  for (const schema of schemas) {
+    if (!isSpecializationTypeSchema(schema)) continue;
+    const constraints = [];
+    const collect = (params) => {
+      for (const p of params) {
+        if (!isNestedIdentifier(p.constraint)) constraints.push(p.constraint);
+      }
+    };
+    if (schema.generic) collect(schema.generic.params);
+    for (const nested of schema.nested ?? []) {
+      if (nested.generic) collect(nested.generic.params);
+    }
+    if (constraints.length === 0) continue;
+    schema.dependencies = concatIdentifiers(schema.dependencies, constraints) ?? schema.dependencies;
+  }
+};
 var mkTypeSchemaIndex = (schemas, {
   register,
   logger,
@@ -881,6 +986,7 @@ var mkTypeSchemaIndex = (schemas, {
 }) => {
   const index = {};
   const nestedIndex = {};
+  const snapshotIndex = {};
   const append = (schema) => {
     const url = schema.identifier.url;
     const pkg = schema.identifier.package;
@@ -907,13 +1013,16 @@ var mkTypeSchemaIndex = (schemas, {
     append(schema);
   }
   populateTypeFamily(schemas);
-  const resolve6 = (id) => {
+  const resolve6 = ((id) => {
+    if (isSnapshotProfileIdentifier(id)) return snapshotIndex[id.url]?.[id.package];
     return index[id.url]?.[id.package];
-  };
-  const resolveType = (id) => {
+  });
+  const resolveType = ((id) => {
     if (isNestedIdentifier(id)) return nestedIndex[id.url]?.[id.package];
+    if (isSnapshotProfileIdentifier(id)) return snapshotIndex[id.url]?.[id.package];
     return index[id.url]?.[id.package];
-  };
+  });
+  populateGeneric(schemas, resolveType);
   const resolveByUrl = (pkgName, url) => {
     if (register) {
       const resolutionTree = register.resolutionTree();
@@ -969,7 +1078,9 @@ var mkTypeSchemaIndex = (schemas, {
     return genealogy;
   };
   const findLastSpecialization = (schema) => {
-    const nonConstraintSchema = hierarchy(schema).find((s) => s.identifier.kind !== "profile");
+    const nonConstraintSchema = hierarchy(schema).find(
+      (s) => !isProfileTypeSchema(s) && !isSnapshotProfileTypeSchema(s)
+    );
     if (!nonConstraintSchema) {
       throw new Error(`No non-constraint schema found in hierarchy for: ${schema.identifier.name}`);
     }
@@ -1048,6 +1159,27 @@ var mkTypeSchemaIndex = (schemas, {
       extensions: mergedExtensions.length > 0 ? mergedExtensions : void 0
     };
   };
+  const buildProfileSnapshot = (schema) => {
+    const flat = flatProfile(schema);
+    return {
+      identifier: snapshotIdentifier(flat.identifier),
+      base: flat.base,
+      description: flat.description,
+      fields: flat.fields ?? {},
+      extensions: flat.extensions,
+      dependencies: flat.dependencies,
+      nested: flat.nested
+    };
+  };
+  for (const schema of schemas) {
+    if (!isProfileTypeSchema(schema)) continue;
+    const hier = tryHierarchy(schema);
+    if (!hier?.some((s) => !isProfileTypeSchema(s) && !isSnapshotProfileTypeSchema(s))) continue;
+    const snap = buildProfileSnapshot(schema);
+    const byPkg = snapshotIndex[snap.identifier.url] ??= {};
+    byPkg[snap.identifier.package] = snap;
+  }
+  const collectSnapshotProfiles = () => Object.values(snapshotIndex).flatMap((byPkg) => Object.values(byPkg));
   const constrainedChoice = (pkgName, baseTypeId, sliceElements) => {
     const baseSchema = resolveByUrl(pkgName, baseTypeId.url);
     if (!baseSchema || !("fields" in baseSchema) || !baseSchema.fields) return void 0;
@@ -1085,6 +1217,7 @@ var mkTypeSchemaIndex = (schemas, {
         nested: {},
         binding: {},
         profile: {},
+        "profile-snapshot": {},
         logical: {}
       };
       for (const schema of shemas) {
@@ -1108,6 +1241,7 @@ var mkTypeSchemaIndex = (schemas, {
     collectResources: () => schemas.filter(isResourceTypeSchema),
     collectLogicalModels: () => schemas.filter(isLogicalTypeSchema),
     collectProfiles: () => schemas.filter(isProfileTypeSchema),
+    collectSnapshotProfiles,
     resolve: resolve6,
     resolveType,
     resolveByUrl,
@@ -1760,6 +1894,8 @@ var codeableReferenceInR4 = "Use CodeableReference which is not provided by FHIR
 var availabilityInR4 = "Use Availability which is not provided by FHIR R4.";
 var skipList = {
   "hl7.fhir.uv.extensions.r4": {
+    "http://hl7.org/fhir/StructureDefinition/biologicallyderivedproduct-manipulation": codeableReferenceInR4,
+    "http://hl7.org/fhir/StructureDefinition/biologicallyderivedproduct-processing": codeableReferenceInR4,
     "http://hl7.org/fhir/StructureDefinition/extended-contact-availability": availabilityInR4,
     "http://hl7.org/fhir/StructureDefinition/immunization-procedure": codeableReferenceInR4,
     "http://hl7.org/fhir/StructureDefinition/specimen-additive": codeableReferenceInR4,
@@ -1904,6 +2040,7 @@ function extractValueSetConcepts(register, valueSet, _logger) {
   return concepts.length > 0 ? concepts : void 0;
 }
 var MAX_ENUM_LENGTH = 100;
+var PLACEHOLDER_ONLY_ENUM_CODES = /* @__PURE__ */ new Set(["UNK"]);
 var BINDABLE_TYPES = /* @__PURE__ */ new Set([
   "code",
   "Coding",
@@ -1931,6 +2068,14 @@ function buildEnum(register, fhirSchema, element, logger) {
   const concepts = extractValueSetConceptsByUrl(register, fhirSchema.package_meta, valueSetUrl);
   if (!concepts || concepts.length === 0) return void 0;
   const codes = concepts.map((c) => c.code).filter((code) => code && typeof code === "string" && code.trim().length > 0);
+  const onlyCode = codes.length === 1 ? codes[0] : void 0;
+  if (onlyCode && PLACEHOLDER_ONLY_ENUM_CODES.has(onlyCode)) {
+    logger?.dryWarn(
+      "#placeholderValueSet",
+      `Value set ${valueSetUrl} only expands to placeholder code '${onlyCode}'; skipping enum generation.`
+    );
+    return void 0;
+  }
   if (codes.length > MAX_ENUM_LENGTH) {
     logger?.dryWarn(
       "#largeValueSet",
@@ -2619,6 +2764,31 @@ function extractNestedDependencies(nestedTypes) {
 }
 
 // src/typeschema/core/field-builder.ts
+var R5_ONLY_TYPES = /* @__PURE__ */ new Set([
+  "Availability",
+  "CodeableReference",
+  "ExtendedContactDetail",
+  "MonetaryComponent",
+  "RatioRange",
+  "VirtualServiceDetail"
+]);
+var dependsOnR4Core = (register, pkg) => {
+  const pkgIndex = register.resolver[packageMetaToFhir(pkg)];
+  if (!pkgIndex) return false;
+  for (const options of Object.values(pkgIndex.canonicalResolution)) {
+    for (const opt of options) {
+      if (opt.pkg.name === "hl7.fhir.r4.core") return true;
+    }
+  }
+  return false;
+};
+var fieldTypeResolutionHint = (register, pkg, type) => {
+  if (!R5_ONLY_TYPES.has(type)) return "";
+  if (!dependsOnR4Core(register, pkg)) return "";
+  return `
+  hint:    '${type}' is an R5+ type and is not available when generating against R4.
+           Either skip this canonical via skip-hack.ts, or upgrade the target to R5.`;
+};
 function isRequired(register, fhirSchema, path) {
   const fieldName = path[path.length - 1];
   if (!fieldName) throw new Error(`Internal error: fieldName is missing for path ${path.join("/")}`);
@@ -2808,10 +2978,18 @@ function buildFieldType(register, fhirSchema, path, element, logger) {
   } else if (element.type) {
     const url = register.ensureSpecializationCanonicalUrl(element.type);
     const fieldFs = register.resolveFs(fhirSchema.package_meta, url);
-    if (!fieldFs)
+    if (!fieldFs) {
+      const pkgId = packageMetaToFhir(fhirSchema.package_meta);
+      const fieldPath = path.join(".");
+      const hint = fieldTypeResolutionHint(register, fhirSchema.package_meta, element.type);
       throw new Error(
-        `Could not resolve field type: <${fhirSchema.url}>.${path.join(".")}: <${element.type}> (pkg: '${packageMetaToFhir(fhirSchema.package_meta)}'))`
+        `Could not resolve field type:
+  package: ${pkgId}
+  schema:  ${fhirSchema.url}
+  field:   ${fieldPath}
+  type:    ${element.type}${hint}`
       );
+    }
     return mkIdentifier(fieldFs);
   } else if (element.choices) {
     return void 0;
@@ -3379,7 +3557,8 @@ var mutableFillReport = (report, tsIndex, shakedIndex) => {
 };
 var treeShakeTypeSchema = (schema, rule, _logger) => {
   schema = JSON.parse(JSON.stringify(schema));
-  if (isPrimitiveTypeSchema(schema) || isValueSetTypeSchema(schema) || isBindingSchema(schema)) return schema;
+  if (isPrimitiveTypeSchema(schema) || isValueSetTypeSchema(schema) || isBindingSchema(schema) || isSnapshotProfileTypeSchema(schema))
+    return schema;
   if (rule.selectFields) {
     if (rule.ignoreFields) throw new Error("Cannot use both ignoreFields and selectFields in the same rule");
     mutableSelectFields(schema, rule.selectFields);
@@ -4449,7 +4628,7 @@ var tsCamelCase = (name) => {
   return camelCase(normalized);
 };
 var tsPackageDir = (name) => {
-  return kebabCase(name);
+  return kebabCase(name.replace(/[@/]/g, "_"));
 };
 var tsModuleName = (id) => {
   return uppercaseFirstLetter(tsResourceName(id));
@@ -4484,8 +4663,8 @@ var tsFieldName = (n) => {
   return n;
 };
 var tsProfileModuleName = (tsIndex, schema) => {
-  const resourceSchema = tsIndex.findLastSpecialization(schema);
-  const resourceName = uppercaseFirstLetter(normalizeTsName(resourceSchema.identifier.name));
+  const resourceId = tsIndex.findLastSpecializationByIdentifier(schema.identifier);
+  const resourceName = uppercaseFirstLetter(normalizeTsName(resourceId.name));
   return `${resourceName}_${normalizeTsName(schema.identifier.name)}`;
 };
 var tsProfileModuleFileName = (tsIndex, schema) => {
@@ -4546,8 +4725,12 @@ var tsEnumType = (enumDef) => {
 };
 var rewriteFieldTypeDefs = {
   Coding: { code: () => "T" },
-  // biome-ignore lint: that is exactly string what we want
-  Reference: { reference: () => "`${T}/${string}`" },
+  Reference: {
+    reference: () => (
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: emitted as a TS template literal type, the placeholders are intentional
+      "`${T}/${string}` | `http://${string}` | `https://${string}` | `urn:uuid:${string}` | `urn:oid:${string}` | `#${string}`"
+    )
+  },
   CodeableConcept: { coding: () => "Coding<T>" }
 };
 var resolveFieldTsType = (schemaName, tsName, field, resolveRef, genericFieldMap, isFamilyType) => {
@@ -4608,7 +4791,7 @@ var valueFieldToTsType = (valueField) => {
   return primitives[fhirName] ?? fhirName;
 };
 var collectSubExtensionSlices = (extProfile) => {
-  const extensionField = extProfile.fields?.extension;
+  const extensionField = extProfile.fields.extension;
   if (!extensionField || isChoiceDeclarationField(extensionField) || !extensionField.slicing?.slices) return [];
   const result = [];
   for (const [sliceName, slice] of Object.entries(extensionField.slicing.slices)) {
@@ -4632,10 +4815,11 @@ var resolveExtensionProfile = (tsIndex, pkgName, url) => {
   const schema = tsIndex.resolveByUrl(pkgName, url);
   if (!schema || !isProfileTypeSchema(schema)) return void 0;
   if (schema.identifier.package !== pkgName) return void 0;
-  const className = tsProfileClassName(schema);
-  const modulePath = `./${tsProfileModuleName(tsIndex, schema)}`;
-  const flatProfile = tsIndex.flatProfile(schema);
-  return { className, modulePath, flatProfile };
+  const snapshot = tsIndex.resolve(snapshotIdentifier(schema.identifier));
+  if (!snapshot) return void 0;
+  const className = tsProfileClassName(snapshot);
+  const modulePath = `./${tsProfileModuleName(tsIndex, snapshot)}`;
+  return { className, modulePath, snapshot };
 };
 var generateRawExtensionBody = (w, ext, targetPath, paramName = "input", useUpsert = false) => {
   w.line(
@@ -4701,10 +4885,10 @@ var generateExtensionGetterOverloads = (w, ext, targetPath, methodName, inputTyp
   );
 };
 var generateComplexExtensionSetter = (w, info) => {
-  const { ext, flatProfile, setMethodName, targetPath, extProfileInfo } = info;
-  const tsProfileName = tsResourceName(flatProfile.identifier);
+  const { ext, snapshot, setMethodName, targetPath, extProfileInfo } = info;
+  const tsProfileName = tsResourceName(snapshot.identifier);
   const inputTypeName = tsExtensionFlatTypeName(tsProfileName, ext.name);
-  const extProfileHasFlatInput = extProfileInfo ? collectSubExtensionSlices(extProfileInfo.flatProfile).length > 0 : false;
+  const extProfileHasFlatInput = extProfileInfo ? collectSubExtensionSlices(extProfileInfo.snapshot).length > 0 : false;
   const useUpsert = ext.max === "1";
   if (extProfileInfo && extProfileHasFlatInput) {
     const paramType = `${extProfileInfo.className}Flat | ${extProfileInfo.className} | Extension`;
@@ -4764,10 +4948,10 @@ var generateComplexExtensionSetter = (w, info) => {
   }
 };
 var generateComplexExtensionGetter = (w, info) => {
-  const { ext, flatProfile, getMethodName, targetPath, extProfileInfo } = info;
-  const tsProfileName = tsResourceName(flatProfile.identifier);
+  const { ext, snapshot, getMethodName, targetPath, extProfileInfo } = info;
+  const tsProfileName = tsResourceName(snapshot.identifier);
   const inputTypeName = tsExtensionFlatTypeName(tsProfileName, ext.name);
-  const extProfileHasFlatInput = extProfileInfo ? collectSubExtensionSlices(extProfileInfo.flatProfile).length > 0 : false;
+  const extProfileHasFlatInput = extProfileInfo ? collectSubExtensionSlices(extProfileInfo.snapshot).length > 0 : false;
   const inputType = extProfileHasFlatInput && extProfileInfo ? `${extProfileInfo.className}Flat` : inputTypeName;
   generateExtensionGetterOverloads(w, ext, targetPath, getMethodName, inputType, extProfileInfo, () => {
     const configItems = (ext.subExtensions ?? []).map((sub) => {
@@ -4787,7 +4971,7 @@ var generateSingleValueExtensionSetter = (w, tsIndex, info) => {
   const valueField = tsValueFieldName(firstValueType);
   const useUpsert = ext.max === "1";
   if (extProfileInfo) {
-    const extFactoryInfo = collectProfileFactoryInfo(tsIndex, extProfileInfo.flatProfile);
+    const extFactoryInfo = collectProfileFactoryInfo(tsIndex, extProfileInfo.snapshot);
     const extValueParam = extFactoryInfo.params.find((p) => p.name === valueField);
     const resolvedValueType = extValueParam?.tsType ?? valueType;
     const paramType = `${extProfileInfo.className} | Extension | ${resolvedValueType}`;
@@ -4855,15 +5039,15 @@ var generateGenericExtensionGetter = (w, info) => {
     }
   });
 };
-var generateExtensionMethods = (w, tsIndex, flatProfile) => {
-  for (const ext of flatProfile.extensions ?? []) {
+var generateExtensionMethods = (w, tsIndex, snapshot) => {
+  for (const ext of snapshot.extensions ?? []) {
     if (!ext.url) continue;
     const baseName = ext.nameCandidates.recommended;
     const targetPath = ext.path.split(".").filter((segment) => segment !== "extension");
-    const extProfileInfo = resolveExtensionProfile(tsIndex, flatProfile.identifier.package, ext.url);
+    const extProfileInfo = resolveExtensionProfile(tsIndex, snapshot.identifier.package, ext.url);
     const info = {
       ext,
-      flatProfile,
+      snapshot,
       setMethodName: `set${baseName}`,
       getMethodName: `get${baseName}`,
       targetPath,
@@ -4885,15 +5069,15 @@ var generateExtensionMethods = (w, tsIndex, flatProfile) => {
     w.line();
   }
 };
-var collectTypesFromExtensions = (tsIndex, flatProfile, addType) => {
+var collectTypesFromExtensions = (tsIndex, snapshot, addType) => {
   let needsExtensionType = false;
-  for (const ext of flatProfile.extensions ?? []) {
+  for (const ext of snapshot.extensions ?? []) {
     if (ext.isComplex && ext.subExtensions) {
       needsExtensionType = true;
       for (const sub of ext.subExtensions) {
         if (!sub.valueFieldType) continue;
         const resolvedType = tsIndex.resolveByUrl(
-          flatProfile.identifier.package,
+          snapshot.identifier.package,
           sub.valueFieldType.url
         );
         addType(resolvedType?.identifier ?? sub.valueFieldType);
@@ -4902,7 +5086,7 @@ var collectTypesFromExtensions = (tsIndex, flatProfile, addType) => {
       needsExtensionType = true;
       if (ext.valueFieldTypes[0]) {
         const resolvedType = tsIndex.resolveByUrl(
-          flatProfile.identifier.package,
+          snapshot.identifier.package,
           ext.valueFieldTypes[0].url
         );
         addType(resolvedType?.identifier ?? ext.valueFieldTypes[0]);
@@ -4913,14 +5097,14 @@ var collectTypesFromExtensions = (tsIndex, flatProfile, addType) => {
   }
   return needsExtensionType;
 };
-var collectTypesFromFlatInput = (tsIndex, flatProfile, addType) => {
-  if (flatProfile.base.name !== "Extension") return;
-  const subSlices = collectSubExtensionSlices(flatProfile);
+var collectTypesFromFlatInput = (tsIndex, snapshot, addType) => {
+  if (snapshot.base.name !== "Extension") return;
+  const subSlices = collectSubExtensionSlices(snapshot);
   for (const sub of subSlices) {
     const tsType = sub.tsType;
     if (["string", "boolean", "number"].includes(tsType)) continue;
     const fhirUrl = `http://hl7.org/fhir/StructureDefinition/${tsType}`;
-    const schema = tsIndex.resolveByUrl(flatProfile.identifier.package, fhirUrl);
+    const schema = tsIndex.resolveByUrl(snapshot.identifier.package, fhirUrl);
     if (schema) addType(schema.identifier);
   }
 };
@@ -4946,9 +5130,9 @@ var extractResourceTypeFromMatch = (match) => {
   }
   return void 0;
 };
-var collectTypesFromSlices = (tsIndex, flatProfile, addType) => {
-  const pkgName = flatProfile.identifier.package;
-  for (const field of Object.values(flatProfile.fields ?? {})) {
+var collectTypesFromSlices = (tsIndex, snapshot, addType) => {
+  const pkgName = snapshot.identifier.package;
+  for (const field of Object.values(snapshot.fields)) {
     if (!isNotChoiceDeclarationField(field) || !field.slicing?.slices || !field.type) continue;
     const isTypeDisc = field.slicing.discriminator?.some((d) => d.type === "type") ?? false;
     for (const slice of Object.values(field.slicing.slices)) {
@@ -4981,10 +5165,10 @@ var collectRequiredSliceNames = (field) => {
   }).map(([name]) => name);
   return names.length > 0 ? names : void 0;
 };
-var collectSliceDefs = (tsIndex, flatProfile) => Object.entries(flatProfile.fields ?? {}).filter(([_, field]) => isNotChoiceDeclarationField(field) && field.slicing?.slices).flatMap(([fieldName, field]) => {
+var collectSliceDefs = (tsIndex, snapshot) => Object.entries(snapshot.fields).filter(([_, field]) => isNotChoiceDeclarationField(field) && field.slicing?.slices).flatMap(([fieldName, field]) => {
   if (!isNotChoiceDeclarationField(field) || !field.slicing?.slices || !field.type) return [];
   const baseType = tsTypeFromIdentifier(field.type);
-  const pkgName = flatProfile.identifier.package;
+  const pkgName = snapshot.identifier.package;
   const choiceBaseNames = collectChoiceBaseNames(tsIndex, field.type);
   const isTypeDisc = field.slicing.discriminator?.some((d) => d.type === "type") ?? false;
   return Object.entries(field.slicing.slices).filter(([_, slice]) => Object.keys(slice.match ?? {}).length > 0).map(([sliceName, slice]) => {
@@ -5012,9 +5196,9 @@ var collectSliceDefs = (tsIndex, flatProfile) => Object.entries(flatProfile.fiel
     };
   });
 });
-var generateSliceSetters = (w, sliceDefs, flatProfile) => {
-  const profileClassName = tsProfileClassName(flatProfile);
-  const tsProfileName = tsResourceName(flatProfile.identifier);
+var generateSliceSetters = (w, sliceDefs, snapshot) => {
+  const profileClassName = tsProfileClassName(snapshot);
+  const tsProfileName = tsResourceName(snapshot.identifier);
   for (const sliceDef of sliceDefs) {
     const baseName = sliceDef.baseName;
     const methodName = `set${baseName}`;
@@ -5076,9 +5260,9 @@ var generateSliceSetters = (w, sliceDefs, flatProfile) => {
     w.line();
   }
 };
-var generateSliceGetters = (w, sliceDefs, flatProfile) => {
-  const profileClassName = tsProfileClassName(flatProfile);
-  const tsProfileName = tsResourceName(flatProfile.identifier);
+var generateSliceGetters = (w, sliceDefs, snapshot) => {
+  const profileClassName = tsProfileClassName(snapshot);
+  const tsProfileName = tsResourceName(snapshot.identifier);
   const defaultMode = w.opts.sliceGetterDefault ?? "flat";
   for (const sliceDef of sliceDefs) {
     const baseName = sliceDef.baseName;
@@ -5209,11 +5393,11 @@ var collectRegularFieldValidation = (errors, warnings, name, field, resolveRef, 
     }
   }
 };
-var generateValidateMethod = (w, tsIndex, flatProfile) => {
-  const fields = flatProfile.fields ?? {};
-  const profileName = flatProfile.identifier.name;
-  const canonicalUrl = flatProfile.identifier.url;
-  const canonicalUrlExpr = canonicalUrl ? { url: canonicalUrl, expr: `${tsProfileClassName(flatProfile)}.canonicalUrl` } : void 0;
+var generateValidateMethod = (w, tsIndex, snapshot) => {
+  const fields = snapshot.fields;
+  const profileName = snapshot.identifier.name;
+  const canonicalUrl = snapshot.identifier.url;
+  const canonicalUrlExpr = canonicalUrl ? { url: canonicalUrl, expr: `${tsProfileClassName(snapshot)}.canonicalUrl` } : void 0;
   w.curlyBlock(["validate(): { errors: string[]; warnings: string[] }"], () => {
     w.line(`const profileName = "${profileName}"`);
     w.line("const res = this.resource");
@@ -5259,9 +5443,9 @@ var generateValidateMethod = (w, tsIndex, flatProfile) => {
 };
 
 // src/api/writer-generator/typescript/profile.ts
-var collectChoiceAccessors = (flatProfile, promotedChoices) => {
+var collectChoiceAccessors = (snapshot, promotedChoices) => {
   const accessors = [];
-  for (const [name, field] of Object.entries(flatProfile.fields ?? {})) {
+  for (const [name, field] of Object.entries(snapshot.fields)) {
     if (field.excluded) continue;
     if (!isChoiceInstanceField(field)) continue;
     if (promotedChoices.has(name)) continue;
@@ -5285,18 +5469,18 @@ var mkIsFamilyType = (tsIndex) => (ref) => {
   if (!schema || !("typeFamily" in schema)) return false;
   return (schema.typeFamily?.resources?.length ?? 0) > 0;
 };
-var collectProfileFactoryInfo = (tsIndex, flatProfile) => {
+var collectProfileFactoryInfo = (tsIndex, snapshot) => {
   const autoFields = [];
   const sliceAutoFields = [];
   const params = [];
   const autoAccessors = [];
   const fixedFields = /* @__PURE__ */ new Set();
-  const fields = flatProfile.fields ?? {};
+  const fields = snapshot.fields;
   const promotedChoices = /* @__PURE__ */ new Set();
   const resolveRef = tsIndex.findLastSpecializationByIdentifier;
   const isFamilyType = mkIsFamilyType(tsIndex);
-  if (isResourceIdentifier(flatProfile.base)) {
-    autoFields.push({ name: "resourceType", value: JSON.stringify(flatProfile.base.name) });
+  if (isResourceIdentifier(snapshot.base)) {
+    autoFields.push({ name: "resourceType", value: JSON.stringify(snapshot.base.name) });
   }
   for (const [name, field] of Object.entries(fields)) {
     if (field.excluded) continue;
@@ -5338,7 +5522,7 @@ var collectProfileFactoryInfo = (tsIndex, flatProfile) => {
   }
   collectBaseRequiredParams(
     tsIndex,
-    flatProfile,
+    snapshot,
     resolveRef,
     params,
     [
@@ -5349,12 +5533,12 @@ var collectProfileFactoryInfo = (tsIndex, flatProfile) => {
     ],
     isFamilyType
   );
-  const accessors = [...autoAccessors, ...collectChoiceAccessors(flatProfile, promotedChoices)];
+  const accessors = [...autoAccessors, ...collectChoiceAccessors(snapshot, promotedChoices)];
   return { autoFields, sliceAutoFields, params, accessors, fixedFields };
 };
-var collectBaseRequiredParams = (tsIndex, flatProfile, resolveRef, params, coveredNames, isFamilyType) => {
+var collectBaseRequiredParams = (tsIndex, snapshot, resolveRef, params, coveredNames, isFamilyType) => {
   const covered = new Set(coveredNames);
-  const baseSchema = tsIndex.resolveType(flatProfile.base);
+  const baseSchema = tsIndex.resolveType(snapshot.base);
   if (!baseSchema || !("fields" in baseSchema) || !baseSchema.fields) return;
   for (const [name, field] of Object.entries(baseSchema.fields)) {
     if (covered.has(name)) continue;
@@ -5367,14 +5551,14 @@ var collectBaseRequiredParams = (tsIndex, flatProfile, resolveRef, params, cover
     }
   }
 };
-var generateProfileIndexFile = (w, tsIndex, initialProfiles) => {
-  if (initialProfiles.length === 0) return;
+var generateProfileIndexFile = (w, tsIndex, snapshots) => {
+  if (snapshots.length === 0) return;
   w.cd("profiles", () => {
     w.cat("index.ts", () => {
       const exports$1 = /* @__PURE__ */ new Map();
-      for (const profile of initialProfiles) {
-        const className = tsProfileClassName(profile);
-        const moduleName = tsProfileModuleName(tsIndex, profile);
+      for (const snapshot of snapshots) {
+        const className = tsProfileClassName(snapshot);
+        const moduleName = tsProfileModuleName(tsIndex, snapshot);
         if (!exports$1.has(className)) {
           exports$1.set(className, `export { ${className} } from "./${moduleName}"`);
         }
@@ -5385,14 +5569,15 @@ var generateProfileIndexFile = (w, tsIndex, initialProfiles) => {
     });
   });
 };
-var generateProfileHelpersImport = (w, tsIndex, flatProfile, sliceDefs, factoryInfo) => {
-  const extensions = flatProfile.extensions ?? [];
-  const hasMeta = tsIndex.isWithMetaField(flatProfile);
-  const canonicalUrl = flatProfile.identifier.url;
+var generateProfileHelpersImport = (w, tsIndex, snapshot, sliceDefs, factoryInfo) => {
+  const extensions = snapshot.extensions ?? [];
+  const hasMeta = tsIndex.isWithMetaField(snapshot);
+  const canonicalUrl = snapshot.identifier.url;
   const imports = [];
-  if (flatProfile.base.name === "Extension" && !!canonicalUrl && collectSubExtensionSlices(flatProfile).length > 0)
+  if (snapshot.base.name === "Extension" && canonicalUrl && collectSubExtensionSlices(snapshot).length > 0)
     imports.push("isRawExtensionInput");
   if (canonicalUrl && hasMeta) imports.push("ensureProfile");
+  if (factoryInfo.autoFields.some((f) => f.name !== "resourceType")) imports.push("applyFixedValue");
   if (sliceDefs.length > 0 || factoryInfo.sliceAutoFields.length > 0)
     imports.push("applySliceMatch", "matchesValue", "setArraySlice", "getArraySlice", "ensureSliceDefaults");
   const hasUnboundedSlice = sliceDefs.some((s) => s.array && (s.max === 0 || s.max === void 0));
@@ -5404,7 +5589,7 @@ var generateProfileHelpersImport = (w, tsIndex, flatProfile, sliceDefs, factoryI
     imports.push("isExtension", "getExtensionValue", "pushExtension");
     if (extensions.some((ext) => ext.url && ext.max === "1")) imports.push("upsertExtension");
   }
-  if (Object.keys(flatProfile.fields ?? {}).length > 0)
+  if (Object.keys(snapshot.fields).length > 0)
     imports.push(
       "validateRequired",
       "validateExcluded",
@@ -5421,7 +5606,7 @@ var generateProfileHelpersImport = (w, tsIndex, flatProfile, sliceDefs, factoryI
     w.line();
   }
 };
-var generateProfileImports = (w, tsIndex, flatProfile) => {
+var generateProfileImports = (w, tsIndex, snapshot) => {
   const usedTypes = /* @__PURE__ */ new Map();
   const getModulePath = (typeId) => {
     if (isNestedIdentifier(typeId)) {
@@ -5437,17 +5622,17 @@ var generateProfileImports = (w, tsIndex, flatProfile) => {
       usedTypes.set(tsName, { importPath: getModulePath(typeId), tsName });
     }
   };
-  addType(flatProfile.base);
-  collectTypesFromSlices(tsIndex, flatProfile, addType);
-  const needsExtensionType = collectTypesFromExtensions(tsIndex, flatProfile, addType);
-  collectTypesFromFlatInput(tsIndex, flatProfile, addType);
-  const factoryInfo = collectProfileFactoryInfo(tsIndex, flatProfile);
+  addType(snapshot.base);
+  collectTypesFromSlices(tsIndex, snapshot, addType);
+  const needsExtensionType = collectTypesFromExtensions(tsIndex, snapshot, addType);
+  collectTypesFromFlatInput(tsIndex, snapshot, addType);
+  const factoryInfo = collectProfileFactoryInfo(tsIndex, snapshot);
   for (const param of factoryInfo.params) addType(param.typeId);
   for (const f of factoryInfo.sliceAutoFields) addType(f.typeId);
   for (const accessor of factoryInfo.accessors) addType(accessor.typeId);
   if (needsExtensionType) {
     const extensionUrl = "http://hl7.org/fhir/StructureDefinition/Extension";
-    const extensionSchema = tsIndex.resolveByUrl(flatProfile.identifier.package, extensionUrl);
+    const extensionSchema = tsIndex.resolveByUrl(snapshot.identifier.package, extensionUrl);
     if (extensionSchema) addType(extensionSchema.identifier);
   }
   const grouped = /* @__PURE__ */ new Map();
@@ -5465,12 +5650,12 @@ var generateProfileImports = (w, tsIndex, flatProfile) => {
   }
   if (sortedModules.length > 0) w.line();
   const extProfileImports = /* @__PURE__ */ new Map();
-  for (const ext of flatProfile.extensions ?? []) {
+  for (const ext of snapshot.extensions ?? []) {
     if (!ext.url) continue;
-    const info = resolveExtensionProfile(tsIndex, flatProfile.identifier.package, ext.url);
+    const info = resolveExtensionProfile(tsIndex, snapshot.identifier.package, ext.url);
     if (!info) continue;
     if (!extProfileImports.has(info.className)) {
-      const hasFlatInput = collectSubExtensionSlices(info.flatProfile).length > 0;
+      const hasFlatInput = collectSubExtensionSlices(info.snapshot).length > 0;
       extProfileImports.set(info.className, { modulePath: info.modulePath, hasFlatInput });
     }
   }
@@ -5499,10 +5684,10 @@ var generateStaticSliceFields = (w, sliceDefs) => {
   }
   if (sliceDefs.length > 0) w.line();
 };
-var generateFactoryMethods = (w, tsIndex, flatProfile, factoryInfo) => {
-  const profileClassName = tsProfileClassName(flatProfile);
-  const tsBaseResourceName = tsTypeFromIdentifier(flatProfile.base);
-  const hasMeta = tsIndex.isWithMetaField(flatProfile);
+var generateFactoryMethods = (w, tsIndex, snapshot, factoryInfo) => {
+  const profileClassName = tsProfileClassName(snapshot);
+  const tsBaseResourceName = tsTypeFromIdentifier(snapshot.base);
+  const hasMeta = tsIndex.isWithMetaField(snapshot);
   const hasParams = factoryInfo.params.length > 0 || factoryInfo.sliceAutoFields.length > 0;
   const createArgsTypeName = `${profileClassName}Raw`;
   const paramSignature = hasParams ? `args: ${createArgsTypeName}` : "";
@@ -5529,20 +5714,32 @@ var generateFactoryMethods = (w, tsIndex, flatProfile, factoryInfo) => {
     w.lineSM("return profile");
   });
   w.line();
+  const canEmitIs = hasMeta && isResourceIdentifier(snapshot.base) || snapshot.base.name === "Extension";
+  if (canEmitIs) {
+    w.curlyBlock(["static", "is", "(resource: unknown)", `: resource is ${tsBaseResourceName}`], () => {
+      w.line(`if (typeof resource !== "object" || resource === null) return false;`);
+      if (hasMeta && isResourceIdentifier(snapshot.base)) {
+        w.line(`const r = resource as { resourceType?: string; meta?: { profile?: string[] } };`);
+        w.line(`if (r.resourceType !== ${JSON.stringify(snapshot.base.name)}) return false;`);
+        w.lineSM(`return (r.meta?.profile ?? []).includes(${profileClassName}.canonicalUrl)`);
+      } else {
+        w.lineSM(`return (resource as { url?: string }).url === ${profileClassName}.canonicalUrl`);
+      }
+    });
+    w.line();
+  }
   w.curlyBlock(["static", "apply", `(resource: ${tsBaseResourceName})`, `: ${profileClassName}`], () => {
     if (hasMeta) {
       w.lineSM(`ensureProfile(resource, ${profileClassName}.canonicalUrl)`);
     }
-    if (flatProfile.base.name === "Extension" && flatProfile.identifier.url) {
+    if (snapshot.base.name === "Extension" && snapshot.identifier.url) {
       w.lineSM(`resource.url = ${profileClassName}.canonicalUrl`);
     }
     const applyAutoFields = factoryInfo.autoFields.filter((f) => f.name !== "resourceType");
     if (applyAutoFields.length > 0) {
-      w.curlyBlock(["Object.assign(resource,"], () => {
-        for (const f of applyAutoFields) {
-          w.line(`${f.name}: ${f.value},`);
-        }
-      }, [")"]);
+      for (const f of applyAutoFields) {
+        w.lineSM(`applyFixedValue(resource, ${JSON.stringify(f.name)}, ${f.value})`);
+      }
     }
     for (const f of factoryInfo.sliceAutoFields) {
       const matchRefs = f.sliceNames.map((s) => `${profileClassName}.${tsSliceStaticName(s)}SliceMatch`);
@@ -5558,7 +5755,7 @@ var generateFactoryMethods = (w, tsIndex, flatProfile, factoryInfo) => {
     w.lineSM(`return new ${profileClassName}(resource)`);
   });
   w.line();
-  const subSlicesForInput = flatProfile.base.name === "Extension" ? collectSubExtensionSlices(flatProfile) : [];
+  const subSlicesForInput = snapshot.base.name === "Extension" ? collectSubExtensionSlices(snapshot) : [];
   const hasInputHelper = subSlicesForInput.length > 0;
   if (hasInputHelper) {
     const rawInputTypeName = `${profileClassName}Raw`;
@@ -5658,7 +5855,7 @@ var generateFactoryMethods = (w, tsIndex, flatProfile, factoryInfo) => {
       if (factoryInfo.sliceAutoFields.length > 0) {
         w.line();
       }
-      if (isPrimitiveIdentifier(flatProfile.base)) {
+      if (isPrimitiveIdentifier(snapshot.base)) {
         w.lineSM(`const resource = undefined as unknown as ${tsBaseResourceName}`);
       } else {
         const hasMetaParam = allFields.some((f) => f.name === "meta");
@@ -5722,13 +5919,13 @@ var generateFieldAccessors = (w, factoryInfo) => {
     }
   }
 };
-var generateInlineExtensionInputTypes = (w, tsIndex, flatProfile) => {
-  const tsProfileName = tsResourceName(flatProfile.identifier);
-  const complexExtensions = (flatProfile.extensions ?? []).filter((ext) => ext.isComplex && ext.subExtensions);
+var generateInlineExtensionInputTypes = (w, tsIndex, snapshot) => {
+  const tsProfileName = tsResourceName(snapshot.identifier);
+  const complexExtensions = (snapshot.extensions ?? []).filter((ext) => ext.isComplex && ext.subExtensions);
   for (const ext of complexExtensions) {
     if (!ext.url) continue;
-    const extProfileInfo = resolveExtensionProfile(tsIndex, flatProfile.identifier.package, ext.url);
-    const hasFlatInput = extProfileInfo ? collectSubExtensionSlices(extProfileInfo.flatProfile).length > 0 : false;
+    const extProfileInfo = resolveExtensionProfile(tsIndex, snapshot.identifier.package, ext.url);
+    const hasFlatInput = extProfileInfo ? collectSubExtensionSlices(extProfileInfo.snapshot).length > 0 : false;
     if (hasFlatInput) continue;
     const typeName = tsExtensionFlatTypeName(tsProfileName, ext.name);
     w.curlyBlock(["export", "type", typeName, "="], () => {
@@ -5753,9 +5950,9 @@ var valueToTypeLiteral = (value) => {
   }
   return "unknown";
 };
-var generateSliceInputTypes = (w, flatProfile, sliceDefs) => {
+var generateSliceInputTypes = (w, snapshot, sliceDefs) => {
   if (sliceDefs.length === 0) return;
-  const tsProfileName = tsResourceName(flatProfile.identifier);
+  const tsProfileName = tsResourceName(snapshot.identifier);
   for (const sliceDef of sliceDefs) {
     const inputTypeName = tsSliceFlatTypeName(tsProfileName, sliceDef.fieldName, sliceDef.sliceName);
     const flatTypeName = tsSliceFlatAllTypeName(tsProfileName, sliceDef.fieldName, sliceDef.sliceName);
@@ -5798,11 +5995,11 @@ var generateSliceInputTypes = (w, flatProfile, sliceDefs) => {
     w.line();
   }
 };
-var generateRawType = (w, flatProfile, factoryInfo) => {
+var generateRawType = (w, snapshot, factoryInfo) => {
   const hasParams = factoryInfo.params.length > 0 || factoryInfo.sliceAutoFields.length > 0;
-  const subSlices = flatProfile.base.name === "Extension" ? collectSubExtensionSlices(flatProfile) : [];
+  const subSlices = snapshot.base.name === "Extension" ? collectSubExtensionSlices(snapshot) : [];
   if (!hasParams && subSlices.length === 0) return;
-  const createArgsTypeName = `${tsProfileClassName(flatProfile)}Raw`;
+  const createArgsTypeName = `${tsProfileClassName(snapshot)}Raw`;
   w.curlyBlock(["export", "type", createArgsTypeName, "="], () => {
     for (const p of factoryInfo.params) {
       w.lineSM(`${p.name}: ${p.tsType}`);
@@ -5817,10 +6014,10 @@ var generateRawType = (w, flatProfile, factoryInfo) => {
   });
   w.line();
 };
-var generateFlatInputType = (w, flatProfile) => {
-  const subSlices = flatProfile.base.name === "Extension" ? collectSubExtensionSlices(flatProfile) : [];
+var generateFlatInputType = (w, snapshot) => {
+  const subSlices = snapshot.base.name === "Extension" ? collectSubExtensionSlices(snapshot) : [];
   if (subSlices.length === 0) return;
-  const flatInputTypeName = `${tsProfileClassName(flatProfile)}Flat`;
+  const flatInputTypeName = `${tsProfileClassName(snapshot)}Flat`;
   w.curlyBlock(["export", "type", flatInputTypeName, "="], () => {
     for (const sub of subSlices) {
       const opt = sub.isRequired ? "" : "?";
@@ -5830,33 +6027,33 @@ var generateFlatInputType = (w, flatProfile) => {
   });
   w.line();
 };
-var generateProfileClass = (w, tsIndex, flatProfile) => {
-  const tsBaseResourceName = tsTypeFromIdentifier(flatProfile.base);
-  const profileClassName = tsProfileClassName(flatProfile);
-  const sliceDefs = collectSliceDefs(tsIndex, flatProfile);
-  const factoryInfo = collectProfileFactoryInfo(tsIndex, flatProfile);
-  generateInlineExtensionInputTypes(w, tsIndex, flatProfile);
-  generateSliceInputTypes(w, flatProfile, sliceDefs);
-  generateProfileHelpersImport(w, tsIndex, flatProfile, sliceDefs, factoryInfo);
-  generateRawType(w, flatProfile, factoryInfo);
-  generateFlatInputType(w, flatProfile);
-  const canonicalUrl = flatProfile.identifier.url;
-  w.comment("CanonicalURL:", canonicalUrl, `(pkg: ${packageMetaToFhir(packageMeta(flatProfile))})`);
+var generateProfileClass = (w, tsIndex, snapshot) => {
+  const tsBaseResourceName = tsTypeFromIdentifier(snapshot.base);
+  const profileClassName = tsProfileClassName(snapshot);
+  const sliceDefs = collectSliceDefs(tsIndex, snapshot);
+  const factoryInfo = collectProfileFactoryInfo(tsIndex, snapshot);
+  generateInlineExtensionInputTypes(w, tsIndex, snapshot);
+  generateSliceInputTypes(w, snapshot, sliceDefs);
+  generateProfileHelpersImport(w, tsIndex, snapshot, sliceDefs, factoryInfo);
+  generateRawType(w, snapshot, factoryInfo);
+  generateFlatInputType(w, snapshot);
+  const canonicalUrl = snapshot.identifier.url;
+  w.comment("CanonicalURL:", canonicalUrl, `(pkg: ${packageMetaToFhir(packageMeta(snapshot))})`);
   w.curlyBlock(["export", "class", profileClassName], () => {
     w.lineSM(`static readonly canonicalUrl = ${JSON.stringify(canonicalUrl)}`);
     w.line();
     generateStaticSliceFields(w, sliceDefs);
     w.lineSM(`private resource: ${tsBaseResourceName}`);
     w.line();
-    generateFactoryMethods(w, tsIndex, flatProfile, factoryInfo);
+    generateFactoryMethods(w, tsIndex, snapshot, factoryInfo);
     generateFieldAccessors(w, factoryInfo);
     w.line("// Extensions");
-    generateExtensionMethods(w, tsIndex, flatProfile);
+    generateExtensionMethods(w, tsIndex, snapshot);
     w.line("// Slices");
-    generateSliceSetters(w, sliceDefs, flatProfile);
-    generateSliceGetters(w, sliceDefs, flatProfile);
+    generateSliceSetters(w, sliceDefs, snapshot);
+    generateSliceGetters(w, sliceDefs, snapshot);
     w.line("// Validation");
-    generateValidateMethod(w, tsIndex, flatProfile);
+    generateValidateMethod(w, tsIndex, snapshot);
   });
   w.line();
 };
@@ -5870,6 +6067,8 @@ var resolveTsAssets = (fn) => {
   }
   return Path5.resolve(__dirname, "../../../..", "assets", "api", "writer-generator", "typescript", fn);
 };
+var leafOf2 = (path) => path[path.length - 1] ?? "";
+var TS_HARDCODED_GENERIC_NAMES = /* @__PURE__ */ new Set(["Reference", "Coding", "CodeableConcept"]);
 var TypeScript = class extends Writer {
   constructor(options) {
     super({ lineWidth: 120, ...options, resolveAssets: options.resolveAssets ?? resolveTsAssets });
@@ -5908,13 +6107,13 @@ var TypeScript = class extends Writer {
   }
   generateFhirPackageIndexFile(schemas) {
     this.cat("index.ts", () => {
-      const profiles = schemas.filter(isProfileTypeSchema);
+      const profiles = schemas.filter(isSnapshotProfileTypeSchema);
       if (profiles.length > 0) {
         this.lineSM(`export * from "./profiles"`);
       }
       let exports$1 = schemas.flatMap((schema) => {
         const resourceName = tsResourceName(schema.identifier);
-        const typeExports = isProfileTypeSchema(schema) ? [] : [
+        const typeExports = isSnapshotProfileTypeSchema(schema) ? [] : [
           resourceName,
           ...isResourceTypeSchema(schema) && schema.nested || isLogicalTypeSchema(schema) && schema.nested ? schema.nested.map((n) => tsResourceName(n.identifier)) : []
         ];
@@ -5993,33 +6192,36 @@ var TypeScript = class extends Writer {
   generateType(tsIndex, schema, isFamilyType) {
     let name;
     const genericTypes = ["Reference", "Coding", "CodeableConcept"];
-    if (genericTypes.includes(schema.identifier.name)) {
+    const isHardcodedGeneric = genericTypes.includes(schema.identifier.name);
+    if (isHardcodedGeneric) {
       name = `${schema.identifier.name}<T extends string = string>`;
     } else {
       name = tsResourceName(schema.identifier);
     }
-    const typeFamilyFields = [];
-    for (const [fieldName, field] of Object.entries(schema.fields ?? {})) {
-      if (isChoiceDeclarationField(field) || !field.type) continue;
-      const fieldTypeSchema = tsIndex.resolveType(field.type);
-      if (isSpecializationTypeSchema(fieldTypeSchema) && (fieldTypeSchema.typeFamily?.resources?.length ?? 0) > 0) {
-        typeFamilyFields.push({ fieldName: tsFieldName(fieldName), familyTypeName: field.type.name });
+    const params = isHardcodedGeneric ? [] : schema.generic?.params ?? [];
+    const fieldMap = {};
+    const nestedArgsByField = {};
+    if (!isHardcodedGeneric) {
+      for (const [fieldName, field] of Object.entries(schema.fields ?? {})) {
+        if (isChoiceDeclarationField(field) || !field.type) continue;
+        const target = tsIndex.resolveType(field.type);
+        if (!target || TS_HARDCODED_GENERIC_NAMES.has(target.identifier.name)) continue;
+        const tsName = tsFieldName(fieldName);
+        const targetParams = isNestedTypeSchema(target) || isSpecializationTypeSchema(target) ? target.generic?.params : void 0;
+        if (targetParams?.length) {
+          const args = targetParams.map(
+            (tp) => params.find((q) => leafOf2(q.path) === leafOf2(tp.path))?.typeVar ?? tp.typeVar
+          );
+          nestedArgsByField[tsName] = `<${args.join(", ")}>`;
+        } else if (isSpecializationTypeSchema(target) && (target.typeFamily?.resources?.length ?? 0) > 0) {
+          const p = params.find((q) => leafOf2(q.path) === fieldName);
+          if (p) fieldMap[tsName] = p.typeVar;
+        }
       }
     }
-    const genericFieldMap = {};
-    if (!genericTypes.includes(schema.identifier.name) && typeFamilyFields.length > 0) {
-      const [first, ...rest] = typeFamilyFields;
-      if (first && rest.length === 0) {
-        genericFieldMap[first.fieldName] = "T";
-        name += `<T extends ${first.familyTypeName} = ${first.familyTypeName}>`;
-      } else {
-        const params = typeFamilyFields.map((tf) => {
-          const paramName = `T${uppercaseFirstLetter(tf.fieldName)}`;
-          genericFieldMap[tf.fieldName] = paramName;
-          return `${paramName} extends ${tf.familyTypeName} = ${tf.familyTypeName}`;
-        });
-        name += `<${params.join(", ")}>`;
-      }
+    if (!isHardcodedGeneric && params.length > 0) {
+      const declParams = params.map((p) => `${p.typeVar} extends ${p.constraint.name} = ${p.constraint.name}`);
+      name += `<${declParams.join(", ")}>`;
     }
     let extendsClause;
     if (schema.base) extendsClause = `extends ${tsNameFromCanonical(schema.base.url)}`;
@@ -6049,12 +6251,13 @@ var TypeScript = class extends Writer {
           tsName,
           field,
           void 0,
-          genericFieldMap,
+          fieldMap,
           isFamilyType
         );
         const optionalSymbol = field.required ? "" : "?";
         const arraySymbol = field.array ? "[]" : "";
-        this.lineSM(`${tsName}${optionalSymbol}: ${tsType}${arraySymbol}`);
+        const nestedArgs = nestedArgsByField[tsName] ?? "";
+        this.lineSM(`${tsName}${optionalSymbol}: ${tsType}${nestedArgs}${arraySymbol}`);
         if (this.withPrimitiveTypeExtension(schema)) {
           if (isPrimitiveIdentifier(field.type)) {
             this.addFieldExtension(fieldName, field.array ?? false);
@@ -6082,21 +6285,19 @@ var TypeScript = class extends Writer {
     });
   }
   generateNestedTypes(tsIndex, schema, isFamilyType) {
-    if (schema.nested) {
-      for (const subtype of schema.nested) {
-        this.generateType(tsIndex, subtype, isFamilyType);
-        this.line();
-      }
+    if (!schema.nested) return;
+    for (const subtype of schema.nested) {
+      this.generateType(tsIndex, subtype, isFamilyType);
+      this.line();
     }
   }
   generateResourceModule(tsIndex, schema) {
-    if (isProfileTypeSchema(schema)) {
+    if (isSnapshotProfileTypeSchema(schema)) {
       this.cd("profiles", () => {
         this.cat(`${tsProfileModuleFileName(tsIndex, schema)}`, () => {
           this.generateDisclaimer();
-          const flatProfile = tsIndex.flatProfile(schema);
-          generateProfileImports(this, tsIndex, flatProfile);
-          generateProfileClass(this, tsIndex, flatProfile);
+          generateProfileImports(this, tsIndex, schema);
+          generateProfileClass(this, tsIndex, schema);
         });
       });
     } else if (isSpecializationTypeSchema(schema)) {
@@ -6123,10 +6324,10 @@ var TypeScript = class extends Writer {
       ...tsIndex.collectComplexTypes(),
       ...tsIndex.collectResources(),
       ...tsIndex.collectLogicalModels(),
-      ...this.opts.generateProfile ? tsIndex.collectProfiles() : []
+      ...this.opts.generateProfile ? tsIndex.collectSnapshotProfiles() : []
     ];
     const grouped = groupByPackages(typesToGenerate);
-    const hasProfiles = this.opts.generateProfile && typesToGenerate.some(isProfileTypeSchema);
+    const hasProfiles = this.opts.generateProfile && typesToGenerate.some(isSnapshotProfileTypeSchema);
     this.cd("/", () => {
       if (hasProfiles) {
         this.cp("profile-helpers.ts", "profile-helpers.ts");
@@ -6137,7 +6338,7 @@ var TypeScript = class extends Writer {
           for (const schema of packageSchemas) {
             this.generateResourceModule(tsIndex, schema);
           }
-          generateProfileIndexFile(this, tsIndex, packageSchemas.filter(isProfileTypeSchema));
+          generateProfileIndexFile(this, tsIndex, packageSchemas.filter(isSnapshotProfileTypeSchema));
           this.generateFhirPackageIndexFile(packageSchemas);
         });
       }
@@ -6151,19 +6352,54 @@ function countLinesByMatches(text) {
   const m = text.match(/\n/g);
   return m ? m.length + 1 : 1;
 }
-var prettyReport = (report) => {
+var formatLoc = (loc) => {
+  if (loc >= 1e4) return `${Math.round(loc / 1e3)} kloc`;
+  if (loc >= 1e3) return `${(loc / 1e3).toFixed(1)} kloc`;
+  return `${loc} loc`;
+};
+var prettyReport = (report, options = {}) => {
   const { success, filesGenerated, errors, warnings, duration } = report;
+  const fileLimit = options.fileLimit ?? 20;
   const errorsStr = errors.length > 0 ? `Errors: ${errors.join(", ")}` : void 0;
   const warningsStr = warnings.length > 0 ? `Warnings: ${warnings.join(", ")}` : void 0;
-  let allLoc = 0;
-  const files = Object.entries(filesGenerated).map(([path, content]) => {
-    const loc = countLinesByMatches(content);
-    allLoc += loc;
-    return `  - ${path} (${loc} loc)`;
-  }).join("\n");
+  let totalFiles = 0;
+  let totalLoc = 0;
+  const aggregateByDir = (files) => {
+    const byDir = {};
+    for (const [p, loc] of Object.entries(files)) {
+      const dir = Path5.dirname(p);
+      byDir[dir] ??= { count: 0, loc: 0 };
+      byDir[dir].count += 1;
+      byDir[dir].loc += loc;
+    }
+    return Object.entries(byDir).map(([dir, v]) => ({ dir, count: v.count, loc: v.loc })).sort((a, b) => a.dir.localeCompare(b.dir));
+  };
+  const groupStrs = Object.entries(filesGenerated).map(([name, files]) => {
+    const locByPath = {};
+    let groupLoc = 0;
+    for (const [path, content] of Object.entries(files)) {
+      const loc = countLinesByMatches(content);
+      locByPath[path] = loc;
+      groupLoc += loc;
+    }
+    const count = Object.keys(files).length;
+    totalFiles += count;
+    totalLoc += groupLoc;
+    const header = `  ${name} (${count} files, ${formatLoc(groupLoc)}):`;
+    if (count === 0) return header;
+    if (count > fileLimit) {
+      const dirs = aggregateByDir(locByPath);
+      const dirLines = dirs.map((d) => `    - ${d.dir}/ (${d.count} files, ${formatLoc(d.loc)})`).join("\n");
+      return `${header}
+${dirLines}`;
+    }
+    const fileLines = Object.entries(locByPath).map(([p, loc]) => `    - ${p} (${loc} loc)`).join("\n");
+    return `${header}
+${fileLines}`;
+  });
   return [
-    `Generated files (${Math.round(allLoc / 1e3)} kloc):`,
-    files,
+    `Generated files (${totalFiles} files, ${formatLoc(totalLoc)}):`,
+    ...groupStrs,
     errorsStr,
     warningsStr,
     `Duration: ${Math.round(duration)}ms`,
@@ -6460,7 +6696,8 @@ var APIBuilder = class {
       await this.executeGenerators(result, tsIndex);
       this.logger.info("Generation completed successfully");
       result.success = result.errors.length === 0;
-      this.logger.debug(`Generation completed: ${result.filesGenerated.length} files`);
+      const totalFiles = Object.values(result.filesGenerated).reduce((n, f) => n + Object.keys(f).length, 0);
+      this.logger.debug(`Generation completed: ${totalFiles} files`);
     } catch (error) {
       this.logger.error(`Code generation failed: ${error instanceof Error ? error.message : String(error)}`);
       result.errors.push(error instanceof Error ? error.message : String(error));
@@ -6491,8 +6728,9 @@ var APIBuilder = class {
       try {
         await gen.writer.generateAsync(tsIndex);
         const fileBuffer = gen.writer.writtenFiles();
+        const files = result.filesGenerated[gen.name] ??= {};
         fileBuffer.forEach((buf) => {
-          result.filesGenerated[buf.relPath] = buf.content;
+          files[buf.relPath] = buf.content;
         });
         this.logger.info(`Generating ${gen.name} finished successfully`);
       } catch (error) {
