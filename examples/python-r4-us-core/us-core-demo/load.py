@@ -7,7 +7,11 @@ import uuid
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, Literal, cast
+
+from pydantic import BaseModel
+
+Gender = Literal["male", "female", "other", "unknown"]
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
@@ -56,7 +60,7 @@ def row_to_patient(row: Row) -> Patient:
         identifier=[Identifier(system="http://hospital.example.org/mrn", value=row.mrn)],
         name=[HumanName(family=row.last, given=[row.first])],
     )
-    resource.gender = row.gender
+    resource.gender = cast(Gender, row.gender)
     resource.birthDate = row.dob
 
     race = UscoreRaceExtension.create()
@@ -96,7 +100,7 @@ def row_to_bp(row: Row, patient_uuid: str) -> Observation:
     return profile.to_resource()
 
 
-def make_entry(full_url: str, resource: Any, method: str, url: str) -> dict[str, Any]:
+def make_entry(full_url: str, resource: BaseModel, method: str, url: str) -> dict[str, Any]:
     return {
         "fullUrl": full_url,
         "resource": json.loads(resource.model_dump_json(exclude_none=True)),
