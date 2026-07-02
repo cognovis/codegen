@@ -74,7 +74,16 @@ export const generateExtensionMethods = (
             const valueField = pyValueFieldName(valueType, w.nameFormatFunction);
             const pyType = pyTypeFromIdentifier(valueType);
             generateSingleValueExtensionGetter(w, ext, baseName, targetPath, valueField, pyType, extProfileInfo);
-            generateSingleValueExtensionSetter(w, ext, className, baseName, targetPath, valueField, extProfileInfo);
+            generateSingleValueExtensionSetter(
+                w,
+                ext,
+                className,
+                baseName,
+                targetPath,
+                valueField,
+                pyType,
+                extProfileInfo,
+            );
         } else {
             generateGenericExtensionGetter(w, ext, baseName, targetPath, extProfileInfo);
             generateGenericExtensionSetter(w, ext, className, baseName, targetPath, extProfileInfo);
@@ -269,6 +278,9 @@ const generateComplexExtensionSetter = (
     extProfileInfo: ExtensionProfileInfo | undefined,
 ): void => {
     generateExtensionSetter(w, ext, className, baseName, "dict[str, Any]", targetPath, extProfileInfo, () => {
+        // In the else branch `value` is the flat dict form (models/profile classes were
+        // handled above); assert it so field access below type-checks and misuse fails loudly.
+        w.line("assert is_record(value)");
         w.line("sub_extensions = []");
         for (const sub of ext.subExtensions ?? []) {
             const valueField = sub.valueFieldType
@@ -322,9 +334,14 @@ const generateSingleValueExtensionSetter = (
     baseName: string,
     targetPath: string[],
     valueField: string,
+    pyType: string,
     extProfileInfo: ExtensionProfileInfo | undefined,
 ): void => {
-    generateExtensionSetter(w, ext, className, baseName, "Any", targetPath, extProfileInfo, () => {
+    // Type the input as the value's own type (symmetric with the getter) instead of `Any`.
+    generateExtensionSetter(w, ext, className, baseName, pyType, targetPath, extProfileInfo, () => {
+        // The profile-class arm is handled by isinstance above and the Extension arm by
+        // is_extension; assert the remainder so the value type-checks and misuse fails loudly.
+        w.line("assert not isinstance(value, Extension)");
         // Wrap in an Extension model so the value field serializes with its FHIR alias.
         emitExtPush(w, targetPath, `Extension(url=${JSON.stringify(ext.url)}, ${valueField}=value)`);
     });
@@ -357,6 +374,9 @@ const generateGenericExtensionSetter = (
     extProfileInfo: ExtensionProfileInfo | undefined,
 ): void => {
     generateExtensionSetter(w, ext, className, baseName, "dict[str, Any]", targetPath, extProfileInfo, () => {
+        // In the else branch `value` is the flat dict form (models/profile classes were
+        // handled above); assert it so `**value` type-checks and misuse fails loudly.
+        w.line("assert is_record(value)");
         emitExtPush(w, targetPath, `{"url": ${JSON.stringify(ext.url)}, **value}`);
     });
 };
