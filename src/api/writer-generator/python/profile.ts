@@ -135,6 +135,12 @@ const collectHelperImports = (
         imports.push("_get_key", "is_extension", "get_extension_value", "push_extension");
         if (extensions.some((ext) => ext.isComplex && ext.subExtensions)) imports.push("extract_complex_extension");
         if (extensions.some((ext) => ext.path.split(".").some((s) => s !== "extension"))) imports.push("ensure_path");
+        // Complex/generic (non single-value) extension setters assert `is_record(value)` in the else branch.
+        const hasDictFormSetter = extensions.some(
+            (ext) =>
+                (ext.isComplex && ext.subExtensions) || !(ext.valueFieldTypes?.length === 1 && ext.valueFieldTypes[0]),
+        );
+        if (hasDictFormSetter) imports.push("is_record");
     }
     imports.push(...validationHelpers);
     imports.sort();

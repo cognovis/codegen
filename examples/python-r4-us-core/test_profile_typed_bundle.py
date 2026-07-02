@@ -37,8 +37,12 @@ def test_get_patient_entry_returns_bundle_entry_instance() -> None:
 
     entry = bundle.get_patient_entry()
     assert isinstance(entry, BundleEntry)
-    assert entry.resource.resourceType == "Patient"
-    assert entry.resource.name[0].family == "Smith"
+    resource = entry.resource
+    assert resource is not None
+    assert resource.resourceType == "Patient"
+    name = resource.name
+    assert name is not None
+    assert name[0].family == "Smith"
 
 
 def test_get_patient_entry_raw_mode_returns_bundle_entry_instance() -> None:
@@ -47,7 +51,9 @@ def test_get_patient_entry_raw_mode_returns_bundle_entry_instance() -> None:
 
     entry = bundle.get_patient_entry()
     assert isinstance(entry, BundleEntry)
-    assert entry.resource.resourceType == "Patient"
+    resource = entry.resource
+    assert resource is not None
+    assert resource.resourceType == "Patient"
 
 
 def test_get_patient_entry_returns_stored_entry_including_resource() -> None:
@@ -67,7 +73,9 @@ def test_set_patient_entry_replaces_existing() -> None:
     bundle.set_patient_entry(BundleEntry(resource=active_patient))
 
     # Only one patient entry — the second call replaced the first.
-    assert len(bundle.to_resource().entry) == 1
+    entry = bundle.to_resource().entry
+    assert entry is not None
+    assert len(entry) == 1
 
 
 # ---------------------------------------------------------------------------

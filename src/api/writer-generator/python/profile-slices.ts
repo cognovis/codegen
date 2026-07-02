@@ -284,15 +284,19 @@ export const generateSliceSetters = (
                 } else {
                     w.line(`merged = apply_slice_match(${inputExpr}, match)`);
                 }
+                // Wrap into the element model under a fresh name: `merged` is typed
+                // `dict[str, Any]`, so rebinding it to a model would trip mypy's assignment check.
+                let elementExpr = "merged";
                 if (sliceDef.elementTypeName) {
-                    w.line(`merged = ${sliceDef.elementTypeName}(**merged)`);
+                    w.line(`element = ${sliceDef.elementTypeName}(**merged)`);
+                    elementExpr = "element";
                 }
                 if (sliceDef.array) {
                     w.line(`items = getattr(self._resource, ${JSON.stringify(fieldName)}, None) or []`);
-                    w.line("set_array_slice(items, match, merged)");
+                    w.line(`set_array_slice(items, match, ${elementExpr})`);
                     w.line(`setattr(self._resource, ${JSON.stringify(fieldName)}, items)`);
                 } else {
-                    w.line(`setattr(self._resource, ${JSON.stringify(fieldName)}, merged)`);
+                    w.line(`setattr(self._resource, ${JSON.stringify(fieldName)}, ${elementExpr})`);
                 }
                 w.line("return self");
             });

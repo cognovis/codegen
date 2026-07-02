@@ -48,7 +48,11 @@ async def main() -> None:
     patients = await client.resources(Patient).fetch()
     print(f"\nFound {len(patients)} patients:")
     for pat in patients:
-        print(f"  - {pat.name[0].family}, {pat.name[0].given[0]}")
+        name = pat.name
+        assert name is not None
+        given = name[0].given
+        assert given is not None
+        print(f"  - {name[0].family}, {given[0]}")
 
     # Search with filters
     female_patients = await client.resources(Patient).search(gender="female").fetch()
@@ -57,16 +61,22 @@ async def main() -> None:
     # Search and limit results
     first_patient = await client.resources(Patient).first()
     if first_patient:
-        print(f"\nFirst patient: {first_patient.name[0].family}")
+        first_patient_name = first_patient.name
+        assert first_patient_name is not None
+        print(f"\nFirst patient: {first_patient_name[0].family}")
 
     # Fetch a single patient by ID
     fetched_patient = await client.reference("Patient", created_patient.id).to_resource()
-    print(f"\nFetched patient by ID: {fetched_patient.name[0].family}")
+    fetched_patient_name = fetched_patient.name
+    assert fetched_patient_name is not None
+    print(f"\nFetched patient by ID: {fetched_patient_name[0].family}")
 
     # Update a patient
     created_patient.name = [HumanName(given=["Bob"], family="Updated")]
     updated_patient = await client.update(created_patient)
-    print(f"\nUpdated patient family name to: {updated_patient.name[0].family}")
+    updated_patient_name = updated_patient.name
+    assert updated_patient_name is not None
+    print(f"\nUpdated patient family name to: {updated_patient_name[0].family}")
 
     # Cleanup
     await client.delete(f"Patient/{created_patient.id}")

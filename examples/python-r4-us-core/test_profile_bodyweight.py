@@ -39,9 +39,13 @@ def test_import_profiled_observation_from_api_and_read_values() -> None:
     profile = UscoreBodyWeightProfile.from_resource(api_response)
 
     assert profile.get_status() == "final"
-    assert profile.get_value_quantity().value == 75
+    q = profile.get_value_quantity()
+    assert q is not None
+    assert q.value == 75
     assert profile.get_effective_date_time() == "2024-06-15"
-    assert profile.get_subject().reference == "Patient/pt-1"
+    subject = profile.get_subject()
+    assert subject is not None
+    assert subject.reference == "Patient/pt-1"
 
 
 def test_apply_profile_to_bare_observation_and_populate_it() -> None:
@@ -56,7 +60,10 @@ def test_apply_profile_to_bare_observation_and_populate_it() -> None:
     profile.set_value_quantity(Quantity(value=75, unit="kg", system="http://unitsofmeasure.org", code="kg"))
 
     assert profile.validate()["errors"] == []
-    assert CANONICAL_URL in profile.to_resource().meta.profile
+    meta = profile.to_resource().meta
+    assert meta is not None
+    assert meta.profile is not None
+    assert CANONICAL_URL in meta.profile
 
 
 def test_create_builds_a_resource_with_fixed_code_and_required_slice_stubs() -> None:
@@ -69,8 +76,11 @@ def test_create_builds_a_resource_with_fixed_code_and_required_slice_stubs() -> 
     profile.set_effective_date_time("2024-01-15")
 
     obs = profile.to_resource()
+    assert obs.code.coding is not None
     assert obs.code.coding[0].code == "29463-7"
+    assert obs.valueQuantity is not None
     assert obs.valueQuantity.value == 70
+    assert obs.category is not None
     assert len(obs.category) == 1
     assert profile.validate()["errors"] == []
 

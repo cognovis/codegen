@@ -31,7 +31,9 @@ def test_bundle_generic_narrows_entry_resources() -> None:
 def test_bundle_entry_generic_narrows_resource() -> None:
     patient = Patient(id="p-1")
     entry: BundleEntry[Patient] = BundleEntry(resource=patient)
-    assert entry.resource.resourceType == "Patient"
+    resource = entry.resource
+    assert resource is not None
+    assert resource.resourceType == "Patient"
 
 
 def test_bundle_without_type_param_is_backwards_compatible() -> None:
@@ -40,7 +42,9 @@ def test_bundle_without_type_param_is_backwards_compatible() -> None:
         type="collection",
         entry=[BundleEntry(resource=patient)],
     )
-    assert len(bundle.entry) == 1
+    entry = bundle.entry
+    assert entry is not None
+    assert len(entry) == 1
 
 
 def test_bundle_from_json_raises_on_invalid_resource() -> None:

@@ -59,9 +59,13 @@ def test_set_extension_via_flat_input() -> None:
 
     res = patient.to_resource()
     assert res.resourceType == "Patient"
+    assert res.identifier is not None
     assert res.identifier[0].value == "MRN-12345"
+    assert res.name is not None
     assert res.name[0].family == "Garcia"
+    assert res.meta is not None
     assert res.meta.profile == [CANONICAL_URL]
+    assert res.extension is not None
     assert len(res.extension) == 3
 
 
@@ -84,7 +88,9 @@ def test_set_extension_via_raw_extension() -> None:
     )
     sex_extension = Extension(url=SEX_URL, valueCoding=Coding(code="female", display="Female"))
     patient.set_sex(sex_extension)
-    assert patient.get_sex().code == "female"
+    sex = patient.get_sex()
+    assert sex is not None
+    assert sex.code == "female"
 
 
 def test_import_profiled_resource_from_api_and_access_data_via_typed_getters() -> None:
@@ -110,12 +116,16 @@ def test_import_profiled_resource_from_api_and_access_data_via_typed_getters() -
 
     patient = UscorePatientProfile.from_resource(api_response)
 
+    assert api_response.meta is not None
+    assert api_response.meta.profile is not None
     assert CANONICAL_URL in api_response.meta.profile
     names = patient.get_name()
+    assert names is not None
     assert names[0].family == "Smith"
     assert names[0].given == ["John"]
 
     race = patient.get_race()
+    assert race is not None
     # Pydantic parses the valueCoding sub-extension input into a Coding model,
     # so race["ombCategory"] is a Coding instance (not a dict like in TS).
     assert race["ombCategory"].code == "2054-5"
@@ -123,6 +133,7 @@ def test_import_profiled_resource_from_api_and_access_data_via_typed_getters() -
     assert race["detailed"] == []
     assert race["text"] == "Black or African American"
     sex = patient.get_sex()
+    assert sex is not None
     assert sex.code == "male"
     assert patient.get_ethnicity() is None
 
@@ -138,9 +149,13 @@ def test_apply_profile_to_a_bare_resource_and_populate_it() -> None:
     assert patient.validate()["errors"] == []
 
     res = patient.to_resource()
+    assert res.identifier is not None
     assert res.identifier[0].value == "MRN-00001"
+    assert res.name is not None
     assert res.name[0].family == "Chen"
+    assert res.meta is not None
     assert res.meta.profile == [CANONICAL_URL]
+    assert res.extension is not None
     assert len(res.extension) == 2
     race_ext = next(e for e in res.extension if (e.get("url") if isinstance(e, dict) else e.url) == RACE_URL)
     eth_ext = next(e for e in res.extension if (e.get("url") if isinstance(e, dict) else e.url) == ETHNICITY_URL)
@@ -161,7 +176,9 @@ def test_create_returns_a_profile_wrapping_the_resource() -> None:
     res = profile.to_resource()
 
     assert res.resourceType == "Patient"
+    assert res.identifier is not None
     assert res.identifier[0].value == "12345"
+    assert res.name is not None
     assert res.name[0].family == "Smith"
 
 
@@ -172,6 +189,7 @@ def test_create_resource_returns_a_plain_patient() -> None:
     )
     assert isinstance(res, Patient)
     assert res.resourceType == "Patient"
+    assert res.identifier is not None
     assert res.identifier[0].value == "12345"
 
 
@@ -183,8 +201,12 @@ def test_apply_wraps_an_existing_patient() -> None:
     profile.set_name([HumanName(family="Smith", given=["John"])])
 
     assert profile.to_resource() is patient
-    assert profile.get_identifier()[0].value == "12345"
-    assert profile.get_name()[0].family == "Smith"
+    identifier = profile.get_identifier()
+    assert identifier is not None
+    assert identifier[0].value == "12345"
+    name = profile.get_name()
+    assert name is not None
+    assert name[0].family == "Smith"
 
 
 def test_all_three_methods_produce_equivalent_resources() -> None:
@@ -199,8 +221,11 @@ def test_all_three_methods_produce_equivalent_resources() -> None:
     from_apply = profile.to_resource()
 
     for res in (from_create, from_create_resource, from_apply):
+        assert res.identifier is not None
         assert res.identifier[0].value == "12345"
+        assert res.name is not None
         assert res.name[0].family == "Smith"
+        assert res.meta is not None
         assert res.meta.profile == [CANONICAL_URL]
 
 
@@ -218,16 +243,24 @@ def _make_patient() -> UscorePatientProfile:
 
 def test_get_identifier_set_identifier() -> None:
     profile = _make_patient()
-    assert profile.get_identifier()[0].value == "12345"
+    identifier = profile.get_identifier()
+    assert identifier is not None
+    assert identifier[0].value == "12345"
     profile.set_identifier([Identifier(system="http://hospital.example.org", value="67890")])
-    assert profile.get_identifier()[0].value == "67890"
+    identifier = profile.get_identifier()
+    assert identifier is not None
+    assert identifier[0].value == "67890"
 
 
 def test_get_name_set_name() -> None:
     profile = _make_patient()
-    assert profile.get_name()[0].family == "Smith"
+    name = profile.get_name()
+    assert name is not None
+    assert name[0].family == "Smith"
     profile.set_name([HumanName(family="Doe", given=["Jane"])])
-    assert profile.get_name()[0].family == "Doe"
+    name = profile.get_name()
+    assert name is not None
+    assert name[0].family == "Doe"
 
 
 def test_fluent_chaining_across_field_accessors() -> None:
@@ -237,8 +270,12 @@ def test_fluent_chaining_across_field_accessors() -> None:
     ).set_name([HumanName(family="Lee")])
 
     assert result is profile
-    assert profile.get_identifier()[0].value == "AAA"
-    assert profile.get_name()[0].family == "Lee"
+    identifier = profile.get_identifier()
+    assert identifier is not None
+    assert identifier[0].value == "AAA"
+    name = profile.get_name()
+    assert name is not None
+    assert name[0].family == "Lee"
 
 
 # ---------------------------------------------------------------------------
@@ -265,6 +302,7 @@ def test_set_race_get_race_round_trip_with_detailed_categories() -> None:
     )
 
     race = profile.get_race()
+    assert race is not None
     assert race["ombCategory"].code == "2106-3"
     assert race["text"] == "White European"
 
@@ -289,6 +327,7 @@ def test_set_sex_get_sex_round_trip() -> None:
     profile.set_sex(Coding(system="http://hl7.org/fhir/administrative-gender", code="male"))
 
     sex = profile.get_sex()
+    assert sex is not None
     assert sex.code == "male"
 
 
@@ -300,7 +339,9 @@ def test_get_sex_raw_returns_raw_extension() -> None:
     profile.set_sex(Coding(system="http://hl7.org/fhir/administrative-gender", code="female"))
 
     raw = profile.get_sex("raw")
+    assert raw is not None
     assert raw.url == SEX_URL
+    assert raw.valueCoding is not None
     assert raw.valueCoding.code == "female"
 
 
@@ -345,11 +386,21 @@ def test_fluent_chaining_across_extensions() -> None:
     )
 
     assert result is profile
-    assert profile.get_race()["text"] == "White"
-    assert profile.get_ethnicity()["text"] == "Not Hispanic or Latino"
-    assert profile.get_sex().code == "male"
-    assert profile.get_tribal_affiliation()["tribalAffiliation"].text == "Navajo"
-    assert profile.get_interpreter_required().code == "no"
+    race = profile.get_race()
+    assert race is not None
+    assert race["text"] == "White"
+    ethnicity = profile.get_ethnicity()
+    assert ethnicity is not None
+    assert ethnicity["text"] == "Not Hispanic or Latino"
+    sex = profile.get_sex()
+    assert sex is not None
+    assert sex.code == "male"
+    tribal_affiliation = profile.get_tribal_affiliation()
+    assert tribal_affiliation is not None
+    assert tribal_affiliation["tribalAffiliation"].text == "Navajo"
+    interpreter_required = profile.get_interpreter_required()
+    assert interpreter_required is not None
+    assert interpreter_required.code == "no"
 
 
 def test_extensions_are_added_to_the_resource() -> None:
@@ -417,7 +468,9 @@ def test_set_sex_accepts_extension_profile_instance() -> None:
     )
     sex_profile = UscoreIndividualSexExtension.create(valueCoding=Coding(code="male"))
     profile.set_sex(sex_profile)
-    assert profile.get_sex().code == "male"
+    sex = profile.get_sex()
+    assert sex is not None
+    assert sex.code == "male"
 
 
 def test_set_sex_accepts_raw_extension() -> None:
@@ -427,7 +480,9 @@ def test_set_sex_accepts_raw_extension() -> None:
     )
     raw_extension = Extension(url=SEX_URL, valueCoding=Coding(code="female"))
     profile.set_sex(raw_extension)
-    assert profile.get_sex().code == "female"
+    sex = profile.get_sex()
+    assert sex is not None
+    assert sex.code == "female"
 
 
 # ---------------------------------------------------------------------------
@@ -440,9 +495,11 @@ def test_profile_mutates_the_underlying_resource() -> None:
     profile = UscorePatientProfile.apply(patient)
 
     profile.set_identifier([Identifier(value="123")])
+    assert patient.identifier is not None
     assert patient.identifier[0].value == "123"
 
     profile.set_name([HumanName(family="Doe")])
+    assert patient.name is not None
     assert patient.name[0].family == "Doe"
 
 

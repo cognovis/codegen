@@ -135,17 +135,26 @@ def test_read_element_level_extension() -> None:
 def test_read_primitive_extension() -> None:
     patient = create_patient_with_extensions()
 
+    assert patient.name is not None
     name = patient.name[0]
     assert isinstance(name.familyExtension, Element)
+    assert name.familyExtension.extension is not None
     assert name.familyExtension.extension[0].valueString == "van"
 
     assert isinstance(name.givenExtension, list)
-    assert name.givenExtension[0].extension[0].valueCode == "birth-certificate"
+    given0 = name.givenExtension[0]
+    assert given0 is not None
+    assert given0.extension is not None
+    assert given0.extension[0].valueCode == "birth-certificate"
     assert name.givenExtension[1] is None
-    assert name.givenExtension[2].extension[0].valueCode == "baptism-record"
+    given2 = name.givenExtension[2]
+    assert given2 is not None
+    assert given2.extension is not None
+    assert given2.extension[0].valueCode == "baptism-record"
 
     assert patient.birthDateExtension is not None
     assert isinstance(patient.birthDateExtension, Element)
+    assert patient.birthDateExtension.extension is not None
     assert patient.birthDateExtension.extension[0].valueDateTime == "1990-03-15T08:22:00-05:00"
 
 
@@ -161,4 +170,5 @@ def test_primitive_extension_survives_round_trip() -> None:
 
     assert restored.birthDateExtension is not None
     assert isinstance(restored.birthDateExtension, Element)
+    assert restored.birthDateExtension.extension is not None
     assert restored.birthDateExtension.extension[0].valueDateTime == "1990-03-15T08:22:00-05:00"

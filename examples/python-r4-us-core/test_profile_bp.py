@@ -83,7 +83,10 @@ def test_apply_profile_to_bare_observation_and_populate_it() -> None:
     profile.set_diastolic({"value": 80, "unit": "mmHg"})
 
     assert profile.validate()["errors"] == []
-    assert CANONICAL_URL in profile.to_resource().meta.profile
+    meta = profile.to_resource().meta
+    assert meta is not None
+    assert meta.profile is not None
+    assert CANONICAL_URL in meta.profile
 
 
 # ---------------------------------------------------------------------------
@@ -99,9 +102,13 @@ def test_create_auto_sets_code_and_meta_profile() -> None:
     profile = _make_bp()
     obs = profile.to_resource()
     assert obs.resourceType == "Observation"
-    assert obs.code.coding[0].code == "85354-9"
-    assert obs.code.coding[0].system == "http://loinc.org"
-    assert obs.meta.profile == [CANONICAL_URL]
+    coding = obs.code.coding
+    assert coding is not None
+    assert coding[0].code == "85354-9"
+    assert coding[0].system == "http://loinc.org"
+    meta = obs.meta
+    assert meta is not None
+    assert meta.profile == [CANONICAL_URL]
 
 
 def test_freshly_created_profile_is_not_yet_valid_missing_effective() -> None:
@@ -115,6 +122,7 @@ def test_freshly_created_profile_is_not_yet_valid_missing_effective() -> None:
 def test_create_auto_populates_component_with_systolic_diastolic_stubs() -> None:
     profile = _make_bp()
     obs = profile.to_resource()
+    assert obs.component is not None
     assert len(obs.component) == 2
 
 
@@ -130,8 +138,12 @@ def test_set_systolic_get_systolic_get_systolic_raw() -> None:
     }
 
     raw = profile.get_systolic("raw")
+    assert raw is not None
+    assert raw.valueQuantity is not None
     assert raw.valueQuantity.value == 120
-    assert raw.code.coding[0].code == "8480-6"
+    coding = raw.code.coding
+    assert coding is not None
+    assert coding[0].code == "8480-6"
 
 
 def test_set_diastolic_get_diastolic_get_diastolic_raw() -> None:
@@ -146,13 +158,18 @@ def test_set_diastolic_get_diastolic_get_diastolic_raw() -> None:
     }
 
     raw = profile.get_diastolic("raw")
+    assert raw is not None
+    assert raw.valueQuantity is not None
     assert raw.valueQuantity.value == 80
-    assert raw.code.coding[0].code == "8462-4"
+    coding = raw.code.coding
+    assert coding is not None
+    assert coding[0].code == "8462-4"
 
 
 def test_both_systolic_and_diastolic_are_in_the_component_array() -> None:
     profile = _make_bp()
     obs = profile.to_resource()
+    assert obs.component is not None
     assert len(obs.component) == 2
 
 
@@ -160,14 +177,19 @@ def test_set_systolic_replaces_an_existing_systolic_component() -> None:
     profile = _make_bp()
     profile.set_systolic({"value": 130, "unit": "mmHg"})
     obs = profile.to_resource()
+    assert obs.component is not None
     assert len(obs.component) == 2
-    assert profile.get_systolic("raw").valueQuantity.value == 130
+    raw = profile.get_systolic("raw")
+    assert raw is not None
+    assert raw.valueQuantity is not None
+    assert raw.valueQuantity.value == 130
 
 
 def test_set_vscat_adds_category_with_discriminator_values() -> None:
     profile = _make_bp()
     profile.set_vscat({"text": "Vital Signs"})
     flat = profile.get_vscat()
+    assert flat is not None
     assert flat["text"] == "Vital Signs"
 
 
@@ -188,9 +210,13 @@ def test_fluent_chaining_across_all_accessor_types() -> None:
     )
     assert result is profile
     assert profile.get_status() == "final"
-    assert profile.get_vscat()["text"] == "Vital Signs"
+    vscat = profile.get_vscat()
+    assert vscat is not None
+    assert vscat["text"] == "Vital Signs"
     assert profile.get_effective_date_time() == "2024-06-15"
-    assert profile.get_subject().reference == "Patient/pt-2"
+    subject = profile.get_subject()
+    assert subject is not None
+    assert subject.reference == "Patient/pt-2"
 
 
 def test_set_systolic_with_no_args_inserts_discriminator_only_component() -> None:
@@ -206,6 +232,7 @@ def test_create_with_custom_category_preserves_user_values_and_adds_required_vsc
         category=[CodeableConcept(text="My Category")],
     )
     obs = custom.to_resource()
+    assert obs.category is not None
     assert len(obs.category) == 2
 
 
@@ -216,6 +243,7 @@ def test_create_with_empty_category_still_adds_required_vscat() -> None:
         category=[],
     )
     obs = custom.to_resource()
+    assert obs.category is not None
     assert len(obs.category) == 1
 
 
@@ -226,4 +254,5 @@ def test_create_with_category_already_containing_vscat_does_not_duplicate_it() -
         category=[CodeableConcept(coding=[VSCAT_CODING])],
     )
     obs = custom.to_resource()
+    assert obs.category is not None
     assert len(obs.category) == 1
