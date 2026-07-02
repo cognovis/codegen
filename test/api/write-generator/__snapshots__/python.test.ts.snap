@@ -545,9 +545,9 @@ class ObservationBodyweightProfile:
     def set_vscat(self, value: dict[str, Any] | None = None) -> "ObservationBodyweightProfile":
         match = self.__class__._vscat_slice_match
         merged = apply_slice_match((value or {}), match)
-        merged = CodeableConcept(**merged)
+        element = CodeableConcept(**merged)
         items = getattr(self._resource, "category", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "category", items)
         return self
 
@@ -752,9 +752,9 @@ class ObservationBpProfile:
     def set_vscat(self, value: dict[str, Any] | None = None) -> "ObservationBpProfile":
         match = self.__class__._vscat_slice_match
         merged = apply_slice_match((value or {}), match)
-        merged = CodeableConcept(**merged)
+        element = CodeableConcept(**merged)
         items = getattr(self._resource, "category", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "category", items)
         return self
 
@@ -762,9 +762,9 @@ class ObservationBpProfile:
         match = self.__class__._systolic_bp_slice_match
         wrapped = wrap_slice_choice((value or {}), "valueQuantity")
         merged = apply_slice_match(wrapped, match)
-        merged = ObservationComponent(**merged)
+        element = ObservationComponent(**merged)
         items = getattr(self._resource, "component", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "component", items)
         return self
 
@@ -772,9 +772,9 @@ class ObservationBpProfile:
         match = self.__class__._diastolic_bp_slice_match
         wrapped = wrap_slice_choice((value or {}), "valueQuantity")
         merged = apply_slice_match(wrapped, match)
-        merged = ObservationComponent(**merged)
+        element = ObservationComponent(**merged)
         items = getattr(self._resource, "component", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "component", items)
         return self
 
@@ -823,7 +823,7 @@ from .extension_uscore_race_extension import UscoreRaceExtension
 from .extension_uscore_tribal_affiliation_extension import UscoreTribalAffiliationExtension
 from fhir_types.profile_helpers import (
     _get_key, build_resource, ensure_profile, extract_complex_extension, get_extension_value, is_extension, \\
-    push_extension, validate_must_support, validate_required
+    is_record, push_extension, validate_must_support, validate_required
 )
 
 
@@ -913,6 +913,7 @@ class UscorePatientProfile:
                 raise ValueError(f"Expected extension url 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race', got {_get_key(value, 'url')!r}")
             push_extension(self._resource, value)
         else:
+            assert is_record(value)
             sub_extensions = []
             if value.get("ombCategory") is not None:
                 sub_extensions.append({"url": "ombCategory", "valueCoding": value["ombCategory"]})
@@ -950,6 +951,7 @@ class UscorePatientProfile:
                 raise ValueError(f"Expected extension url 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity', got {_get_key(value, 'url')!r}")
             push_extension(self._resource, value)
         else:
+            assert is_record(value)
             sub_extensions = []
             if value.get("ombCategory") is not None:
                 sub_extensions.append({"url": "ombCategory", "valueCoding": value["ombCategory"]})
@@ -987,6 +989,7 @@ class UscorePatientProfile:
                 raise ValueError(f"Expected extension url 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation', got {_get_key(value, 'url')!r}")
             push_extension(self._resource, value)
         else:
+            assert is_record(value)
             sub_extensions = []
             if value.get("tribalAffiliation") is not None:
                 sub_extensions.append({"url": "tribalAffiliation", "valueCodeableConcept": value["tribalAffiliation"]})
@@ -1013,7 +1016,7 @@ class UscorePatientProfile:
             return UscoreIndividualSexExtension.apply(ext_obj)
         return cast('Coding | None', get_extension_value(ext, "valueCoding"))
 
-    def set_sex(self, value: "UscoreIndividualSexExtension | Extension | Any") -> "UscorePatientProfile":
+    def set_sex(self, value: "UscoreIndividualSexExtension | Extension | Coding") -> "UscorePatientProfile":
         if isinstance(value, UscoreIndividualSexExtension):
             push_extension(self._resource, value.to_resource())
         elif is_extension(value):
@@ -1021,6 +1024,7 @@ class UscorePatientProfile:
                 raise ValueError(f"Expected extension url 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-individual-sex', got {_get_key(value, 'url')!r}")
             push_extension(self._resource, value)
         else:
+            assert not isinstance(value, Extension)
             push_extension(self._resource, Extension(url="http://hl7.org/fhir/us/core/StructureDefinition/us-core-individual-sex", valueCoding=value))
         return self
 
@@ -1042,7 +1046,7 @@ class UscorePatientProfile:
             return UscoreInterpreterNeededExtension.apply(ext_obj)
         return cast('Coding | None', get_extension_value(ext, "valueCoding"))
 
-    def set_interpreter_required(self, value: "UscoreInterpreterNeededExtension | Extension | Any") -> "UscorePatientProfile":
+    def set_interpreter_required(self, value: "UscoreInterpreterNeededExtension | Extension | Coding") -> "UscorePatientProfile":
         if isinstance(value, UscoreInterpreterNeededExtension):
             push_extension(self._resource, value.to_resource())
         elif is_extension(value):
@@ -1050,6 +1054,7 @@ class UscorePatientProfile:
                 raise ValueError(f"Expected extension url 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-interpreter-needed', got {_get_key(value, 'url')!r}")
             push_extension(self._resource, value)
         else:
+            assert not isinstance(value, Extension)
             push_extension(self._resource, Extension(url="http://hl7.org/fhir/us/core/StructureDefinition/us-core-interpreter-needed", valueCoding=value))
         return self
 
@@ -1423,9 +1428,9 @@ class UscoreBloodPressureProfile:
     def set_vscat(self, value: dict[str, Any] | None = None) -> "UscoreBloodPressureProfile":
         match = self.__class__._vscat_slice_match
         merged = apply_slice_match((value or {}), match)
-        merged = CodeableConcept(**merged)
+        element = CodeableConcept(**merged)
         items = getattr(self._resource, "category", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "category", items)
         return self
 
@@ -1433,9 +1438,9 @@ class UscoreBloodPressureProfile:
         match = self.__class__._systolic_slice_match
         wrapped = wrap_slice_choice((value or {}), "valueQuantity")
         merged = apply_slice_match(wrapped, match)
-        merged = ObservationComponent(**merged)
+        element = ObservationComponent(**merged)
         items = getattr(self._resource, "component", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "component", items)
         return self
 
@@ -1443,9 +1448,9 @@ class UscoreBloodPressureProfile:
         match = self.__class__._diastolic_slice_match
         wrapped = wrap_slice_choice((value or {}), "valueQuantity")
         merged = apply_slice_match(wrapped, match)
-        merged = ObservationComponent(**merged)
+        element = ObservationComponent(**merged)
         items = getattr(self._resource, "component", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "component", items)
         return self
 
@@ -1684,9 +1689,9 @@ class UscoreBodyWeightProfile:
     def set_vscat(self, value: dict[str, Any] | None = None) -> "UscoreBodyWeightProfile":
         match = self.__class__._vscat_slice_match
         merged = apply_slice_match((value or {}), match)
-        merged = CodeableConcept(**merged)
+        element = CodeableConcept(**merged)
         items = getattr(self._resource, "category", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "category", items)
         return self
 
@@ -1739,8 +1744,8 @@ from fhir_types.hl7_fhir_r4_core.base import Extension
 from fhir_types.hl7_fhir_r4_core.base import Extension
 from fhir_types.profile_helpers import (
     _get_key, apply_slice_match, build_resource, ensure_slice_defaults, get_array_slice, get_extension_value, \\
-    is_extension, matches_value, push_extension, set_array_slice, strip_match_keys, unwrap_slice_choice, validate_fixed_value, \\
-    validate_required, validate_slice_cardinality, wrap_slice_choice
+    is_extension, is_record, matches_value, push_extension, set_array_slice, strip_match_keys, unwrap_slice_choice, \\
+    validate_fixed_value, validate_required, validate_slice_cardinality, wrap_slice_choice
 )
 
 
@@ -1824,6 +1829,7 @@ class UscoreRaceExtension:
                 raise ValueError(f"Expected extension url 'ombCategory', got {_get_key(value, 'url')!r}")
             push_extension(self._resource, value)
         else:
+            assert is_record(value)
             push_extension(self._resource, {"url": "ombCategory", **value})
         return self
 
@@ -1847,6 +1853,7 @@ class UscoreRaceExtension:
                 raise ValueError(f"Expected extension url 'detailed', got {_get_key(value, 'url')!r}")
             push_extension(self._resource, value)
         else:
+            assert is_record(value)
             push_extension(self._resource, {"url": "detailed", **value})
         return self
 
@@ -1870,6 +1877,7 @@ class UscoreRaceExtension:
                 raise ValueError(f"Expected extension url 'text', got {_get_key(value, 'url')!r}")
             push_extension(self._resource, value)
         else:
+            assert is_record(value)
             push_extension(self._resource, {"url": "text", **value})
         return self
 
@@ -1913,9 +1921,9 @@ class UscoreRaceExtension:
         match = self.__class__._omb_category_slice_match
         wrapped = wrap_slice_choice((value or {}), "valueCoding")
         merged = apply_slice_match(wrapped, match)
-        merged = Extension(**merged)
+        element = Extension(**merged)
         items = getattr(self._resource, "extension", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "extension", items)
         return self
 
@@ -1923,18 +1931,18 @@ class UscoreRaceExtension:
         match = self.__class__._detailed_slice_match
         wrapped = wrap_slice_choice((value or {}), "valueCoding")
         merged = apply_slice_match(wrapped, match)
-        merged = Extension(**merged)
+        element = Extension(**merged)
         items = getattr(self._resource, "extension", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "extension", items)
         return self
 
     def set_extension_text(self, value: dict[str, Any] | None = None) -> "UscoreRaceExtension":
         match = self.__class__._text_slice_match
         merged = apply_slice_match((value or {}), match)
-        merged = Extension(**merged)
+        element = Extension(**merged)
         items = getattr(self._resource, "extension", None) or []
-        set_array_slice(items, match, merged)
+        set_array_slice(items, match, element)
         setattr(self._resource, "extension", items)
         return self
 
