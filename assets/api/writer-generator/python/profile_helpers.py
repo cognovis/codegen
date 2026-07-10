@@ -35,7 +35,7 @@ T = TypeVar("T")
 # ---------------------------------------------------------------------------
 
 
-def is_record(value: Any) -> TypeGuard[MutableMapping[str, Any]]:
+def is_record(value: object) -> TypeGuard[MutableMapping[str, Any]]:
     """True when ``value`` is a non-None mapping (dict-like, not a list)."""
     return isinstance(value, MutableMapping)
 
@@ -87,14 +87,14 @@ def apply_slice_match(input_obj: Mapping[str, Any], match: Mapping[str, Any]) ->
     return result
 
 
-def _get_key(obj: Any, key: str) -> Any:
+def _get_key(obj: object, key: str) -> Any:
     """Retrieve ``key`` from a dict-like or Pydantic-model-like object."""
     if is_record(obj):
         return obj.get(key)
     return getattr(obj, key, None)
 
 
-def _model_get(value: Any, key: str) -> Any:
+def _model_get(value: object, key: str) -> Any:
     """Get an attribute from a Pydantic model by Python name or field alias.
 
     Pydantic stores fields as snake_case attributes but slice match dicts use
@@ -112,7 +112,7 @@ def _model_get(value: Any, key: str) -> Any:
     return None
 
 
-def matches_value(value: Any, match: Any) -> bool:
+def matches_value(value: object, match: object) -> bool:
     """Recursively test whether ``value`` structurally contains everything in
     ``match``. Lists use "every match item has a corresponding value item"
     semantics; mappings are matched key-by-key; primitives use ``==``.
@@ -151,7 +151,7 @@ def matches_value(value: Any, match: Any) -> bool:
     return bool(value == match)
 
 
-def is_extension(value: Any, url: str | None = None) -> bool:
+def is_extension(value: object, url: str | None = None) -> bool:
     """True when ``value`` looks like a raw FHIR Extension (has a ``url``).
     When ``url`` is given, also checks the URL matches.
     Works with both plain dicts and Pydantic model instances."""
@@ -161,7 +161,7 @@ def is_extension(value: Any, url: str | None = None) -> bool:
     return url is None or bool(ext_url == url)
 
 
-def get_extension_value(ext: Any | None, field: str) -> Any:
+def get_extension_value(ext: object | None, field: str) -> Any:
     """Read a single typed value field from an Extension dict or Pydantic model,
     returning ``None`` when the extension itself is absent or the field is not set."""
     if ext is None:
@@ -194,7 +194,7 @@ def push_extension(target: Any, ext: Any) -> None:
 
 
 def extract_complex_extension(
-    extension: Any | None,
+    extension: object | None,
     config: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any] | None:
     """Read a complex (nested) FHIR extension into a plain key/value dict.
@@ -327,7 +327,7 @@ def ensure_profile(resource: Any, canonical_url: str) -> None:
         profiles.append(canonical_url)
 
 
-def set_array_slice(lst: MutableSequence[Any], match: Mapping[str, Any], value: Any) -> None:
+def set_array_slice(lst: MutableSequence[Any], match: Mapping[str, Any], value: object) -> None:
     """Find or insert a slice element. If an element matching ``match``
     already exists it is replaced in place; otherwise ``value`` is appended."""
     for i, item in enumerate(lst):
@@ -357,7 +357,7 @@ def get_array_slices(lst: Sequence[Any] | None, match: Mapping[str, Any]) -> lis
 def set_array_slices(
     lst: MutableSequence[Any],
     match: Mapping[str, Any],
-    values: Sequence[Any],
+    values: Sequence[object],
 ) -> None:
     """Remove all elements matching ``match``, then append ``values``."""
     indices = [i for i, item in enumerate(lst) if matches_value(item, match)]
@@ -374,13 +374,13 @@ def set_array_slices(
 # ---------------------------------------------------------------------------
 
 
-def _get_field(res: Any, field: str) -> Any:
+def _get_field(res: object, field: str) -> Any:
     if isinstance(res, Mapping):
         return res.get(field)
     return getattr(res, field, None)
 
 
-def validate_required(res: Any, profile_name: str, field: str) -> list[str]:
+def validate_required(res: object, profile_name: str, field: str) -> list[str]:
     """Checks that ``field`` is present (not ``None``)."""
     return (
         [f"{profile_name}: required field '{field}' is missing"]
@@ -389,7 +389,7 @@ def validate_required(res: Any, profile_name: str, field: str) -> list[str]:
     )
 
 
-def validate_must_support(res: Any, profile_name: str, field: str) -> list[str]:
+def validate_must_support(res: object, profile_name: str, field: str) -> list[str]:
     """Checks that a must-support field is populated (warning, not error)."""
     return (
         [f"{profile_name}: must-support field '{field}' is not populated"]
@@ -398,7 +398,7 @@ def validate_must_support(res: Any, profile_name: str, field: str) -> list[str]:
     )
 
 
-def validate_excluded(res: Any, profile_name: str, field: str) -> list[str]:
+def validate_excluded(res: object, profile_name: str, field: str) -> list[str]:
     """Checks that ``field`` is absent."""
     return (
         [f"{profile_name}: field '{field}' must not be present"]
@@ -407,7 +407,7 @@ def validate_excluded(res: Any, profile_name: str, field: str) -> list[str]:
     )
 
 
-def validate_fixed_value(res: Any, profile_name: str, field: str, expected: Any) -> list[str]:
+def validate_fixed_value(res: object, profile_name: str, field: str, expected: object) -> list[str]:
     """Checks that ``field`` structurally contains the expected fixed value."""
     actual = _get_field(res, field)
     return (
@@ -418,7 +418,7 @@ def validate_fixed_value(res: Any, profile_name: str, field: str, expected: Any)
 
 
 def validate_slice_cardinality(
-    res: Any,
+    res: object,
     profile_name: str,
     field: str,
     match: Mapping[str, Any],
@@ -444,14 +444,14 @@ def validate_slice_cardinality(
     return errors
 
 
-def validate_choice_required(res: Any, profile_name: str, choices: Sequence[str]) -> list[str]:
+def validate_choice_required(res: object, profile_name: str, choices: Sequence[str]) -> list[str]:
     """Checks that at least one of the listed choice-type variants is present."""
     if any(_get_field(res, c) is not None for c in choices):
         return []
     return [f"{profile_name}: at least one of {', '.join(choices)} is required"]
 
 
-def validate_enum(res: Any, profile_name: str, field: str, allowed: Sequence[str]) -> list[str]:
+def validate_enum(res: object, profile_name: str, field: str, allowed: Sequence[str]) -> list[str]:
     """Checks that the value of ``field`` has a code within ``allowed``.
     Handles plain strings, Coding, and CodeableConcept."""
     value = _get_field(res, field)
@@ -483,7 +483,7 @@ def validate_enum(res: Any, profile_name: str, field: str, allowed: Sequence[str
     return []
 
 
-def validate_reference(res: Any, profile_name: str, field: str, allowed: Sequence[str]) -> list[str]:
+def validate_reference(res: object, profile_name: str, field: str, allowed: Sequence[str]) -> list[str]:
     """Checks that a Reference field points to one of the ``allowed`` resource
     types. Extracts the type from the ``reference`` string (the part before
     the first ``/``)."""
