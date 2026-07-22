@@ -300,8 +300,8 @@ export const registerFromManager = async (
                             if (!sd.package_name) {
                                 return {
                                     ...sd,
-                                    package_name: pkgIndex.pkg.name,
-                                    package_version: pkgIndex.pkg.version,
+                                    package_name: r.pkg.name,
+                                    package_version: r.pkg.version,
                                 };
                             }
                             return sd;

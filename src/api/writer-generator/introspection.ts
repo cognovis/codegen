@@ -113,12 +113,17 @@ export class IntrospectionWriter extends FileSystemWriter<IntrospectionWriterOpt
             );
         }
 
+        // Dump only schemas that survived IR transformations (e.g. tree shaking),
+        // mirroring the typeSchemas output.
+        const indexUrls = new Set<string>(tsIndex.schemas.map((ts) => ts.identifier.url));
+
         if (this.opts.fhirSchemas && tsIndex.register) {
             const outputPath = this.opts.fhirSchemas;
             const allFs = tsIndex.register.allFs();
             // Deduplicate FHIR schemas by URL (same schema can appear from different packages)
             const seenUrls = new Set<string>();
             const fhirSchemas = allFs.filter((fs) => {
+                if (!indexUrls.has(fs.url)) return false;
                 if (seenUrls.has(fs.url)) return false;
                 seenUrls.add(fs.url);
                 return true;
@@ -142,6 +147,7 @@ export class IntrospectionWriter extends FileSystemWriter<IntrospectionWriterOpt
             // Deduplicate SDs by URL (same SD can appear multiple times from different packages)
             const seenUrls = new Set<string>();
             const structureDefinitions = allSd.filter((sd) => {
+                if (!indexUrls.has(sd.url)) return false;
                 if (seenUrls.has(sd.url)) return false;
                 seenUrls.add(sd.url);
                 return true;
