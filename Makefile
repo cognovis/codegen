@@ -8,6 +8,7 @@ VERSION = $(shell cat package.json | grep version | sed -E 's/ *"version": "//' 
 	test test-multi-package \
 	prepare-aidbox-runme test-all-example-generation test-other-example-generation \
 	test-on-the-fly-example test-on-the-fly-norge-r4 test-on-the-fly-kbv-r4 test-on-the-fly-ccda \
+	test-on-the-fly-kbv-condition-diagnosis \
 	test-typescript-r4-us-core-example test-typescript-custom-packages-example \
 	test-mustache-java-r4-example \
 	test-csharp-sdk generate-python-r4-us-core-sdk generate-python-r4-sdk \
@@ -62,7 +63,7 @@ test-all-example-generation: test-other-example-generation
 
 test-other-example-generation: test-on-the-fly-example
 
-test-on-the-fly-example: test-on-the-fly-norge-r4 test-on-the-fly-kbv-r4 test-on-the-fly-ccda
+test-on-the-fly-example: test-on-the-fly-norge-r4 test-on-the-fly-kbv-r4 test-on-the-fly-kbv-condition-diagnosis test-on-the-fly-ccda
 
 test-on-the-fly-norge-r4: typecheck
 	bun run examples/on-the-fly/norge-r4/generate.ts
@@ -73,6 +74,10 @@ test-on-the-fly-kbv-r4: typecheck
 	bun run examples/on-the-fly/kbv-r4/generate.ts
 	$(TYPECHECK) --project examples/on-the-fly/kbv-r4/tsconfig.json
 	bun test ./examples/on-the-fly/kbv-r4/
+
+test-on-the-fly-kbv-condition-diagnosis: typecheck
+	bun run examples/on-the-fly/kbv-condition-diagnosis/generate.ts
+	$(TYPECHECK) --project examples/on-the-fly/kbv-condition-diagnosis/tsconfig.json
 
 test-on-the-fly-ccda: typecheck
 	bun run examples/on-the-fly/ccda/generate.ts
