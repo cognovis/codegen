@@ -1,13 +1,20 @@
 import assert from "node:assert";
 import * as Path from "node:path";
 import type { RichFHIRSchema, RichStructureDefinition } from "@root/typeschema/types";
-import { type CanonicalUrl, extractNameFromCanonical, type TypeSchema } from "@root/typeschema/types";
+import {
+    type CanonicalUrl,
+    extractNameFromCanonical,
+    isSnapshotProfileTypeSchema,
+    type TypeSchema,
+} from "@root/typeschema/types";
 import type { TypeSchemaIndex } from "@root/typeschema/utils";
 import YAML from "yaml";
 import { FileSystemWriter, type FileSystemWriterOptions } from "./writer";
 
 export interface IntrospectionWriterOptions extends FileSystemWriterOptions {
-    typeSchemas?: string /** if .ndjson -- put in one file, else -- split into separated files*/;
+    /** if target is .ndjson -- put in one file, else -- split into separated files;
+     *  profileSnapshots additionally exports flattened profile snapshots next to profiles as <name>.snapshot.json */
+    typeSchemas?: string | { target: string; profileSnapshots?: boolean };
     typeTree?: string /** .json or .yaml file */;
     fhirSchemas?: string /** if .ndjson -- put in one file, else -- split into separated files*/;
     structureDefinitions?: string /** if .ndjson -- put in one file, else -- split into separated files*/;
@@ -21,7 +28,8 @@ const normalizeFileName = (str: string): string => {
 
 const typeSchemaToJson = (ts: TypeSchema, pretty: boolean): { filename: string; genContent: () => string } => {
     const pkgPath = normalizeFileName(ts.identifier.package);
-    const name = normalizeFileName(`${ts.identifier.name}(${extractNameFromCanonical(ts.identifier.url)})`);
+    const suffix = isSnapshotProfileTypeSchema(ts) ? ".snapshot" : "";
+    const name = normalizeFileName(`${ts.identifier.name}(${extractNameFromCanonical(ts.identifier.url)})`) + suffix;
     const baseName = Path.join(pkgPath, name);
 
     return {
@@ -65,10 +73,15 @@ export class IntrospectionWriter extends FileSystemWriter<IntrospectionWriterOpt
         }
 
         if (this.opts.typeSchemas) {
-            if (Path.extname(this.opts.typeSchemas) === ".ndjson") {
-                await this.writeNdjson(tsIndex.schemas, this.opts.typeSchemas, typeSchemaToJson);
+            const tsOpts =
+                typeof this.opts.typeSchemas === "string" ? { target: this.opts.typeSchemas } : this.opts.typeSchemas;
+            const schemas: TypeSchema[] = tsOpts.profileSnapshots
+                ? [...tsIndex.schemas, ...tsIndex.collectSnapshotProfiles()]
+                : tsIndex.schemas;
+            if (Path.extname(tsOpts.target) === ".ndjson") {
+                await this.writeNdjson(schemas, tsOpts.target, typeSchemaToJson);
             } else {
-                const items = tsIndex.schemas.map((ts) => typeSchemaToJson(ts, true));
+                const items = schemas.map((ts) => typeSchemaToJson(ts, true));
                 const seenFilenames = new Set<string>();
                 const dedupedItems = items.filter((item) => {
                     if (seenFilenames.has(item.filename)) return false;
@@ -76,7 +89,7 @@ export class IntrospectionWriter extends FileSystemWriter<IntrospectionWriterOpt
                     return true;
                 });
 
-                this.cd(this.opts.typeSchemas, () => {
+                this.cd(tsOpts.target, () => {
                     for (const { filename, genContent } of dedupedItems) {
                         const fileName = `${filename}.json`;
                         this.cd(Path.dirname(fileName), () => {
@@ -108,9 +121,7 @@ export class IntrospectionWriter extends FileSystemWriter<IntrospectionWriterOpt
                     }
                 });
             }
-            this.logger()?.info(
-                `IntrospectionWriter: ${tsIndex.schemas.length} TypeSchema written to ${this.opts.typeSchemas}`,
-            );
+            this.logger()?.info(`IntrospectionWriter: ${schemas.length} TypeSchema written to ${tsOpts.target}`);
         }
 
         // Dump only schemas that survived IR transformations (e.g. tree shaking),
