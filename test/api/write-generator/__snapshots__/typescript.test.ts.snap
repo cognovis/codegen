@@ -532,6 +532,7 @@ import {
     validateEnum,
     validateReference,
     validateChoiceRequired,
+    validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
 
@@ -713,6 +714,7 @@ export class observation_bodyweightProfile {
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateChoiceRequired(res, profileName, ["effectiveDateTime","effectivePeriod"]),
+                ...validateChoiceProhibited(res, profileName, ["effectiveTiming","effectiveInstant"]),
                 ...validateReference(res, profileName, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateReference(res, profileName, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]),
             ],
@@ -770,6 +772,7 @@ import {
     validateEnum,
     validateReference,
     validateChoiceRequired,
+    validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
 
@@ -1024,6 +1027,7 @@ export class observation_bpProfile {
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateChoiceRequired(res, profileName, ["effectiveDateTime","effectivePeriod"]),
+                ...validateChoiceProhibited(res, profileName, ["effectiveTiming","effectiveInstant"]),
                 ...validateReference(res, profileName, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateReference(res, profileName, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateSliceCardinality(res, profileName, "component", {"code":{"coding":[{"code":"8480-6","system":"http://loinc.org"}]}}, "SystolicBP", 1, 1),
@@ -1084,6 +1088,7 @@ import {
     validateEnum,
     validateReference,
     validateChoiceRequired,
+    validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
 
@@ -1351,6 +1356,7 @@ import {
     validateEnum,
     validateReference,
     validateChoiceRequired,
+    validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
 
@@ -1720,6 +1726,7 @@ export class USCoreBloodPressureProfile {
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateChoiceRequired(res, profileName, ["effectiveDateTime","effectivePeriod"]),
+                ...validateChoiceProhibited(res, profileName, ["effectiveTiming","effectiveInstant"]),
                 ...validateReference(res, profileName, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateReference(res, profileName, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateSliceCardinality(res, profileName, "component", {"code":{"coding":[{"system":"http://loinc.org","code":"8480-6"}]}}, "systolic", 1, 1),
@@ -1778,6 +1785,7 @@ import {
     validateEnum,
     validateReference,
     validateChoiceRequired,
+    validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
 
@@ -2074,19 +2082,11 @@ export class USCoreBodyWeightProfile {
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateChoiceRequired(res, profileName, ["effectiveDateTime","effectivePeriod"]),
+                ...validateChoiceProhibited(res, profileName, ["effectiveTiming","effectiveInstant"]),
                 ...validateReference(res, profileName, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateReference(res, profileName, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateReference(res, profileName, "performer", ["PractitionerRole","USCoreCareTeam","USCoreOrganizationProfile","Patient","USCorePractitionerProfile","USCoreRelatedPersonProfile"]),
-                ...validateExcluded(res, profileName, "valueCodeableConcept"),
-                ...validateExcluded(res, profileName, "valueString"),
-                ...validateExcluded(res, profileName, "valueBoolean"),
-                ...validateExcluded(res, profileName, "valueInteger"),
-                ...validateExcluded(res, profileName, "valueRange"),
-                ...validateExcluded(res, profileName, "valueRatio"),
-                ...validateExcluded(res, profileName, "valueSampledData"),
-                ...validateExcluded(res, profileName, "valueTime"),
-                ...validateExcluded(res, profileName, "valueDateTime"),
-                ...validateExcluded(res, profileName, "valuePeriod"),
+                ...validateChoiceProhibited(res, profileName, ["valueCodeableConcept","valueString","valueBoolean","valueInteger","valueRange","valueRatio","valueSampledData","valueTime","valueDateTime","valuePeriod"]),
             ],
             warnings: [
                 ...validateEnum(res, profileName, "category", ["social-history","vital-signs","imaging","laboratory","procedure","survey","exam","therapy","activity"]),
@@ -2146,6 +2146,7 @@ import {
     validateEnum,
     validateReference,
     validateChoiceRequired,
+    validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
 
