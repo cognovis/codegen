@@ -8,6 +8,7 @@ import {
     type BindingIdentifier,
     type BindingTypeSchema,
     type CanonicalUrl,
+    type ChoiceFieldDeclaration,
     type ChoiceFieldInstance,
     type ComplexTypeIdentifier,
     type ComplexTypeTypeSchema,
@@ -366,6 +367,89 @@ export type TypeSchemaIndex = {
 
 type EntityTree = Record<PkgName, Record<TypeIdentifier["kind"], Record<CanonicalUrl, object>>>;
 
+const choiceInstances = (fields: Record<string, Field>, declName: string): [string, ChoiceFieldInstance][] =>
+    Object.entries(fields).filter(
+        (e): e is [string, ChoiceFieldInstance] => isChoiceInstanceField(e[1]) && e[1].choiceOf === declName,
+    );
+
+/** Every variant name known for a choice group: the base declaration's choices,
+ *  the (merged) declaration's choices, and any declared instances. */
+const choiceUniverse = (
+    fields: Record<string, Field>,
+    baseFields: Record<string, Field>,
+    declName: string,
+    declField: ChoiceFieldDeclaration,
+): string[] => {
+    const baseDecl = baseFields[declName];
+    const baseChoices = isChoiceDeclarationField(baseDecl) ? baseDecl.choices : [];
+    return [
+        ...new Set([...baseChoices, ...declField.choices, ...choiceInstances(fields, declName).map(([name]) => name)]),
+    ];
+};
+
+/** Variant names a schema positively declares for a choice group: the restated
+ *  declaration's choices plus non-excluded instances. */
+const declaredChoiceVariants = (fields: Record<string, Field>, declName: string): string[] => {
+    const declaration = fields[declName];
+    const fromDeclaration = isChoiceDeclarationField(declaration) && !declaration.excluded ? declaration.choices : [];
+    const fromInstances = choiceInstances(fields, declName)
+        .filter(([, field]) => !field.excluded)
+        .map(([name]) => name);
+    return [...new Set([...fromDeclaration, ...fromInstances])];
+};
+
+/** Fold every profile's choice constraints over the base declaration's permitted set,
+ *  base-to-leaf, warning when a profile declares variants an ancestor already prohibited. */
+const resolvePermittedChoiceVariants = (
+    universe: string[],
+    baseDeclaration: Field | undefined,
+    constraintSchemas: TypeSchema[],
+    declName: string,
+    logger?: CodegenLog,
+): Set<string> => {
+    let permitted = new Set(isChoiceDeclarationField(baseDeclaration) ? baseDeclaration.choices : universe);
+    for (const schema of constraintSchemas.slice().reverse()) {
+        const fields = (schema as SpecializationTypeSchema).fields;
+        if (!fields) continue;
+        const reintroduced = declaredChoiceVariants(fields, declName).filter((name) => !permitted.has(name));
+        if (reintroduced.length > 0)
+            logger?.dryWarn(
+                "#nonMonotonicChoice",
+                `Profile '${schema.identifier.name}' declares choice variant(s) ${reintroduced.join(", ")} of '${declName}' that an ancestor prohibits; they stay prohibited`,
+            );
+        permitted = applyChoiceConstraints(permitted, fields, declName);
+    }
+    return permitted;
+};
+
+/** Apply one profile schema's choice constraints to the permitted variant set.
+ *  A restated declaration narrows to its choices; instances declared without the
+ *  declaration narrow to the instance names; an excluded instance removes its
+ *  variant. Everything intersects, so resolution stays monotonic base-to-leaf. */
+const applyChoiceConstraints = (
+    permitted: Set<string>,
+    fields: Record<string, Field>,
+    declName: string,
+): Set<string> => {
+    const result = new Set(permitted);
+    const instances = choiceInstances(fields, declName);
+    for (const [name, field] of instances) {
+        if (field.excluded) result.delete(name);
+    }
+
+    const declaration = fields[declName];
+    if (isChoiceDeclarationField(declaration)) {
+        if (declaration.excluded) return new Set();
+        const declared = new Set(declaration.choices);
+        return new Set([...result].filter((name) => declared.has(name)));
+    }
+
+    const declared = instances.filter(([, field]) => !field.excluded).map(([name]) => name);
+    if (declared.length === 0) return result;
+    const declaredSet = new Set(declared);
+    return new Set([...result].filter((name) => declaredSet.has(name)));
+};
+
 export const mkTypeSchemaIndex = (
     schemas: TypeSchema[],
     {
@@ -497,52 +581,41 @@ export const mkTypeSchemaIndex = (
         return findLastSpecialization(resolved).identifier;
     };
 
-    /** Narrow choice declarations by finding the most derived schema that constrains each choice group.
-     *  When a child profile declares only specific choice instances without re-declaring the declaration,
-     *  restrict the declaration's choices array to only the allowed instances. */
+    /** Resolve the permitted choice variants monotonically through the profile hierarchy.
+     *  Each profile's constraints (restated declaration, declared instances, exclusions)
+     *  intersect with the inherited permitted set, so a child profile can never
+     *  reintroduce a variant an ancestor prohibited. Declarations the chain constrains
+     *  only via instances are materialized from the base when something is prohibited. */
     const narrowMergedChoiceDeclarations = (
         mergedFields: Record<string, Field>,
         constraintSchemas: TypeSchema[],
         baseFields: Record<string, Field> = {},
     ): Record<string, Field> => {
         const result = { ...mergedFields };
-        for (const [declName, declField] of Object.entries(result)) {
-            if (!isChoiceDeclarationField(declField) || declField.excluded) continue;
+        const declNames = new Set([...Object.keys(result), ...Object.keys(baseFields)]);
 
-            for (const cSchema of constraintSchemas) {
-                const sFields = (cSchema as SpecializationTypeSchema).fields;
-                if (!sFields) continue;
-                if (sFields[declName] && isChoiceDeclarationField(sFields[declName])) continue;
-
-                const instancesInSchema = Object.entries(sFields)
-                    .filter(([_, f]) => isChoiceInstanceField(f) && (f as ChoiceFieldInstance).choiceOf === declName)
-                    .map(([name]) => name);
-                if (instancesInSchema.length === 0) continue;
-
-                const allowed = new Set(instancesInSchema);
-                result[declName] = { ...declField, choices: declField.choices.filter((c) => allowed.has(c)) };
-                break;
-            }
-        }
-
-        // Compute prohibited for all choice declarations. Variants declared on
-        // the base specialization count even when the profile does not restate
-        // them — omitting a variant from a narrowed choice prohibits it.
-        for (const [declName, declField] of Object.entries(result)) {
+        for (const declName of declNames) {
+            const declField = result[declName] ?? baseFields[declName];
             if (!isChoiceDeclarationField(declField)) continue;
-            const permitted = new Set(declField.excluded ? [] : declField.choices);
-            const baseDecl = baseFields[declName];
-            const baseChoices = isChoiceDeclarationField(baseDecl) ? baseDecl.choices : [];
-            const mergedInstances = Object.entries(result)
-                .filter(
-                    (e): e is [string, ChoiceFieldInstance] =>
-                        isChoiceInstanceField(e[1]) && e[1].choiceOf === declName,
-                )
-                .map(([name]) => name);
-            const prohibited = [...new Set([...baseChoices, ...mergedInstances])].filter(
-                (name) => !permitted.has(name),
+            const restated = result[declName] !== undefined;
+            if (!restated && choiceInstances(result, declName).length === 0) continue;
+
+            const universe = choiceUniverse(result, baseFields, declName, declField);
+            const permitted = resolvePermittedChoiceVariants(
+                universe,
+                baseFields[declName],
+                constraintSchemas,
+                declName,
+                logger,
             );
-            if (prohibited.length > 0) result[declName] = { ...declField, prohibited };
+
+            const prohibited = universe.filter((name) => !permitted.has(name));
+            if (!restated && prohibited.length === 0) continue;
+            result[declName] = {
+                ...declField,
+                choices: universe.filter((name) => permitted.has(name)),
+                ...(prohibited.length > 0 ? { prohibited } : {}),
+            };
         }
 
         return result;
