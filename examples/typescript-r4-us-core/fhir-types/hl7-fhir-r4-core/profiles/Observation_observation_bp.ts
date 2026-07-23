@@ -299,6 +299,7 @@ export class observation_bpProfile {
                 ...validateSliceFields(res, profileName, "component", {"code":{"coding":[{"code":"8480-6","system":"http://loinc.org"}]}}, "SystolicBP", ["valueQuantity"]),
                 ...validateSliceCardinality(res, profileName, "component", {"code":{"coding":[{"code":"8462-4","system":"http://loinc.org"}]}}, "DiastolicBP", 1, 1),
                 ...validateSliceFields(res, profileName, "component", {"code":{"coding":[{"code":"8462-4","system":"http://loinc.org"}]}}, "DiastolicBP", ["valueQuantity"]),
+                ...validateChoiceProhibited(res, profileName, ["valueCodeableConcept","valueString","valueBoolean","valueInteger","valueRange","valueRatio","valueSampledData","valueTime","valueDateTime","valuePeriod"]),
             ],
             warnings: [
                 ...validateEnum(res, profileName, "category", ["social-history","vital-signs","imaging","laboratory","procedure","survey","exam","therapy","activity"]),
