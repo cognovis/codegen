@@ -90,6 +90,50 @@ describe("IntrospectionWriter - TypeSchema output", async () => {
     });
 });
 
+describe("IntrospectionWriter - flat profile output", async () => {
+    const result = await new APIBuilder({ register: r4Manager, logger: mkErrorLogger() })
+        .typeSchema({
+            treeShake: {
+                "hl7.fhir.r4.core": {
+                    "http://hl7.org/fhir/StructureDefinition/bodyweight": {},
+                    "http://hl7.org/fhir/StructureDefinition/DomainResource": {
+                        ignoreFields: ["extension", "modifierExtension"],
+                    },
+                    "http://hl7.org/fhir/StructureDefinition/BackboneElement": {
+                        ignoreFields: ["modifierExtension"],
+                    },
+                    "http://hl7.org/fhir/StructureDefinition/Element": {
+                        ignoreFields: ["extension"],
+                    },
+                },
+            },
+        })
+        .introspection({ typeSchemas: { target: "introspection", profileSnapshots: true } })
+        .introspection({ typeSchemas: { target: "introspection.ndjson", profileSnapshots: true } })
+        .generate();
+
+    const files = result.filesGenerated.introspection!;
+
+    it("generates successfully", () => {
+        expect(result.success).toBeTrue();
+    });
+
+    it("Generated file list", () => {
+        expect(Object.keys(files)).toMatchSnapshot();
+    });
+    it("Check bodyweight flat profile next to the regular profile", () => {
+        const profile = files["generated/introspection/hl7.fhir.r4.core/observation-bodyweight(bodyweight).json"];
+        expect(profile).toBeDefined();
+        const snapshot =
+            files["generated/introspection/hl7.fhir.r4.core/observation-bodyweight(bodyweight).snapshot.json"];
+        expect(snapshot).toBeDefined();
+        expect(snapshot).toMatchSnapshot();
+    });
+    it("Check flat profiles are included in the ndjson file", () => {
+        expect(files["generated/introspection.ndjson"]).toContain('"kind":"profile-snapshot"');
+    });
+});
+
 describe("IntrospectionWriter - typeTree", async () => {
     const result = await new APIBuilder({ register: r4Manager, logger: mkErrorLogger() })
         .typeSchema({
