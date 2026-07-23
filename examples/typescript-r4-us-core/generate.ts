@@ -65,7 +65,7 @@ if (require.main === module) {
             },
         })
         .introspection({
-            typeSchemas: "type-schemas",
+            typeSchemas: { target: "type-schemas", profileSnapshots: true },
             typeTree: "type-tree.yaml",
         })
         .outputTo("./examples/typescript-r4-us-core/fhir-types")
