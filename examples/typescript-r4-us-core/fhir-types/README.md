@@ -2081,6 +2081,8 @@
 - `http://hl7.org/fhir/us/core/StructureDefinition/us-core-smokingstatus`
 - `http://hl7.org/fhir/us/core/StructureDefinition/us-core-smokingstatus#code_binding`
 - `http://hl7.org/fhir/us/core/StructureDefinition/us-core-smokingstatus#status_binding`
+- `http://hl7.org/fhir/us/core/StructureDefinition/us-core-smokingstatus#valueCodeableConcept_binding`
+- `http://hl7.org/fhir/us/core/StructureDefinition/us-core-smokingstatus#valueQuantity_binding`
 - `http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen`
 - `http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen#collection.bodySite_binding`
 - `http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen#condition_binding`
@@ -3022,6 +3024,7 @@
 - `urn:fhir:binding:specialty`
 - `urn:fhir:binding:status`
 - `urn:fhir:binding:strandType`
+- `urn:fhir:binding:v3-Confidentiality`
 - `urn:fhir:binding:v3Act`
 - `urn:fhir:binding:validation-process`
 - `urn:fhir:binding:validation-status`
@@ -5541,6 +5544,9 @@ and check `<pkg>/collisions/<name>/1.json, 2.json, ...` files.
   - Version 1 (auto): Claim (hl7.fhir.r4.core#4.0.1), Claim (hl7.fhir.r4.core#4.0.1), Claim (hl7.fhir.r4.core#4.0.1), Claim (hl7.fhir.r4.core#4.0.1), Claim (hl7.fhir.r4.core#4.0.1), Claim (hl7.fhir.r4.core#4.0.1), Claim (hl7.fhir.r4.core#4.0.1), Claim (hl7.fhir.r4.core#4.0.1), Claim (hl7.fhir.r4.core#4.0.1), Claim (hl7.fhir.r4.core#4.0.1), ClaimResponse (hl7.fhir.r4.core#4.0.1), ClaimResponse (hl7.fhir.r4.core#4.0.1), ClaimResponse (hl7.fhir.r4.core#4.0.1), ClaimResponse (hl7.fhir.r4.core#4.0.1), ClaimResponse (hl7.fhir.r4.core#4.0.1), ClaimResponse (hl7.fhir.r4.core#4.0.1), ClaimResponse (hl7.fhir.r4.core#4.0.1), ClaimResponse (hl7.fhir.r4.core#4.0.1), ClaimResponse (hl7.fhir.r4.core#4.0.1), ClaimResponse (hl7.fhir.r4.core#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.core#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.core#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.core#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.core#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.core#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.core#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.core#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.core#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.core#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.core#4.0.1)
   - Version 2: Claim (hl7.fhir.r5.core#5.0.0), Claim (hl7.fhir.r5.core#5.0.0), Claim (hl7.fhir.r5.core#5.0.0), ClaimResponse (hl7.fhir.r5.core#5.0.0), ClaimResponse (hl7.fhir.r5.core#5.0.0), ClaimResponse (hl7.fhir.r5.core#5.0.0), ExplanationOfBenefit (hl7.fhir.r5.core#5.0.0), ExplanationOfBenefit (hl7.fhir.r5.core#5.0.0), ExplanationOfBenefit (hl7.fhir.r5.core#5.0.0)
   - Version 3: Claim (hl7.fhir.r4.examples#4.0.1), ClaimResponse (hl7.fhir.r4.examples#4.0.1), ExplanationOfBenefit (hl7.fhir.r4.examples#4.0.1)
+- `urn:fhir:binding:v3-Confidentiality` (2 versions)
+  - Version 1 (auto): confidential (hl7.fhir.uv.extensions.r4#5.2.0), confidential (hl7.fhir.uv.extensions.r4#5.2.0), confidential (hl7.fhir.uv.extensions.r4#5.2.0)
+  - Version 2: confidential (hl7.fhir.uv.extensions#5.1.0-snapshot1), confidential (hl7.fhir.uv.extensions#5.1.0-snapshot1)
 - `urn:fhir:binding:v3Act` (2 versions)
   - Version 1 (auto): DocumentManifest (hl7.fhir.r4.core#4.0.1), DocumentManifest (hl7.fhir.r4.core#4.0.1), DocumentManifest (hl7.fhir.r4.core#4.0.1), DocumentManifest (hl7.fhir.r4.core#4.0.1), DocumentManifest (hl7.fhir.r4.core#4.0.1), DocumentManifest (hl7.fhir.r4.core#4.0.1), DocumentManifest (hl7.fhir.r4.core#4.0.1), DocumentManifest (hl7.fhir.r4.core#4.0.1), DocumentManifest (hl7.fhir.r4.core#4.0.1), DocumentManifest (hl7.fhir.r4.core#4.0.1)
   - Version 2: DocumentManifest (hl7.fhir.r4.examples#4.0.1)
@@ -8153,6 +8159,10 @@ Add to `.typeSchema({ resolveCollisions: { ... } })` to resolve remaining collis
         "urn:fhir:binding:Use": {
             package: "hl7.fhir.r4.core#4.0.1",
             canonical: "http://hl7.org/fhir/StructureDefinition/Claim",
+        },
+        "urn:fhir:binding:v3-Confidentiality": {
+            package: "hl7.fhir.uv.extensions.r4#5.2.0",
+            canonical: "http://hl7.org/fhir/StructureDefinition/confidential",
         },
         "urn:fhir:binding:v3Act": {
             package: "hl7.fhir.r4.core#4.0.1",
