@@ -503,6 +503,7 @@ export const mkTypeSchemaIndex = (
     const narrowMergedChoiceDeclarations = (
         mergedFields: Record<string, Field>,
         constraintSchemas: TypeSchema[],
+        baseFields: Record<string, Field> = {},
     ): Record<string, Field> => {
         const result = { ...mergedFields };
         for (const [declName, declField] of Object.entries(result)) {
@@ -524,17 +525,23 @@ export const mkTypeSchemaIndex = (
             }
         }
 
-        // Compute prohibited for all choice declarations
+        // Compute prohibited for all choice declarations. Variants declared on
+        // the base specialization count even when the profile does not restate
+        // them — omitting a variant from a narrowed choice prohibits it.
         for (const [declName, declField] of Object.entries(result)) {
             if (!isChoiceDeclarationField(declField)) continue;
             const permitted = new Set(declField.excluded ? [] : declField.choices);
-            const prohibited = Object.entries(result)
+            const baseDecl = baseFields[declName];
+            const baseChoices = isChoiceDeclarationField(baseDecl) ? baseDecl.choices : [];
+            const mergedInstances = Object.entries(result)
                 .filter(
                     (e): e is [string, ChoiceFieldInstance] =>
                         isChoiceInstanceField(e[1]) && e[1].choiceOf === declName,
                 )
-                .filter(([name]) => !permitted.has(name))
                 .map(([name]) => name);
+            const prohibited = [...new Set([...baseChoices, ...mergedInstances])].filter(
+                (name) => !permitted.has(name),
+            );
             if (prohibited.length > 0) result[declName] = { ...declField, prohibited };
         }
 
@@ -570,7 +577,11 @@ export const mkTypeSchemaIndex = (
             }
         }
 
-        const narrowedFields = narrowMergedChoiceDeclarations(mergedFields, constraintSchemas);
+        const narrowedFields = narrowMergedChoiceDeclarations(
+            mergedFields,
+            constraintSchemas,
+            (nonConstraintSchema as SpecializationTypeSchema).fields,
+        );
 
         const dependencies = Object.values(
             Object.fromEntries(
