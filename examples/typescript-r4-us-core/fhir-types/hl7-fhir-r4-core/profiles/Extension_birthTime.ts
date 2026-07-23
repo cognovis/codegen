@@ -14,6 +14,7 @@ import {
     validateEnum,
     validateReference,
     validateChoiceRequired,
+    validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
 
@@ -91,6 +92,7 @@ export class birthTimeProfile {
                 ...validateRequired(res, profileName, "url"),
                 ...validateFixedValue(res, profileName, "url", birthTimeProfile.canonicalUrl),
                 ...validateChoiceRequired(res, profileName, ["valueDateTime"]),
+                ...validateChoiceProhibited(res, profileName, ["valueBase64Binary","valueBoolean","valueCanonical","valueCode","valueDate","valueDecimal","valueId","valueInstant","valueInteger","valueMarkdown","valueOid","valuePositiveInt","valueString","valueTime","valueUnsignedInt","valueUri","valueUrl","valueUuid","valueAddress","valueAge","valueAnnotation","valueAttachment","valueCodeableConcept","valueCoding","valueContactPoint","valueCount","valueDistance","valueDuration","valueHumanName","valueIdentifier","valueMoney","valuePeriod","valueQuantity","valueRange","valueRatio","valueReference","valueSampledData","valueSignature","valueTiming","valueContactDetail","valueContributor","valueDataRequirement","valueExpression","valueParameterDefinition","valueRelatedArtifact","valueTriggerDefinition","valueUsageContext","valueDosage","valueMeta"]),
             ],
             warnings: [],
         }
