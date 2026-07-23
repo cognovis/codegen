@@ -33,6 +33,38 @@ const booleanType: TypeIdentifier = {
     url: "http://example.org/StructureDefinition/boolean" as CanonicalUrl,
 };
 
+const _dateTimeType: TypeIdentifier = {
+    name: "dateTime" as Name,
+    package: "test",
+    kind: "primitive-type",
+    version: "1.0.0",
+    url: "http://example.org/StructureDefinition/dateTime" as CanonicalUrl,
+};
+
+const _periodType: TypeIdentifier = {
+    name: "Period" as Name,
+    package: "test",
+    kind: "complex-type",
+    version: "1.0.0",
+    url: "http://example.org/StructureDefinition/Period" as CanonicalUrl,
+};
+
+const _rangeType: TypeIdentifier = {
+    name: "Range" as Name,
+    package: "test",
+    kind: "complex-type",
+    version: "1.0.0",
+    url: "http://example.org/StructureDefinition/Range" as CanonicalUrl,
+};
+
+const _ageType: TypeIdentifier = {
+    name: "Age" as Name,
+    package: "test",
+    kind: "complex-type",
+    version: "1.0.0",
+    url: "http://example.org/StructureDefinition/Age" as CanonicalUrl,
+};
+
 describe("TypeSchema Index", () => {
     describe("hierarchy", () => {
         it("should return a single element hierarchy for a constraint resource", () => {
@@ -779,6 +811,85 @@ describe("TypeSchema Index", () => {
             // recorded is inherited; value[x] is a choice declaration → skipped.
             expect(snap.inheritedRequiredFields).toEqual(["recorded"]);
             expect(snap.inheritedRequiredFields).not.toContain("value[x]");
+        });
+    });
+
+    describe("choice prohibited fields", () => {
+        it("keeps undeclared instances prohibited in a choice type", () => {
+            const baseSchema: SpecializationTypeSchema = {
+                identifier: {
+                    name: "Base" as Name,
+                    package: "test",
+                    kind: "resource",
+                    version: "1.0.0",
+                    url: "http://example.org/StructureDefinition/Base" as CanonicalUrl,
+                },
+                fields: {
+                    onset: {
+                        choices: ["onsetDateTime", "onsetPeriod", "onsetRange", "onsetAge"],
+                    },
+                },
+            };
+            const constraintSchema: ProfileTypeSchema = {
+                identifier: {
+                    name: "Constraint" as Name,
+                    package: "test",
+                    kind: "profile",
+                    version: "1.0.0",
+                    url: "http://example.org/StructureDefinition/Constraint" as CanonicalUrl,
+                },
+                base: baseSchema.identifier,
+                fields: {
+                    onset: {
+                        choices: ["onsetRange", "onsetAge"],
+                    },
+                },
+            };
+            const emptyTransitSchema: ProfileTypeSchema = {
+                identifier: {
+                    name: "EmptyTransitSchema" as Name,
+                    package: "test",
+                    kind: "profile",
+                    version: "1.0.0",
+                    url: "http://example.org/StructureDefinition/EmptyTransitSchema" as CanonicalUrl,
+                },
+                base: constraintSchema.identifier,
+            };
+            const leafSchema: ProfileTypeSchema = {
+                identifier: {
+                    name: "LeafConstraint" as Name,
+                    package: "test",
+                    kind: "profile",
+                    version: "1.0.0",
+                    url: "http://example.org/StructureDefinition/LeafConstraint" as CanonicalUrl,
+                },
+                base: emptyTransitSchema.identifier,
+                fields: {
+                    onset: {
+                        choices: ["onsetAge"],
+                    },
+                },
+            };
+
+            const tsIndex = mkTypeSchemaIndex([baseSchema, constraintSchema, emptyTransitSchema, leafSchema], {});
+
+            const flatConstraintSchema = tsIndex.flatProfile(constraintSchema);
+            expect(flatConstraintSchema.fields?.onset).toMatchObject({
+                choices: ["onsetRange", "onsetAge"],
+                prohibited: ["onsetDateTime", "onsetPeriod"],
+            });
+
+            const flatEmptyTransitSchema = tsIndex.flatProfile(emptyTransitSchema);
+            expect(flatEmptyTransitSchema.fields?.onset).toMatchObject({
+                choices: ["onsetRange", "onsetAge"],
+                prohibited: ["onsetDateTime", "onsetPeriod"],
+            });
+
+            const flatLeafSchema = tsIndex.flatProfile(leafSchema);
+            expect(flatLeafSchema.fields?.onset).toMatchObject({
+                choices: ["onsetAge"],
+                prohibited: ["onsetDateTime", "onsetPeriod", "onsetRange"],
+            });
         });
     });
 });
