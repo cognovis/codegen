@@ -14,6 +14,7 @@ import {
     validateEnum,
     validateReference,
     validateChoiceRequired,
+    validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
 
@@ -91,6 +92,7 @@ export class own_prefixProfile {
                 ...validateRequired(res, profileName, "url"),
                 ...validateFixedValue(res, profileName, "url", own_prefixProfile.canonicalUrl),
                 ...validateChoiceRequired(res, profileName, ["valueString"]),
+                ...validateChoiceProhibited(res, profileName, ["valueBase64Binary","valueBoolean","valueCanonical","valueCode","valueDate","valueDateTime","valueDecimal","valueId","valueInstant","valueInteger","valueMarkdown","valueOid","valuePositiveInt","valueTime","valueUnsignedInt","valueUri","valueUrl","valueUuid","valueAddress","valueAge","valueAnnotation","valueAttachment","valueCodeableConcept","valueCoding","valueContactPoint","valueCount","valueDistance","valueDuration","valueHumanName","valueIdentifier","valueMoney","valuePeriod","valueQuantity","valueRange","valueRatio","valueReference","valueSampledData","valueSignature","valueTiming","valueContactDetail","valueContributor","valueDataRequirement","valueExpression","valueParameterDefinition","valueRelatedArtifact","valueTriggerDefinition","valueUsageContext","valueDosage","valueMeta"]),
             ],
             warnings: [],
         }

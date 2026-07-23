@@ -438,6 +438,17 @@ export const validateChoiceRequired = (res: object, profileName: string, choices
 };
 
 /**
+ * Checks that none of the listed prohibited choice-type variants is present.
+ * E.g. a profile narrowing `value[x]` to `valueAddress` prohibits every other variant.
+ */
+export const validateChoiceProhibited = (res: object, profileName: string, prohibited: string[]): string[] => {
+    const rec = res as Record<string, unknown>;
+    return prohibited
+        .filter((c) => rec[c] !== undefined)
+        .map((c) => `${profileName}: field '${c}' must not be present`);
+};
+
+/**
  * Checks that the value of `field` has a code within `allowed`.
  * Handles plain strings, Coding objects, and CodeableConcept objects.
  * Skips validation when the field is absent.

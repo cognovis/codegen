@@ -40,6 +40,7 @@ import {
     validateEnum,
     validateReference,
     validateChoiceRequired,
+    validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
 
@@ -409,6 +410,7 @@ export class USCoreBloodPressureProfile {
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateChoiceRequired(res, profileName, ["effectiveDateTime","effectivePeriod"]),
+                ...validateChoiceProhibited(res, profileName, ["effectiveTiming","effectiveInstant"]),
                 ...validateReference(res, profileName, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateReference(res, profileName, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateSliceCardinality(res, profileName, "component", {"code":{"coding":[{"system":"http://loinc.org","code":"8480-6"}]}}, "systolic", 1, 1),

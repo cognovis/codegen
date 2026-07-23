@@ -297,6 +297,7 @@ const generateProfileHelpersImport = (
             "validateEnum",
             "validateReference",
             "validateChoiceRequired",
+            "validateChoiceProhibited",
             "validateMustSupport",
         );
     if (imports.length > 0) {

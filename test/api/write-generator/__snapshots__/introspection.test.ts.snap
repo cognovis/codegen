@@ -2637,6 +2637,657 @@ exports[`IntrospectionWriter - TypeSchema output Check all introspection data in
 "
 `;
 
+exports[`IntrospectionWriter - flat profile output Generated file list 1`] = `
+[
+  "generated/introspection/hl7.fhir.r4.core/Annotation(Annotation).json",
+  "generated/introspection/hl7.fhir.r4.core/BackboneElement(BackboneElement).json",
+  "generated/introspection/hl7.fhir.r4.core/boolean(boolean).json",
+  "generated/introspection/hl7.fhir.r4.core/canonical(canonical).json",
+  "generated/introspection/hl7.fhir.r4.core/code(code).json",
+  "generated/introspection/hl7.fhir.r4.core/CodeableConcept(CodeableConcept).json",
+  "generated/introspection/hl7.fhir.r4.core/Coding(Coding).json",
+  "generated/introspection/hl7.fhir.r4.core/dateTime(dateTime).json",
+  "generated/introspection/hl7.fhir.r4.core/decimal(decimal).json",
+  "generated/introspection/hl7.fhir.r4.core/DomainResource(DomainResource).json",
+  "generated/introspection/hl7.fhir.r4.core/Duration(Duration).json",
+  "generated/introspection/hl7.fhir.r4.core/Element(Element).json",
+  "generated/introspection/hl7.fhir.r4.core/id(id).json",
+  "generated/introspection/hl7.fhir.r4.core/Identifier(Identifier).json",
+  "generated/introspection/hl7.fhir.r4.core/instant(instant).json",
+  "generated/introspection/hl7.fhir.r4.core/integer(integer).json",
+  "generated/introspection/hl7.fhir.r4.core/markdown(markdown).json",
+  "generated/introspection/hl7.fhir.r4.core/Meta(Meta).json",
+  "generated/introspection/hl7.fhir.r4.core/Narrative(Narrative).json",
+  "generated/introspection/hl7.fhir.r4.core/observation-bodyweight(bodyweight).json",
+  "generated/introspection/hl7.fhir.r4.core/observation-bodyweight(bodyweight).snapshot.json",
+  "generated/introspection/hl7.fhir.r4.core/observation-vitalsigns(vitalsigns).json",
+  "generated/introspection/hl7.fhir.r4.core/observation-vitalsigns(vitalsigns).snapshot.json",
+  "generated/introspection/hl7.fhir.r4.core/Observation(Observation).json",
+  "generated/introspection/hl7.fhir.r4.core/Period(Period).json",
+  "generated/introspection/hl7.fhir.r4.core/positiveInt(positiveInt).json",
+  "generated/introspection/hl7.fhir.r4.core/Quantity(Quantity).json",
+  "generated/introspection/hl7.fhir.r4.core/Range(Range).json",
+  "generated/introspection/hl7.fhir.r4.core/Ratio(Ratio).json",
+  "generated/introspection/hl7.fhir.r4.core/Reference(Reference).json",
+  "generated/introspection/hl7.fhir.r4.core/Resource(Resource).json",
+  "generated/introspection/hl7.fhir.r4.core/SampledData(SampledData).json",
+  "generated/introspection/hl7.fhir.r4.core/string(string).json",
+  "generated/introspection/hl7.fhir.r4.core/time(time).json",
+  "generated/introspection/hl7.fhir.r4.core/Timing(Timing).json",
+  "generated/introspection/hl7.fhir.r4.core/unsignedInt(unsignedInt).json",
+  "generated/introspection/hl7.fhir.r4.core/uri(uri).json",
+  "generated/introspection/hl7.fhir.r4.core/xhtml(xhtml).json",
+  "generated/introspection/shared/BodySite(urnfhirbindingBodySite).json",
+  "generated/introspection/shared/collisions/CommunicationReason(urnfhirbindingCommunicationReason)/1.json",
+  "generated/introspection/shared/collisions/CommunicationReason(urnfhirbindingCommunicationReason)/2.json",
+  "generated/introspection/shared/collisions/ObservationCategory(urnfhirbindingObservationCategory)/1.json",
+  "generated/introspection/shared/collisions/ObservationCategory(urnfhirbindingObservationCategory)/2.json",
+  "generated/introspection/shared/collisions/ObservationCategory(urnfhirbindingObservationCategory)/3.json",
+  "generated/introspection/shared/collisions/ObservationRangeMeaning(urnfhirbindingObservationRangeMeaning)/1.json",
+  "generated/introspection/shared/collisions/ObservationRangeMeaning(urnfhirbindingObservationRangeMeaning)/2.json",
+  "generated/introspection/shared/collisions/ObservationRangeMeaning(urnfhirbindingObservationRangeMeaning)/3.json",
+  "generated/introspection/shared/collisions/ObservationRangeMeaning(urnfhirbindingObservationRangeMeaning)/4.json",
+  "generated/introspection/shared/collisions/ObservationRangeMeaning(urnfhirbindingObservationRangeMeaning)/5.json",
+  "generated/introspection/shared/collisions/ObservationRangeMeaning(urnfhirbindingObservationRangeMeaning)/6.json",
+  "generated/introspection/shared/collisions/PaymentType(urnfhirbindingPaymentType)/1.json",
+  "generated/introspection/shared/collisions/PaymentType(urnfhirbindingPaymentType)/2.json",
+  "generated/introspection/shared/collisions/PaymentType(urnfhirbindingPaymentType)/3.json",
+  "generated/introspection/shared/collisions/ProcessPriority(urnfhirbindingProcessPriority)/1.json",
+  "generated/introspection/shared/collisions/ProcessPriority(urnfhirbindingProcessPriority)/2.json",
+  "generated/introspection/shared/collisions/ProcessPriority(urnfhirbindingProcessPriority)/3.json",
+  "generated/introspection/shared/collisions/TargetDisease(urnfhirbindingTargetDisease)/1.json",
+  "generated/introspection/shared/collisions/TargetDisease(urnfhirbindingTargetDisease)/2.json",
+  "generated/introspection/shared/DayOfWeek(urnfhirbindingDayOfWeek).json",
+  "generated/introspection/shared/EventTiming(urnfhirbindingEventTiming).json",
+  "generated/introspection/shared/FHIRResourceTypeExt(urnfhirbindingFHIRResourceTypeExt).json",
+  "generated/introspection/shared/IdentifierType(urnfhirbindingIdentifierType).json",
+  "generated/introspection/shared/IdentifierUse(urnfhirbindingIdentifierUse).json",
+  "generated/introspection/shared/Language(urnfhirbindingLanguage).json",
+  "generated/introspection/shared/NarrativeStatus(urnfhirbindingNarrativeStatus).json",
+  "generated/introspection/shared/ObservationCategory(urnfhirbindingObservationCategory).json",
+  "generated/introspection/shared/ObservationCode(urnfhirbindingObservationCode).json",
+  "generated/introspection/shared/ObservationInterpretation(urnfhirbindingObservationInterpretation).json",
+  "generated/introspection/shared/ObservationMethod(urnfhirbindingObservationMethod).json",
+  "generated/introspection/shared/ObservationRangeMeaning(urnfhirbindingObservationRangeMeaning).json",
+  "generated/introspection/shared/ObservationRangeType(urnfhirbindingObservationRangeType).json",
+  "generated/introspection/shared/ObservationStatus(urnfhirbindingObservationStatus).json",
+  "generated/introspection/shared/ObservationValueAbsentReason(urnfhirbindingObservationValueAbsentReason).json",
+  "generated/introspection/shared/QuantityComparator(urnfhirbindingQuantityComparator).json",
+  "generated/introspection/shared/SecurityLabels(urnfhirbindingSecurityLabels).json",
+  "generated/introspection/shared/Status(urnfhirbindingStatus).json",
+  "generated/introspection/shared/Tags(urnfhirbindingTags).json",
+  "generated/introspection/shared/TimingAbbreviation(urnfhirbindingTimingAbbreviation).json",
+  "generated/introspection/shared/UnitsOfTime(urnfhirbindingUnitsOfTime).json",
+  "generated/introspection/shared/VitalSigns(urnfhirbindingVitalSigns).json",
+  "generated/introspection.ndjson",
+]
+`;
+
+exports[`IntrospectionWriter - flat profile output Check bodyweight flat profile next to the regular profile 1`] = `
+"{
+  "identifier": {
+    "kind": "profile-snapshot",
+    "package": "hl7.fhir.r4.core",
+    "version": "4.0.1",
+    "name": "observation-bodyweight",
+    "url": "http://hl7.org/fhir/StructureDefinition/bodyweight"
+  },
+  "base": {
+    "kind": "resource",
+    "package": "hl7.fhir.r4.core",
+    "version": "4.0.1",
+    "name": "Observation",
+    "url": "http://hl7.org/fhir/StructureDefinition/Observation"
+  },
+  "description": "FHIR Body Weight Profile",
+  "fields": {
+    "status": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "code",
+        "url": "http://hl7.org/fhir/StructureDefinition/code"
+      },
+      "required": true,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "Status",
+        "url": "urn:fhir:binding:Status"
+      },
+      "enum": {
+        "isOpen": false,
+        "values": [
+          "registered",
+          "preliminary",
+          "final",
+          "amended",
+          "corrected",
+          "cancelled",
+          "entered-in-error",
+          "unknown"
+        ]
+      },
+      "mustSupport": true
+    },
+    "category": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": true,
+      "excluded": false,
+      "array": true,
+      "min": 1,
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "value",
+            "path": "coding.code"
+          },
+          {
+            "type": "value",
+            "path": "coding.system"
+          }
+        ],
+        "rules": "open",
+        "ordered": false,
+        "slices": {
+          "VSCat": {
+            "min": 1,
+            "max": 1,
+            "match": {
+              "coding": [
+                {
+                  "code": "vital-signs",
+                  "system": "http://terminology.hl7.org/CodeSystem/observation-category"
+                }
+              ]
+            },
+            "required": [
+              "coding"
+            ],
+            "elements": [
+              "coding"
+            ],
+            "nameCandidates": {
+              "candidates": [
+                "VSCat",
+                "CategoryVSCat",
+                "CategoryVSCatSlice"
+              ],
+              "recommended": "VSCat"
+            }
+          }
+        }
+      },
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ObservationCategory",
+        "url": "urn:fhir:binding:ObservationCategory"
+      },
+      "enum": {
+        "isOpen": true,
+        "values": [
+          "social-history",
+          "vital-signs",
+          "imaging",
+          "laboratory",
+          "procedure",
+          "survey",
+          "exam",
+          "therapy",
+          "activity"
+        ]
+      },
+      "mustSupport": true
+    },
+    "code": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": true,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "VitalSigns",
+        "url": "urn:fhir:binding:VitalSigns"
+      },
+      "enum": {
+        "isOpen": true,
+        "values": [
+          "85353-1",
+          "9279-1",
+          "8867-4",
+          "2708-6",
+          "8310-5",
+          "8302-2",
+          "9843-4",
+          "29463-7",
+          "39156-5",
+          "85354-9",
+          "8480-6",
+          "8462-4",
+          "8478-0"
+        ]
+      },
+      "valueConstraint": {
+        "kind": "fixed",
+        "type": "CodeableConcept",
+        "value": {
+          "coding": [
+            {
+              "code": "29463-7",
+              "system": "http://loinc.org"
+            }
+          ]
+        }
+      },
+      "mustSupport": true
+    },
+    "subject": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": true,
+      "excluded": false,
+      "reference": [
+        {
+          "kind": "resource",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "Patient",
+          "url": "http://hl7.org/fhir/StructureDefinition/Patient"
+        }
+      ],
+      "array": false,
+      "mustSupport": true
+    },
+    "effective": {
+      "required": true,
+      "excluded": false,
+      "array": false,
+      "choices": [
+        "effectiveDateTime",
+        "effectivePeriod"
+      ],
+      "mustSupport": true,
+      "prohibited": [
+        "effectiveTiming",
+        "effectiveInstant"
+      ]
+    },
+    "effectiveDateTime": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "dateTime",
+        "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "effective",
+      "mustSupport": true
+    },
+    "effectivePeriod": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Period",
+        "url": "http://hl7.org/fhir/StructureDefinition/Period"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "effective",
+      "mustSupport": true
+    },
+    "dataAbsentReason": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ObservationValueAbsentReason",
+        "url": "urn:fhir:binding:ObservationValueAbsentReason"
+      },
+      "enum": {
+        "isOpen": true,
+        "values": [
+          "unknown",
+          "asked-unknown",
+          "temp-unknown",
+          "not-asked",
+          "asked-declined",
+          "masked",
+          "not-applicable",
+          "unsupported",
+          "as-text",
+          "error",
+          "not-a-number",
+          "negative-infinity",
+          "positive-infinity",
+          "not-performed",
+          "not-permitted"
+        ]
+      },
+      "mustSupport": true
+    },
+    "hasMember": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": false,
+      "excluded": false,
+      "reference": [
+        {
+          "kind": "resource",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "MolecularSequence",
+          "url": "http://hl7.org/fhir/StructureDefinition/MolecularSequence"
+        },
+        {
+          "kind": "resource",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "QuestionnaireResponse",
+          "url": "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"
+        },
+        {
+          "kind": "profile",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "observation-vitalsigns",
+          "url": "http://hl7.org/fhir/StructureDefinition/vitalsigns"
+        }
+      ],
+      "array": true
+    },
+    "derivedFrom": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": false,
+      "excluded": false,
+      "reference": [
+        {
+          "kind": "resource",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "DocumentReference",
+          "url": "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+        },
+        {
+          "kind": "resource",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "ImagingStudy",
+          "url": "http://hl7.org/fhir/StructureDefinition/ImagingStudy"
+        },
+        {
+          "kind": "resource",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "Media",
+          "url": "http://hl7.org/fhir/StructureDefinition/Media"
+        },
+        {
+          "kind": "resource",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "MolecularSequence",
+          "url": "http://hl7.org/fhir/StructureDefinition/MolecularSequence"
+        },
+        {
+          "kind": "resource",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "QuestionnaireResponse",
+          "url": "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"
+        },
+        {
+          "kind": "profile",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "observation-vitalsigns",
+          "url": "http://hl7.org/fhir/StructureDefinition/vitalsigns"
+        }
+      ],
+      "array": true
+    },
+    "component": {
+      "type": {
+        "kind": "nested",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "component",
+        "url": "http://hl7.org/fhir/StructureDefinition/Observation#component"
+      },
+      "array": true,
+      "required": false,
+      "excluded": false
+    },
+    "valueQuantity": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Quantity",
+        "url": "http://hl7.org/fhir/StructureDefinition/Quantity"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "value"
+    }
+  },
+  "dependencies": [
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "CodeableConcept",
+      "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Quantity",
+      "url": "http://hl7.org/fhir/StructureDefinition/Quantity"
+    },
+    {
+      "kind": "profile",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "observation-vitalsigns",
+      "url": "http://hl7.org/fhir/StructureDefinition/vitalsigns"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "VitalSigns",
+      "url": "urn:fhir:binding:VitalSigns"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "BackboneElement",
+      "url": "http://hl7.org/fhir/StructureDefinition/BackboneElement"
+    },
+    {
+      "kind": "primitive-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "boolean",
+      "url": "http://hl7.org/fhir/StructureDefinition/boolean"
+    },
+    {
+      "kind": "primitive-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "code",
+      "url": "http://hl7.org/fhir/StructureDefinition/code"
+    },
+    {
+      "kind": "primitive-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "dateTime",
+      "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+    },
+    {
+      "kind": "primitive-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "integer",
+      "url": "http://hl7.org/fhir/StructureDefinition/integer"
+    },
+    {
+      "kind": "resource",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Observation",
+      "url": "http://hl7.org/fhir/StructureDefinition/Observation"
+    },
+    {
+      "kind": "nested",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "component",
+      "url": "http://hl7.org/fhir/StructureDefinition/Observation#component"
+    },
+    {
+      "kind": "nested",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "referenceRange",
+      "url": "http://hl7.org/fhir/StructureDefinition/Observation#referenceRange"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Period",
+      "url": "http://hl7.org/fhir/StructureDefinition/Period"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Range",
+      "url": "http://hl7.org/fhir/StructureDefinition/Range"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Ratio",
+      "url": "http://hl7.org/fhir/StructureDefinition/Ratio"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Reference",
+      "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "SampledData",
+      "url": "http://hl7.org/fhir/StructureDefinition/SampledData"
+    },
+    {
+      "kind": "primitive-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "string",
+      "url": "http://hl7.org/fhir/StructureDefinition/string"
+    },
+    {
+      "kind": "primitive-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "time",
+      "url": "http://hl7.org/fhir/StructureDefinition/time"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ObservationCategory",
+      "url": "urn:fhir:binding:ObservationCategory"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ObservationInterpretation",
+      "url": "urn:fhir:binding:ObservationInterpretation"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ObservationValueAbsentReason",
+      "url": "urn:fhir:binding:ObservationValueAbsentReason"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "Status",
+      "url": "urn:fhir:binding:Status"
+    }
+  ]
+}"
+`;
+
 exports[`IntrospectionWriter - StructureDefinition output Generated file list 1`] = `
 [
   "generated/structure-definitions/hl7.fhir.r4.core/BackboneElement(BackboneElement).json",

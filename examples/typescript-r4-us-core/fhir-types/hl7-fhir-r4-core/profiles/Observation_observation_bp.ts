@@ -37,6 +37,7 @@ import {
     validateEnum,
     validateReference,
     validateChoiceRequired,
+    validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
 
@@ -291,6 +292,7 @@ export class observation_bpProfile {
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateChoiceRequired(res, profileName, ["effectiveDateTime","effectivePeriod"]),
+                ...validateChoiceProhibited(res, profileName, ["effectiveTiming","effectiveInstant"]),
                 ...validateReference(res, profileName, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateReference(res, profileName, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateSliceCardinality(res, profileName, "component", {"code":{"coding":[{"code":"8480-6","system":"http://loinc.org"}]}}, "SystolicBP", 1, 1),
