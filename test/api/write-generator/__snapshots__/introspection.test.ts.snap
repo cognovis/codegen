@@ -3120,6 +3120,26 @@ exports[`IntrospectionWriter - flat profile output Check bodyweight flat profile
       "excluded": false,
       "array": false,
       "choiceOf": "value"
+    },
+    "value": {
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choices": [
+        "valueQuantity"
+      ],
+      "prohibited": [
+        "valueCodeableConcept",
+        "valueString",
+        "valueBoolean",
+        "valueInteger",
+        "valueRange",
+        "valueRatio",
+        "valueSampledData",
+        "valueTime",
+        "valueDateTime",
+        "valuePeriod"
+      ]
     }
   },
   "dependencies": [

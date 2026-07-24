@@ -293,7 +293,7 @@ export const isSnapshotProfileTypeSchema = (s: TypeSchemaGuardInput): s is Snaps
 
 export interface FieldSlicing {
     discriminator?: FS.FHIRSchemaDiscriminator[];
-    rules?: string;
+    rules?: FS.SlicingRules;
     ordered?: boolean;
     slices?: Record<string, FieldSlice>;
 }

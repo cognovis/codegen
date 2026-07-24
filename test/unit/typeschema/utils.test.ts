@@ -8,6 +8,7 @@ import type {
     TypeIdentifier,
 } from "@typeschema/types";
 import { mkTypeSchemaIndex } from "@typeschema/utils";
+import { mkErrorLogger } from "@typeschema-test/utils";
 
 const stringType: TypeIdentifier = {
     name: "string" as Name,
@@ -57,7 +58,7 @@ const _rangeType: TypeIdentifier = {
     url: "http://example.org/StructureDefinition/Range" as CanonicalUrl,
 };
 
-const _ageType: TypeIdentifier = {
+const ageType: TypeIdentifier = {
     name: "Age" as Name,
     package: "test",
     kind: "complex-type",
@@ -815,64 +816,100 @@ describe("TypeSchema Index", () => {
     });
 
     describe("choice prohibited fields", () => {
+        const baseSchema: SpecializationTypeSchema = {
+            identifier: {
+                name: "Base" as Name,
+                package: "test",
+                kind: "resource",
+                version: "1.0.0",
+                url: "http://example.org/StructureDefinition/Base" as CanonicalUrl,
+            },
+            fields: {
+                onset: {
+                    choices: ["onsetDateTime", "onsetPeriod", "onsetRange", "onsetAge"],
+                },
+            },
+        };
+        const constraintSchema: ProfileTypeSchema = {
+            identifier: {
+                name: "Constraint" as Name,
+                package: "test",
+                kind: "profile",
+                version: "1.0.0",
+                url: "http://example.org/StructureDefinition/Constraint" as CanonicalUrl,
+            },
+            base: baseSchema.identifier,
+            fields: {
+                onset: {
+                    choices: ["onsetRange", "onsetAge"],
+                },
+            },
+        };
+        const emptyTransitSchema: ProfileTypeSchema = {
+            identifier: {
+                name: "EmptyTransitSchema" as Name,
+                package: "test",
+                kind: "profile",
+                version: "1.0.0",
+                url: "http://example.org/StructureDefinition/EmptyTransitSchema" as CanonicalUrl,
+            },
+            base: constraintSchema.identifier,
+        };
+        const leafSchema: ProfileTypeSchema = {
+            identifier: {
+                name: "LeafConstraint" as Name,
+                package: "test",
+                kind: "profile",
+                version: "1.0.0",
+                url: "http://example.org/StructureDefinition/LeafConstraint" as CanonicalUrl,
+            },
+            base: emptyTransitSchema.identifier,
+            fields: {
+                onset: {
+                    choices: ["onsetAge"],
+                },
+            },
+        };
+        const excludedFieldSchema: ProfileTypeSchema = {
+            identifier: {
+                name: "ExcludedFieldSchema" as Name,
+                package: "test",
+                kind: "profile",
+                version: "1.0.0",
+                url: "http://example.org/StructureDefinition/ExcludedFieldSchema" as CanonicalUrl,
+            },
+            base: baseSchema.identifier,
+            fields: {
+                onsetAge: {
+                    choiceOf: "onset",
+                    type: ageType,
+                    excluded: true,
+                },
+            },
+        };
+        const leaf2Schema: ProfileTypeSchema = {
+            identifier: {
+                name: "Leaf2Schema" as Name,
+                package: "test",
+                kind: "profile",
+                version: "1.0.0",
+                url: "http://example.org/StructureDefinition/Leaf2Schema" as CanonicalUrl,
+            },
+            base: excludedFieldSchema.identifier,
+            fields: {
+                onset: {
+                    choices: ["onsetRange", "onsetAge"],
+                },
+            },
+        };
+
+        const logger = mkErrorLogger();
+        const tsIndex = mkTypeSchemaIndex(
+            [baseSchema, constraintSchema, emptyTransitSchema, leafSchema, excludedFieldSchema, leaf2Schema],
+            { logger },
+        );
+
         it("keeps undeclared instances prohibited in a choice type", () => {
-            const baseSchema: SpecializationTypeSchema = {
-                identifier: {
-                    name: "Base" as Name,
-                    package: "test",
-                    kind: "resource",
-                    version: "1.0.0",
-                    url: "http://example.org/StructureDefinition/Base" as CanonicalUrl,
-                },
-                fields: {
-                    onset: {
-                        choices: ["onsetDateTime", "onsetPeriod", "onsetRange", "onsetAge"],
-                    },
-                },
-            };
-            const constraintSchema: ProfileTypeSchema = {
-                identifier: {
-                    name: "Constraint" as Name,
-                    package: "test",
-                    kind: "profile",
-                    version: "1.0.0",
-                    url: "http://example.org/StructureDefinition/Constraint" as CanonicalUrl,
-                },
-                base: baseSchema.identifier,
-                fields: {
-                    onset: {
-                        choices: ["onsetRange", "onsetAge"],
-                    },
-                },
-            };
-            const emptyTransitSchema: ProfileTypeSchema = {
-                identifier: {
-                    name: "EmptyTransitSchema" as Name,
-                    package: "test",
-                    kind: "profile",
-                    version: "1.0.0",
-                    url: "http://example.org/StructureDefinition/EmptyTransitSchema" as CanonicalUrl,
-                },
-                base: constraintSchema.identifier,
-            };
-            const leafSchema: ProfileTypeSchema = {
-                identifier: {
-                    name: "LeafConstraint" as Name,
-                    package: "test",
-                    kind: "profile",
-                    version: "1.0.0",
-                    url: "http://example.org/StructureDefinition/LeafConstraint" as CanonicalUrl,
-                },
-                base: emptyTransitSchema.identifier,
-                fields: {
-                    onset: {
-                        choices: ["onsetAge"],
-                    },
-                },
-            };
-
-            const tsIndex = mkTypeSchemaIndex([baseSchema, constraintSchema, emptyTransitSchema, leafSchema], {});
-
             const flatConstraintSchema = tsIndex.flatProfile(constraintSchema);
             expect(flatConstraintSchema.fields?.onset).toMatchObject({
                 choices: ["onsetRange", "onsetAge"],
@@ -890,6 +927,40 @@ describe("TypeSchema Index", () => {
                 choices: ["onsetAge"],
                 prohibited: ["onsetDateTime", "onsetPeriod", "onsetRange"],
             });
+
+            // Excluding an instance prohibits that variant; the declaration is
+            // materialized from the base even though the profile never restates it.
+            const flatExcludedFieldSchema = tsIndex.flatProfile(excludedFieldSchema);
+            expect(flatExcludedFieldSchema.fields?.onset).toMatchObject({
+                choices: ["onsetDateTime", "onsetPeriod", "onsetRange"],
+                prohibited: ["onsetAge"],
+            });
+        });
+
+        it("monotonic choice variants", () => {
+            // Monotonic: leaf2 restates onsetAge, but cannot reintroduce a
+            // variant its parent excluded.
+            const flatLeaf2Schema = tsIndex.flatProfile(leaf2Schema);
+            expect(flatLeaf2Schema.fields?.onset).toMatchObject({
+                choices: ["onsetRange"],
+                prohibited: ["onsetDateTime", "onsetPeriod", "onsetAge"],
+            });
+
+            // The reintroduction attempt is the only distinct warning — ordinary
+            // narrowing in the sibling profiles does not warn. (The buffer holds
+            // one entry from the eager snapshot build at index creation and one
+            // from the flatProfile call above; dryWarn dedupes only the output.)
+            const warnings = [
+                ...new Set(
+                    logger
+                        .buffer()
+                        .filter((e) => e.tag === "#nonMonotonicChoice")
+                        .map((e) => e.message),
+                ),
+            ];
+            expect(warnings).toHaveLength(1);
+            expect(warnings[0]).toContain("Leaf2Schema");
+            expect(warnings[0]).toContain("onsetAge");
         });
     });
 });

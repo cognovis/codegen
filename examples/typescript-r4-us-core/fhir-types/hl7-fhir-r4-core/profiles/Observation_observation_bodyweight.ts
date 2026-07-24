@@ -214,6 +214,7 @@ export class observation_bodyweightProfile {
                 ...validateChoiceProhibited(res, profileName, ["effectiveTiming","effectiveInstant"]),
                 ...validateReference(res, profileName, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateReference(res, profileName, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]),
+                ...validateChoiceProhibited(res, profileName, ["valueCodeableConcept","valueString","valueBoolean","valueInteger","valueRange","valueRatio","valueSampledData","valueTime","valueDateTime","valuePeriod"]),
             ],
             warnings: [
                 ...validateEnum(res, profileName, "category", ["social-history","vital-signs","imaging","laboratory","procedure","survey","exam","therapy","activity"]),
