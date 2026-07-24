@@ -394,6 +394,10 @@ export class APIBuilder {
             assert(this.options.typeSchema.treeShake === undefined, "treeShake option is already set");
             this.options.typeSchema.treeShake = cfg.treeShake;
         }
+        if (cfg.treeShakeDefaults) {
+            assert(this.options.typeSchema.treeShakeDefaults === undefined, "treeShakeDefaults option is already set");
+            this.options.typeSchema.treeShakeDefaults = cfg.treeShakeDefaults;
+        }
         if (cfg.promoteLogical) {
             assert(this.options.typeSchema.promoteLogical === undefined, "promoteLogical option is already set");
             this.options.typeSchema.promoteLogical = cfg.promoteLogical;
@@ -480,7 +484,12 @@ export class APIBuilder {
             };
             const tsIndexOpts = { register, irReport, logger: tsLogger };
             let tsIndex = mkTypeSchemaIndex(typeSchemas, tsIndexOpts);
-            if (this.options.typeSchema?.treeShake) tsIndex = treeShake(tsIndex, this.options.typeSchema.treeShake);
+            if (this.options.typeSchema?.treeShake)
+                tsIndex = treeShake(
+                    tsIndex,
+                    this.options.typeSchema.treeShake,
+                    this.options.typeSchema.treeShakeDefaults,
+                );
             if (this.options.typeSchema?.promoteLogical)
                 tsIndex = promoteLogical(tsIndex, this.options.typeSchema.promoteLogical);
 

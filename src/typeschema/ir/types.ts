@@ -17,15 +17,27 @@ export type ResolveCollisionsConf = Record<string, CollisionResolution>;
 
 export type IrConf = {
     treeShake?: TreeShakeConf;
+    /** Rule defaults applied to every treeShake root; a rule's own value wins. */
+    treeShakeDefaults?: TreeShakeDefaults;
     promoteLogical?: LogicalPromotionConf;
     resolveCollisions?: ResolveCollisionsConf;
 };
+
+export type TreeShakeDefaults = Pick<TreeShakeRule, "followReferences">;
 
 export type LogicalPromotionConf = Record<PkgName, CanonicalUrl[]>;
 
 export type TreeShakeConf = Record<string, Record<string, TreeShakeRule>>;
 
-export type TreeShakeRule = { ignoreFields?: string[]; selectFields?: string[]; ignoreExtensions?: string[] };
+export type TreeShakeRule = {
+    ignoreFields?: string[];
+    selectFields?: string[];
+    ignoreExtensions?: string[];
+    /** Also generate types for the schema's reference targets (base resources
+     *  and target profiles). Non-transitive: followed types keep their own
+     *  reference targets as plain string literals. Default: false. */
+    followReferences?: boolean;
+};
 
 export type IrReport = {
     treeShake?: TreeShakeReport;
