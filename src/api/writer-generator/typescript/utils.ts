@@ -80,9 +80,23 @@ export const resolveFieldTsType = (
         return tsEnumType(field.enum);
     }
     if (field.reference && field.reference.resource.length > 0) {
-        const resolved = field.reference.resource.map((ref) => (resolveRef ? resolveRef(ref) : ref));
-        const references = resolved
-            .map((ref) => (isFamilyType?.(ref) ? `string /* ${ref.name} */` : `"${ref.name}"`))
+        // Profile targets are replaced by their base resource type; keep the
+        // profile URLs as comments to make server-side validation errors traceable.
+        const profilesByResource: Record<string, string[]> = {};
+        if (resolveRef) {
+            for (const profile of field.reference.profiles ?? []) {
+                const base = resolveRef(profile).name;
+                (profilesByResource[base] ??= []).push(profile.url);
+            }
+        }
+        const references = field.reference.resource
+            .map((original) => {
+                const ref = resolveRef ? resolveRef(original) : original;
+                if (isFamilyType?.(ref)) return `string /* ${ref.name} */`;
+                const profiles = profilesByResource[ref.name];
+                if (profiles) return `"${ref.name}" /* ${profiles.join(", ")} */`;
+                return `"${ref.name}"`;
+            })
             .join(" | ");
         return `Reference<${references}>`;
     }
