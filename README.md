@@ -279,7 +279,7 @@ Tree shaking optimizes the generated output by including only the resources you 
 })
 ```
 
-This feature automatically resolves and includes all dependencies (referenced types, base resources, nested types, and extension definitions used by profiles) while excluding unused resources, significantly reducing the size of generated code and improving compilation times.
+This feature automatically resolves and includes all dependencies (field types, base resources, nested types, and extension definitions used by profiles) while excluding unused resources, significantly reducing the size of generated code and improving compilation times. Reference targets are not dependencies: a field typed `Reference<"Patient">` does not pull the `Patient` type into the output, since the reference is rendered as a string literal.
 
 ##### Field-Level Tree Shaking
 
@@ -310,6 +310,33 @@ Beyond resource-level filtering, tree shaking supports fine-grained field select
 **Polymorphic Field Handling:**
 
 FHIR choice types (like `multipleBirth[x]` which can be boolean or integer) are handled intelligently. Selecting/ignoring the base field affects all variants, while targeting specific variants only affects those types.
+
+##### Following Reference Targets
+
+To also generate types for a schema's reference targets — both the base resources (`reference.resource`) and the target profiles (`reference.profiles`) — enable `followReferences` on the rule (default: `false`):
+
+```typescript
+.typeSchema({
+    treeShake: {
+        "kbv.basis": {
+            "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Condition_Diagnosis": {
+                followReferences: true
+            }
+        }
+    }
+})
+```
+
+With this rule, `Condition.subject` targeting `KBV_PR_Base_Patient` pulls the Patient profile (and the `Patient`/`Group` resources) into the generated output, including their regular dependencies. Following is **non-transitive**: the pulled-in types keep their own reference targets as plain string literals, so a single flag cannot drag in the whole package. If a followed target is also listed as a tree-shake root, the root's rule wins.
+
+To enable it for every tree-shake root at once, use `treeShakeDefaults` (a rule's own `followReferences` still wins over the default):
+
+```typescript
+.typeSchema({
+    treeShake: { ... },
+    treeShakeDefaults: { followReferences: true }
+})
+```
 
 #### Logical Model Promotion
 

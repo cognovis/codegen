@@ -319,7 +319,7 @@ Detection uses `mkIsFamilyType(tsIndex)` which checks `schema.typeFamily.resourc
 ### Working with Tree Shaking
 - Configured via `builder.typeSchema({ treeShake: {...} })`
 - Specify which resources and fields to include
-- Automatically resolves dependencies
+- Automatically resolves dependencies; reference targets are not dependencies — opt in per rule with `followReferences: true` (non-transitive), or for all roots via `treeShakeDefaults: { followReferences: true }`
 - Reference format: `"hl7.fhir.r4.core#4.0.1"`
 
 ## Key File Locations
