@@ -39,7 +39,9 @@ export const collectValidateBody = (
                 helpers.add("validate_choice_prohibited");
                 const pyProhibited = field.prohibited.map((c) => pyFieldName(c, formatName));
                 errorLines.push(
-                    `errors.extend(validate_choice_prohibited(self._resource, profile_name, ${JSON.stringify(pyProhibited)}))`,
+                    "errors.extend(validate_choice_prohibited(self._resource, profile_name, [",
+                    ...pyProhibited.map((c) => `    ${JSON.stringify(c)},`),
+                    "]))",
                 );
             }
             continue;
