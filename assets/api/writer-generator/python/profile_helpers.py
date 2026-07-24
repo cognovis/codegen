@@ -444,11 +444,45 @@ def validate_slice_cardinality(
     return errors
 
 
+def validate_slice_fields(
+    res: object,
+    profile_name: str,
+    field: str,
+    match: Mapping[str, Any],
+    slice_name: str,
+    required_fields: Sequence[str],
+) -> list[str]:
+    """Validates required fields within matched slice elements. For each array
+    item matching the discriminator, checks that the listed fields are present."""
+    items = _get_field(res, field) or []
+    if not isinstance(items, Iterable):
+        items = []
+    errors: list[str] = []
+    for item in items:
+        if not matches_value(item, match):
+            continue
+        for rf in required_fields:
+            if _get_field(item, rf) is None:
+                errors.append(f"{profile_name}.{field}[{slice_name}].{rf} is required")
+    return errors
+
+
 def validate_choice_required(res: object, profile_name: str, choices: Sequence[str]) -> list[str]:
     """Checks that at least one of the listed choice-type variants is present."""
     if any(_get_field(res, c) is not None for c in choices):
         return []
     return [f"{profile_name}: at least one of {', '.join(choices)} is required"]
+
+
+def validate_choice_prohibited(res: object, profile_name: str, prohibited: Sequence[str]) -> list[str]:
+    """Checks that none of the listed prohibited choice-type variants is present.
+    E.g. a profile narrowing ``value[x]`` to ``value_quantity`` prohibits every
+    other variant."""
+    return [
+        f"{profile_name}: field '{c}' must not be present"
+        for c in prohibited
+        if _get_field(res, c) is not None
+    ]
 
 
 def validate_enum(res: object, profile_name: str, field: str, allowed: Sequence[str]) -> list[str]:

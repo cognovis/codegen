@@ -1,4 +1,6 @@
 import { pascalCase, snakeCase, uppercaseFirstLetterOfEach } from "@root/api/writer-generator/utils";
+import type { TypeSchemaIndex } from "@root/typeschema/utils";
+import type { ChoiceFieldInstance, RegularField } from "@typeschema/types.ts";
 import { isPrimitiveIdentifier, type TypeIdentifier } from "@typeschema/types.ts";
 
 export const PRIMITIVE_TYPE_MAP: Record<string, string> = {
@@ -120,4 +122,24 @@ export const pyTypeFromIdentifier = (id: TypeIdentifier): string => {
     const prim = PRIMITIVE_TYPE_MAP[id.name];
     if (prim !== undefined) return prim;
     return deriveResourceName(id);
+};
+
+/** `Literal[...]` type argument for a `Reference` field's targets, mirroring
+ *  the TypeScript writer's `Reference<"Patient" | ...>`. Returns undefined
+ *  when there are no targets or a target is a family type (e.g. `Resource`),
+ *  where the bare `Reference` (defaulting to `str`) is the right annotation. */
+export const pyReferenceTypeParam = (
+    field: RegularField | ChoiceFieldInstance,
+    tsIndex: TypeSchemaIndex,
+): string | undefined => {
+    if (!field.reference || field.reference.resource.length === 0) return undefined;
+    const isFamilyType = (ref: TypeIdentifier): boolean => {
+        const schema = tsIndex.resolveType(ref);
+        if (!schema || !("typeFamily" in schema)) return false;
+        return (schema.typeFamily?.resources?.length ?? 0) > 0;
+    };
+    const resolved = field.reference.resource.map((ref) => tsIndex.findLastSpecializationByIdentifier(ref));
+    if (resolved.some(isFamilyType)) return undefined;
+    const names = [...new Set(resolved.map((ref) => ref.name))];
+    return `Literal[${names.map((n) => JSON.stringify(n)).join(", ")}]`;
 };

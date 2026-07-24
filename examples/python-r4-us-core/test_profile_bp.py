@@ -116,6 +116,8 @@ def test_freshly_created_profile_is_not_yet_valid_missing_effective() -> None:
     errors = profile.validate()["errors"]
     assert errors == [
         "UscoreBloodPressureProfile: at least one of effectiveDateTime, effectivePeriod is required",
+        "UscoreBloodPressureProfile.component[systolic].valueQuantity is required",
+        "UscoreBloodPressureProfile.component[diastolic].valueQuantity is required",
     ]
 
 
