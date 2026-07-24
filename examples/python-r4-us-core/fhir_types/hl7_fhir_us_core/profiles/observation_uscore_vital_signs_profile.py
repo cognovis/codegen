@@ -334,7 +334,7 @@ class UscoreVitalSignsProfile:
         errors.extend(validate_choice_required(self._resource, profile_name, ["effectiveDateTime","effectivePeriod"]))
         errors.extend(validate_reference(self._resource, profile_name, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]))
         errors.extend(validate_reference(self._resource, profile_name, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]))
-        errors.extend(validate_reference(self._resource, profile_name, "performer", ["PractitionerRole","USCoreCareTeam","USCoreOrganizationProfile","Patient","USCorePractitionerProfile","USCoreRelatedPersonProfile"]))
+        errors.extend(validate_reference(self._resource, profile_name, "performer", ["PractitionerRole","CareTeam","Organization","Patient","Practitioner","RelatedPerson"]))
         warnings.extend(validate_enum(self._resource, profile_name, "category", ["social-history","vital-signs","imaging","laboratory","procedure","survey","exam","therapy","activity"]))
         warnings.extend(validate_enum(self._resource, profile_name, "code", ["2708-6","29463-7","3140-1","3150-0","3151-8","39156-5","59408-5","59575-1","59576-9","77606-2","8287-5","8289-1","8302-2","8306-3","8310-5","8462-4","8478-0","8480-6","8867-4","9279-1","9843-4"]))
         warnings.extend(validate_enum(self._resource, profile_name, "dataAbsentReason", ["unknown","asked-unknown","temp-unknown","not-asked","asked-declined","masked","not-applicable","unsupported","as-text","error","not-a-number","negative-infinity","positive-infinity","not-performed","not-permitted"]))

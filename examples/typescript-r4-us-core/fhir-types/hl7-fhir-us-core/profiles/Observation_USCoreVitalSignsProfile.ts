@@ -335,7 +335,7 @@ export class USCoreVitalSignsProfile {
                 ...validateChoiceProhibited(res, profileName, ["effectiveTiming","effectiveInstant"]),
                 ...validateReference(res, profileName, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]),
                 ...validateReference(res, profileName, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]),
-                ...validateReference(res, profileName, "performer", ["PractitionerRole","USCoreCareTeam","USCoreOrganizationProfile","Patient","USCorePractitionerProfile","USCoreRelatedPersonProfile"]),
+                ...validateReference(res, profileName, "performer", ["PractitionerRole","CareTeam","Organization","Patient","Practitioner","RelatedPerson"]),
             ],
             warnings: [
                 ...validateEnum(res, profileName, "category", ["social-history","vital-signs","imaging","laboratory","procedure","survey","exam","therapy","activity"]),

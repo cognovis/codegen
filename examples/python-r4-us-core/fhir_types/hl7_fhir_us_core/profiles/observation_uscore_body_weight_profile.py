@@ -225,7 +225,7 @@ class UscoreBodyWeightProfile:
         errors.extend(validate_choice_required(self._resource, profile_name, ["effectiveDateTime","effectivePeriod"]))
         errors.extend(validate_reference(self._resource, profile_name, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]))
         errors.extend(validate_reference(self._resource, profile_name, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]))
-        errors.extend(validate_reference(self._resource, profile_name, "performer", ["PractitionerRole","USCoreCareTeam","USCoreOrganizationProfile","Patient","USCorePractitionerProfile","USCoreRelatedPersonProfile"]))
+        errors.extend(validate_reference(self._resource, profile_name, "performer", ["PractitionerRole","CareTeam","Organization","Patient","Practitioner","RelatedPerson"]))
         errors.extend(validate_excluded(self._resource, profile_name, "valueCodeableConcept"))
         errors.extend(validate_excluded(self._resource, profile_name, "valueString"))
         errors.extend(validate_excluded(self._resource, profile_name, "valueBoolean"))
