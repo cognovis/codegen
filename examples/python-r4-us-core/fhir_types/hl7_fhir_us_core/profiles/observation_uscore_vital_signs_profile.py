@@ -48,7 +48,7 @@ class UscoreVitalSignsProfile:
         return cls(resource)
 
     @classmethod
-    def create_resource(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], code: CodeableConcept, subject: Reference) -> Observation:
+    def create_resource(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], code: CodeableConcept, subject: Reference[Literal["Patient"]]) -> Observation:
         category_with_defaults = ensure_slice_defaults(list(category or []), cls._vscat_slice_match)
 
         return build_resource(
@@ -62,7 +62,7 @@ class UscoreVitalSignsProfile:
         )
 
     @classmethod
-    def create(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], code: CodeableConcept, subject: Reference) -> "UscoreVitalSignsProfile":
+    def create(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], code: CodeableConcept, subject: Reference[Literal["Patient"]]) -> "UscoreVitalSignsProfile":
         return cls.apply(cls.create_resource(category=category, status=status, code=code, subject=subject))
 
     def to_resource(self) -> Observation:
@@ -82,10 +82,10 @@ class UscoreVitalSignsProfile:
         setattr(self._resource, "code", value)
         return self
 
-    def get_subject(self) -> Reference | None:  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
-        return cast('Reference | None', getattr(self._resource, "subject", None))
+    def get_subject(self) -> Reference[Literal["Patient"]] | None:  # http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient
+        return cast('Reference[Literal["Patient"]] | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "UscoreVitalSignsProfile":  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
+    def set_subject(self, value: Reference[Literal["Patient"]]) -> "UscoreVitalSignsProfile":  # http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient
         setattr(self._resource, "subject", value)
         return self
 

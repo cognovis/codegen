@@ -25,14 +25,14 @@ class PatientContact(BackboneElement):
     address: Address | None = Field(None, alias="address", serialization_alias="address")
     gender: Literal["male", "female", "other", "unknown"] | None = Field(None, alias="gender", serialization_alias="gender")
     name: HumanName | None = Field(None, alias="name", serialization_alias="name")
-    organization: Reference | None = Field(None, alias="organization", serialization_alias="organization")
+    organization: Reference[Literal["Organization"]] | None = Field(None, alias="organization", serialization_alias="organization")
     period: Period | None = Field(None, alias="period", serialization_alias="period")
     relationship: PyList[CodeableConcept] | None = Field(None, alias="relationship", serialization_alias="relationship")
     telecom: PyList[ContactPoint] | None = Field(None, alias="telecom", serialization_alias="telecom")
 
 class PatientLink(BackboneElement):
     model_config = ConfigDict(validate_by_name=True, serialize_by_alias=True, extra="forbid")
-    other: Reference = Field(alias="other", serialization_alias="other")
+    other: Reference[Literal["Patient", "RelatedPerson"]] = Field(alias="other", serialization_alias="other")
     type: Literal["replaced-by", "replaces", "refer", "seealso"] = Field(alias="type", serialization_alias="type")
 
 
@@ -57,10 +57,10 @@ class Patient(DomainResource):
     deceasedDateTimeExtension: Element | None = Field(None, alias="_deceasedDateTime", serialization_alias="_deceasedDateTime")
     gender: Literal["male", "female", "other", "unknown"] | None = Field(None, alias="gender", serialization_alias="gender")
     genderExtension: Element | None = Field(None, alias="_gender", serialization_alias="_gender")
-    generalPractitioner: PyList[Reference] | None = Field(None, alias="generalPractitioner", serialization_alias="generalPractitioner")
+    generalPractitioner: PyList[Reference[Literal["Organization", "Practitioner", "PractitionerRole"]]] | None = Field(None, alias="generalPractitioner", serialization_alias="generalPractitioner")
     identifier: PyList[Identifier] | None = Field(None, alias="identifier", serialization_alias="identifier")
     link: PyList[PatientLink] | None = Field(None, alias="link", serialization_alias="link")
-    managingOrganization: Reference | None = Field(None, alias="managingOrganization", serialization_alias="managingOrganization")
+    managingOrganization: Reference[Literal["Organization"]] | None = Field(None, alias="managingOrganization", serialization_alias="managingOrganization")
     maritalStatus: CodeableConcept[Literal["A", "D", "I", "L", "M", "P", "S", "T", "U", "W", "UNK"] | str] | None = Field(None, alias="maritalStatus", serialization_alias="maritalStatus")
     multipleBirthBoolean: bool | None = Field(None, alias="multipleBirthBoolean", serialization_alias="multipleBirthBoolean")
     multipleBirthBooleanExtension: Element | None = Field(None, alias="_multipleBirthBoolean", serialization_alias="_multipleBirthBoolean")

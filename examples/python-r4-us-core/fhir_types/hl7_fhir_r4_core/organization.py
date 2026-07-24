@@ -37,11 +37,11 @@ class Organization(DomainResource):
     alias: PyList[str] | None = Field(None, alias="alias", serialization_alias="alias")
     aliasExtension: PyList[Element | None] | None = Field(None, alias="_alias", serialization_alias="_alias")
     contact: PyList[OrganizationContact] | None = Field(None, alias="contact", serialization_alias="contact")
-    endpoint: PyList[Reference] | None = Field(None, alias="endpoint", serialization_alias="endpoint")
+    endpoint: PyList[Reference[Literal["Endpoint"]]] | None = Field(None, alias="endpoint", serialization_alias="endpoint")
     identifier: PyList[Identifier] | None = Field(None, alias="identifier", serialization_alias="identifier")
     name: str | None = Field(None, alias="name", serialization_alias="name")
     nameExtension: Element | None = Field(None, alias="_name", serialization_alias="_name")
-    partOf: Reference | None = Field(None, alias="partOf", serialization_alias="partOf")
+    partOf: Reference[Literal["Organization"]] | None = Field(None, alias="partOf", serialization_alias="partOf")
     telecom: PyList[ContactPoint] | None = Field(None, alias="telecom", serialization_alias="telecom")
     type: PyList[CodeableConcept] | None = Field(None, alias="type", serialization_alias="type")
 

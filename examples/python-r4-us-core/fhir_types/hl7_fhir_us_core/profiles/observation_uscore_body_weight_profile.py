@@ -48,7 +48,7 @@ class UscoreBodyWeightProfile:
         return cls(resource)
 
     @classmethod
-    def create_resource(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference) -> Observation:
+    def create_resource(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference[Literal["Patient"]]) -> Observation:
         category_with_defaults = ensure_slice_defaults(list(category or []), cls._vscat_slice_match)
 
         return build_resource(
@@ -62,7 +62,7 @@ class UscoreBodyWeightProfile:
         )
 
     @classmethod
-    def create(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference) -> "UscoreBodyWeightProfile":
+    def create(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference[Literal["Patient"]]) -> "UscoreBodyWeightProfile":
         return cls.apply(cls.create_resource(category=category, status=status, subject=subject))
 
     def to_resource(self) -> Observation:
@@ -75,10 +75,10 @@ class UscoreBodyWeightProfile:
         setattr(self._resource, "status", value)
         return self
 
-    def get_subject(self) -> Reference | None:  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
-        return cast('Reference | None', getattr(self._resource, "subject", None))
+    def get_subject(self) -> Reference[Literal["Patient"]] | None:  # http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient
+        return cast('Reference[Literal["Patient"]] | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "UscoreBodyWeightProfile":  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
+    def set_subject(self, value: Reference[Literal["Patient"]]) -> "UscoreBodyWeightProfile":  # http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient
         setattr(self._resource, "subject", value)
         return self
 

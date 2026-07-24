@@ -46,7 +46,7 @@ class ObservationBodyweightProfile:
         return cls(resource)
 
     @classmethod
-    def create_resource(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference) -> Observation:
+    def create_resource(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference[Literal["Patient"]]) -> Observation:
         category_with_defaults = ensure_slice_defaults(list(category or []), cls._vscat_slice_match)
 
         return build_resource(
@@ -60,7 +60,7 @@ class ObservationBodyweightProfile:
         )
 
     @classmethod
-    def create(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference) -> "ObservationBodyweightProfile":
+    def create(cls, *, category: list[CodeableConcept] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference[Literal["Patient"]]) -> "ObservationBodyweightProfile":
         return cls.apply(cls.create_resource(category=category, status=status, subject=subject))
 
     def to_resource(self) -> Observation:
@@ -73,10 +73,10 @@ class ObservationBodyweightProfile:
         setattr(self._resource, "status", value)
         return self
 
-    def get_subject(self) -> Reference | None:  # Reference[Patient]
-        return cast('Reference | None', getattr(self._resource, "subject", None))
+    def get_subject(self) -> Reference[Literal["Patient"]] | None:
+        return cast('Reference[Literal["Patient"]] | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "ObservationBodyweightProfile":  # Reference[Patient]
+    def set_subject(self, value: Reference[Literal["Patient"]]) -> "ObservationBodyweightProfile":
         setattr(self._resource, "subject", value)
         return self
 
