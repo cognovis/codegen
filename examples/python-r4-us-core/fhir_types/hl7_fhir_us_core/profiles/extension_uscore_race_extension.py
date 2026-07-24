@@ -218,10 +218,19 @@ class UscoreRaceExtension:
         warnings: list[str] = []
         errors.extend(validate_required(self._resource, profile_name, "extension"))
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "extension", {"url":"ombCategory"}, "ombCategory", 0, 6))
-        errors.extend(validate_slice_fields(self._resource, profile_name, "extension", {"url":"ombCategory"}, "ombCategory", ["value","valueCoding"]))
-        errors.extend(validate_slice_fields(self._resource, profile_name, "extension", {"url":"detailed"}, "detailed", ["value","valueCoding"]))
+        errors.extend(
+            validate_slice_fields(self._resource, profile_name, "extension", {"url":"ombCategory"}, "ombCategory", [
+                "value","valueCoding"
+        ]))
+        errors.extend(
+            validate_slice_fields(self._resource, profile_name, "extension", {"url":"detailed"}, "detailed", [
+                "value","valueCoding"
+        ]))
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "extension", {"url":"text"}, "text", 1, 1))
-        errors.extend(validate_slice_fields(self._resource, profile_name, "extension", {"url":"text"}, "text", ["value","valueString"]))
+        errors.extend(
+            validate_slice_fields(self._resource, profile_name, "extension", {"url":"text"}, "text", [
+                "value","valueString"
+        ]))
         errors.extend(validate_required(self._resource, profile_name, "url"))
         errors.extend(validate_fixed_value(self._resource, profile_name, "url", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"))
         return {"errors": errors, "warnings": warnings}

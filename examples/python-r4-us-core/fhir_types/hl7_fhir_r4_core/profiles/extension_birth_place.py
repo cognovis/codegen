@@ -67,57 +67,13 @@ class BirthPlaceExtension:
         warnings: list[str] = []
         errors.extend(validate_required(self._resource, profile_name, "url"))
         errors.extend(validate_fixed_value(self._resource, profile_name, "url", "http://hl7.org/fhir/StructureDefinition/patient-birthPlace"))
-        errors.extend(validate_choice_required(self._resource, profile_name, ["valueAddress"]))
-        errors.extend(validate_choice_prohibited(self._resource, profile_name, [
-            "valueBase64binary",
-            "valueBoolean",
-            "valueCanonical",
-            "valueCode",
-            "valueDate",
-            "valueDateTime",
-            "valueDecimal",
-            "valueId",
-            "valueInstant",
-            "valueInteger",
-            "valueMarkdown",
-            "valueOid",
-            "valuePositiveInt",
-            "valueString",
-            "valueTime",
-            "valueUnsignedInt",
-            "valueUri",
-            "valueUrl",
-            "valueUuid",
-            "valueAge",
-            "valueAnnotation",
-            "valueAttachment",
-            "valueCodeableConcept",
-            "valueCoding",
-            "valueContactPoint",
-            "valueCount",
-            "valueDistance",
-            "valueDuration",
-            "valueHumanName",
-            "valueIdentifier",
-            "valueMoney",
-            "valuePeriod",
-            "valueQuantity",
-            "valueRange",
-            "valueRatio",
-            "valueReference",
-            "valueSampledData",
-            "valueSignature",
-            "valueTiming",
-            "valueContactDetail",
-            "valueContributor",
-            "valueDataRequirement",
-            "valueExpression",
-            "valueParameterDefinition",
-            "valueRelatedArtifact",
-            "valueTriggerDefinition",
-            "valueUsageContext",
-            "valueDosage",
-            "valueMeta",
+        errors.extend(
+            validate_choice_required(self._resource, profile_name, [
+                "valueAddress"
+        ]))
+        errors.extend(
+            validate_choice_prohibited(self._resource, profile_name, [
+                "valueBase64binary","valueBoolean","valueCanonical","valueCode","valueDate","valueDateTime","valueDecimal","valueId","valueInstant","valueInteger","valueMarkdown","valueOid","valuePositiveInt","valueString","valueTime","valueUnsignedInt","valueUri","valueUrl","valueUuid","valueAge","valueAnnotation","valueAttachment","valueCodeableConcept","valueCoding","valueContactPoint","valueCount","valueDistance","valueDuration","valueHumanName","valueIdentifier","valueMoney","valuePeriod","valueQuantity","valueRange","valueRatio","valueReference","valueSampledData","valueSignature","valueTiming","valueContactDetail","valueContributor","valueDataRequirement","valueExpression","valueParameterDefinition","valueRelatedArtifact","valueTriggerDefinition","valueUsageContext","valueDosage","valueMeta"
         ]))
         return {"errors": errors, "warnings": warnings}
 
