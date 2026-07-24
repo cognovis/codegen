@@ -29,10 +29,10 @@ Out-of-scope: anything that ties the generated output to a specific FHIR server 
 
 ### Current long-lived branches
 
-- `main` — upstream mirror, currently at `373dc665` (atomic-ehr@0.0.12 + py-to-json-resource-type fix)
-- `cognovis/next` — upstream + `fix/profile-duplicate-meta-key` + this infra
+- `main` — upstream mirror, currently **stale at `f027e0fc`** (origin/main diverged from upstream; needs a force sync to `c2bb3589` = atomic-ehr incl. #200/#201/#202 + fhirschema 0.0.14)
+- `cognovis/next` — upstream + canonical-lookup fallback (`fix(register)`), COGNOVIS/bd infra; the choice-slicing, inherited-required, collision-order and CodeableConcept series all landed upstream
+- `cognovis/consumer-dist` — consumer snapshot with committed `dist/` for git-URL installs (polaris `@polaris/fhir-de` pins this)
 - `cognovis/mira-adapters` — consumer snapshot with committed `dist/` so `bun add github:cognovis/codegen#cognovis/mira-adapters` works
-- `fix/profile-duplicate-meta-key` — in-flight upstream PR [atomic-ehr/codegen#138](https://github.com/atomic-ehr/codegen/pull/138)
 
 ## Consumer integration
 
