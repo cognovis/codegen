@@ -2786,48 +2786,6 @@ exports[`IntrospectionWriter - flat profile output Check bodyweight flat profile
       "excluded": false,
       "array": true,
       "min": 1,
-      "slicing": {
-        "discriminator": [
-          {
-            "type": "value",
-            "path": "coding.code"
-          },
-          {
-            "type": "value",
-            "path": "coding.system"
-          }
-        ],
-        "rules": "open",
-        "ordered": false,
-        "slices": {
-          "VSCat": {
-            "min": 1,
-            "max": 1,
-            "match": {
-              "coding": [
-                {
-                  "code": "vital-signs",
-                  "system": "http://terminology.hl7.org/CodeSystem/observation-category"
-                }
-              ]
-            },
-            "required": [
-              "coding"
-            ],
-            "elements": [
-              "coding"
-            ],
-            "nameCandidates": {
-              "candidates": [
-                "VSCat",
-                "CategoryVSCat",
-                "CategoryVSCatSlice"
-              ],
-              "recommended": "VSCat"
-            }
-          }
-        }
-      },
       "binding": {
         "kind": "binding",
         "package": "shared",
@@ -3164,6 +3122,50 @@ exports[`IntrospectionWriter - flat profile output Check bodyweight flat profile
         "valueDateTime",
         "valuePeriod"
       ]
+    }
+  },
+  "slicing": {
+    "category": {
+      "discriminator": [
+        {
+          "type": "value",
+          "path": "coding.code"
+        },
+        {
+          "type": "value",
+          "path": "coding.system"
+        }
+      ],
+      "rules": "open",
+      "ordered": false,
+      "slices": {
+        "VSCat": {
+          "min": 1,
+          "max": 1,
+          "match": {
+            "coding": [
+              {
+                "code": "vital-signs",
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category"
+              }
+            ]
+          },
+          "required": [
+            "coding"
+          ],
+          "elements": [
+            "coding"
+          ],
+          "nameCandidates": {
+            "candidates": [
+              "VSCat",
+              "CategoryVSCat",
+              "CategoryVSCatSlice"
+            ],
+            "recommended": "VSCat"
+          }
+        }
+      }
     }
   },
   "dependencies": [
