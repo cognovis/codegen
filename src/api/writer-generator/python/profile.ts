@@ -403,13 +403,7 @@ const generateProfileModule = (w: Python, tsIndex: TypeSchemaIndex, flatProfile:
     const resolvedNames = resolveProfileMethodBaseNames(extensions, sliceDefs);
     const errorLines: string[] = [];
     const warningLines: string[] = [];
-    const validationHelpers = collectValidateBody(
-        flatProfile,
-        tsIndex.findLastSpecializationByIdentifier,
-        errorLines,
-        warningLines,
-        w.nameFormatFunction,
-    );
+    const validationHelpers = collectValidateBody(flatProfile, tsIndex, errorLines, warningLines, w.nameFormatFunction);
 
     const helperImports = collectHelperImports(isResourceBase, factoryInfo, sliceDefs, extensions, validationHelpers);
     const typeImports = collectTypeImports(

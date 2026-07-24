@@ -17,12 +17,13 @@ import { pyFieldName } from "./profile-naming";
  *  set of helper function names referenced. Pure: no writer side effects. */
 export const collectValidateBody = (
     flatProfile: SnapshotProfileTypeSchema,
-    resolveRef: TypeSchemaIndex["findLastSpecializationByIdentifier"],
+    tsIndex: TypeSchemaIndex,
     errorLines: string[],
     warningLines: string[],
     formatName: (s: string) => string,
 ): Set<string> => {
     const helpers = new Set<string>();
+    const resolveRef = tsIndex.findLastSpecializationByIdentifier;
     const fields = flatProfile.fields;
     for (const [name, field] of Object.entries(fields)) {
         const pyName = pyFieldName(name, formatName);
@@ -87,29 +88,49 @@ export const collectValidateBody = (
                 );
             }
             if (field.slicing?.slices) {
-                collectSliceCardinalityValidation(field, pyName, helpers, errorLines);
+                collectSliceValidation(field, pyName, helpers, errorLines, tsIndex, formatName);
             }
         }
     }
     return helpers;
 };
 
-const collectSliceCardinalityValidation = (
+const collectSliceValidation = (
     field: RegularField | ChoiceFieldInstance,
     name: string,
     helpers: Set<string>,
     errorLines: string[],
+    tsIndex: TypeSchemaIndex,
+    formatName: (s: string) => string,
 ): void => {
     if (!field.slicing?.slices) return;
     for (const [sliceName, slice] of Object.entries(field.slicing.slices)) {
-        if (slice.min === undefined && slice.max === undefined) continue;
         const match = slice.match ?? {};
         if (Object.keys(match).length === 0) continue;
-        const min = slice.min ?? 0;
-        const max = slice.max ?? 0;
-        helpers.add("validate_slice_cardinality");
-        errorLines.push(
-            `errors.extend(validate_slice_cardinality(self._resource, profile_name, ${JSON.stringify(name)}, ${JSON.stringify(match)}, ${JSON.stringify(sliceName)}, ${min}, ${max}))`,
-        );
+        if (slice.min !== undefined || slice.max !== undefined) {
+            const min = slice.min ?? 0;
+            const max = slice.max ?? 0;
+            helpers.add("validate_slice_cardinality");
+            errorLines.push(
+                `errors.extend(validate_slice_cardinality(self._resource, profile_name, ${JSON.stringify(name)}, ${JSON.stringify(match)}, ${JSON.stringify(sliceName)}, ${min}, ${max}))`,
+            );
+        }
+        // Collect required fields within the slice element
+        const sliceRequiredFields: string[] = [];
+        const matchKeys = new Set(Object.keys(match));
+        for (const rf of slice.required ?? []) {
+            if (!matchKeys.has(rf)) sliceRequiredFields.push(pyFieldName(rf, formatName));
+        }
+        // Constrained choice: the single variant is required
+        if (field.type && slice.elements) {
+            const cc = tsIndex.constrainedChoice(field.type.package, field.type, slice.elements);
+            if (cc) sliceRequiredFields.push(pyFieldName(cc.variant, formatName));
+        }
+        if (sliceRequiredFields.length > 0) {
+            helpers.add("validate_slice_fields");
+            errorLines.push(
+                `errors.extend(validate_slice_fields(self._resource, profile_name, ${JSON.stringify(name)}, ${JSON.stringify(match)}, ${JSON.stringify(sliceName)}, ${JSON.stringify(sliceRequiredFields)}))`,
+            );
+        }
     }
 };
