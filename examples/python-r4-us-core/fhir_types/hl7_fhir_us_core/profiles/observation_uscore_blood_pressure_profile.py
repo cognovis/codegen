@@ -85,10 +85,10 @@ class UscoreBloodPressureProfile:
         setattr(self._resource, "status", value)
         return self
 
-    def get_subject(self) -> Reference | None:
+    def get_subject(self) -> Reference | None:  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
         return cast('Reference | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "UscoreBloodPressureProfile":
+    def set_subject(self, value: Reference) -> "UscoreBloodPressureProfile":  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
         setattr(self._resource, "subject", value)
         return self
 

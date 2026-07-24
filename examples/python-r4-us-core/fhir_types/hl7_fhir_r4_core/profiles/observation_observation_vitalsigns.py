@@ -80,10 +80,10 @@ class ObservationVitalsignsProfile:
         setattr(self._resource, "code", value)
         return self
 
-    def get_subject(self) -> Reference | None:
+    def get_subject(self) -> Reference | None:  # Reference[Patient]
         return cast('Reference | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "ObservationVitalsignsProfile":
+    def set_subject(self, value: Reference) -> "ObservationVitalsignsProfile":  # Reference[Patient]
         setattr(self._resource, "subject", value)
         return self
 

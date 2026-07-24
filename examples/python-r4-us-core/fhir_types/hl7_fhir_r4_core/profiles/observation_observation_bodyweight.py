@@ -73,10 +73,10 @@ class ObservationBodyweightProfile:
         setattr(self._resource, "status", value)
         return self
 
-    def get_subject(self) -> Reference | None:
+    def get_subject(self) -> Reference | None:  # Reference[Patient]
         return cast('Reference | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "ObservationBodyweightProfile":
+    def set_subject(self, value: Reference) -> "ObservationBodyweightProfile":  # Reference[Patient]
         setattr(self._resource, "subject", value)
         return self
 

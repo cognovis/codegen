@@ -82,10 +82,10 @@ class UscoreVitalSignsProfile:
         setattr(self._resource, "code", value)
         return self
 
-    def get_subject(self) -> Reference | None:
+    def get_subject(self) -> Reference | None:  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
         return cast('Reference | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "UscoreVitalSignsProfile":
+    def set_subject(self, value: Reference) -> "UscoreVitalSignsProfile":  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
         setattr(self._resource, "subject", value)
         return self
 
