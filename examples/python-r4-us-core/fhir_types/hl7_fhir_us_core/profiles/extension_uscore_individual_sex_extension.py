@@ -9,7 +9,7 @@ from typing import cast
 from fhir_types.hl7_fhir_r4_core.base import Extension
 from fhir_types.hl7_fhir_r4_core.base import Coding
 from fhir_types.profile_helpers import (
-    build_resource, validate_choice_required, validate_fixed_value, validate_required
+    build_resource, validate_choice_prohibited, validate_choice_required, validate_fixed_value, validate_required
 )
 
 
@@ -68,5 +68,6 @@ class UscoreIndividualSexExtension:
         errors.extend(validate_required(self._resource, profile_name, "url"))
         errors.extend(validate_fixed_value(self._resource, profile_name, "url", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-individual-sex"))
         errors.extend(validate_choice_required(self._resource, profile_name, ["valueCoding"]))
+        errors.extend(validate_choice_prohibited(self._resource, profile_name, ["valueBase64binary","valueBoolean","valueCanonical","valueCode","valueDate","valueDateTime","valueDecimal","valueId","valueInstant","valueInteger","valueMarkdown","valueOid","valuePositiveInt","valueString","valueTime","valueUnsignedInt","valueUri","valueUrl","valueUuid","valueAddress","valueAge","valueAnnotation","valueAttachment","valueCodeableConcept","valueContactPoint","valueCount","valueDistance","valueDuration","valueHumanName","valueIdentifier","valueMoney","valuePeriod","valueQuantity","valueRange","valueRatio","valueReference","valueSampledData","valueSignature","valueTiming","valueContactDetail","valueContributor","valueDataRequirement","valueExpression","valueParameterDefinition","valueRelatedArtifact","valueTriggerDefinition","valueUsageContext","valueDosage","valueMeta"]))
         return {"errors": errors, "warnings": warnings}
 

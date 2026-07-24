@@ -13,7 +13,7 @@ from fhir_types.hl7_fhir_r4_core.patient import Patient
 from fhir_types.hl7_fhir_r4_core.resource import Resource
 from fhir_types.profile_helpers import (
     build_resource, ensure_profile, get_array_slice, get_array_slices, set_array_slice, set_array_slices, \
-    validate_slice_cardinality
+    validate_required, validate_slice_cardinality
 )
 
 
@@ -99,5 +99,6 @@ class ExampleTypedBundleProfile:
         errors: list[str] = []
         warnings: list[str] = []
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "entry", {"resource":{"resourceType":"Patient"}}, "PatientEntry", 1, 1))
+        errors.extend(validate_required(self._resource, profile_name, "type"))
         return {"errors": errors, "warnings": warnings}
 

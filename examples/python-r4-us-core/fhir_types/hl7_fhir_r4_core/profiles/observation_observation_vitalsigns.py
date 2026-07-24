@@ -10,8 +10,8 @@ from fhir_types.hl7_fhir_r4_core.observation import Observation
 from fhir_types.hl7_fhir_r4_core.base import CodeableConcept, Period, Reference
 from fhir_types.profile_helpers import (
     apply_slice_match, build_resource, ensure_profile, ensure_slice_defaults, get_array_slice, matches_value, \
-    set_array_slice, strip_match_keys, validate_choice_required, validate_enum, validate_must_support, validate_reference, \
-    validate_required, validate_slice_cardinality
+    set_array_slice, strip_match_keys, validate_choice_prohibited, validate_choice_required, validate_enum, \
+    validate_must_support, validate_reference, validate_required, validate_slice_cardinality
 )
 
 
@@ -143,6 +143,7 @@ class ObservationVitalsignsProfile:
         errors.extend(validate_required(self._resource, profile_name, "subject"))
         errors.extend(validate_reference(self._resource, profile_name, "subject", ["Patient"]))
         errors.extend(validate_choice_required(self._resource, profile_name, ["effectiveDateTime","effectivePeriod"]))
+        errors.extend(validate_choice_prohibited(self._resource, profile_name, ["effectiveTiming","effectiveInstant"]))
         errors.extend(validate_reference(self._resource, profile_name, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]))
         errors.extend(validate_reference(self._resource, profile_name, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]))
         warnings.extend(validate_enum(self._resource, profile_name, "category", ["social-history","vital-signs","imaging","laboratory","procedure","survey","exam","therapy","activity"]))
