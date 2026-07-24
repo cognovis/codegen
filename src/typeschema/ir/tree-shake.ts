@@ -6,6 +6,7 @@ import {
     concatIdentifiers,
     extractExtensionDeps,
     type Field,
+    type Identifier,
     isBindingSchema,
     isChoiceDeclarationField,
     isChoiceInstanceField,
@@ -23,7 +24,7 @@ import {
     type TypeSchema,
 } from "../types";
 import type { TypeSchemaIndex } from "../utils";
-import type { IrReport, TreeShakeConf, TreeShakeReport, TreeShakeRule } from "./types";
+import type { IrReport, TreeShakeConf, TreeShakeDefaults, TreeShakeReport, TreeShakeRule } from "./types";
 
 const ensureIrReport = (indexOrReport: TypeSchemaIndex | IrReport): IrReport => {
     if ("irReport" in indexOrReport && typeof indexOrReport.irReport === "function") {
@@ -244,15 +245,46 @@ export const treeShakeTypeSchema = (schema: TypeSchema, rule: TreeShakeRule, _lo
     return schema;
 };
 
-export const treeShake = (tsIndex: TypeSchemaIndex, treeShake: TreeShakeConf): TypeSchemaIndex => {
+/** Reference target identifiers (base resources and target profiles) of a schema's fields, including nested types. */
+const collectReferenceTargets = (schema: TypeSchema): Identifier[] => {
+    if (!isSpecializationTypeSchema(schema) && !isProfileTypeSchema(schema)) return [];
+    const fieldSets = [schema.fields, ...(schema.nested ?? []).map((n) => n.fields)];
+    return fieldSets.flatMap((fields) =>
+        Object.values(fields ?? {})
+            .filter(isNotChoiceDeclarationField)
+            .flatMap((f) => [...(f.reference?.resource ?? []), ...(f.reference?.profiles ?? [])])
+            .filter((id): id is Identifier => !isNestedIdentifier(id)),
+    );
+};
+
+export const treeShake = (
+    tsIndex: TypeSchemaIndex,
+    treeShake: TreeShakeConf,
+    defaults?: TreeShakeDefaults,
+): TypeSchemaIndex => {
     const focusedSchemas: TypeSchema[] = [];
+    const followedSchemas: TypeSchema[] = [];
     for (const [pkgId, requires] of Object.entries(treeShake)) {
         for (const [url, rule] of Object.entries(requires)) {
             const schema = tsIndex.resolveByUrl(pkgId, url as CanonicalUrl);
             if (!schema || isNestedTypeSchema(schema)) throw new Error(`Schema not found for ${pkgId} ${url}`);
             const shaked = treeShakeTypeSchema(schema, rule);
             focusedSchemas.push(shaked);
+            if (rule.followReferences ?? defaults?.followReferences) {
+                for (const refId of collectReferenceTargets(shaked)) {
+                    const refSchema = tsIndex.resolve(refId);
+                    if (!refSchema)
+                        throw new Error(`Reference target ${JSON.stringify(refId)} not found for ${pkgId} ${url}`);
+                    followedSchemas.push(refSchema);
+                }
+            }
         }
+    }
+    // Explicit roots win over followed reference targets: a root's rule must not
+    // be overridden by the untouched schema pulled in via followReferences.
+    const rootIds = new Set(focusedSchemas.map((s) => JSON.stringify(s.identifier)));
+    for (const schema of followedSchemas) {
+        if (!rootIds.has(JSON.stringify(schema.identifier))) focusedSchemas.push(schema);
     }
     const collectDeps = (schemas: TypeSchema[], acc: Record<string, TypeSchema>): TypeSchema[] => {
         if (schemas.length === 0) return Object.values(acc);
