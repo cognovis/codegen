@@ -486,10 +486,10 @@ class ObservationBodyweightProfile:
         setattr(self._resource, "status", value)
         return self
 
-    def get_subject(self) -> Reference | None:
+    def get_subject(self) -> Reference | None:  # Reference[Patient]
         return cast('Reference | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "ObservationBodyweightProfile":
+    def set_subject(self, value: Reference) -> "ObservationBodyweightProfile":  # Reference[Patient]
         setattr(self._resource, "subject", value)
         return self
 
@@ -695,10 +695,10 @@ class ObservationBpProfile:
         setattr(self._resource, "status", value)
         return self
 
-    def get_subject(self) -> Reference | None:
+    def get_subject(self) -> Reference | None:  # Reference[Patient]
         return cast('Reference | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "ObservationBpProfile":
+    def set_subject(self, value: Reference) -> "ObservationBpProfile":  # Reference[Patient]
         setattr(self._resource, "subject", value)
         return self
 
@@ -1232,10 +1232,10 @@ class UscoreBloodPressureProfile:
         setattr(self._resource, "status", value)
         return self
 
-    def get_subject(self) -> Reference | None:
+    def get_subject(self) -> Reference | None:  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
         return cast('Reference | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "UscoreBloodPressureProfile":
+    def set_subject(self, value: Reference) -> "UscoreBloodPressureProfile":  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
         setattr(self._resource, "subject", value)
         return self
 
@@ -1673,10 +1673,10 @@ class UscoreBodyWeightProfile:
         setattr(self._resource, "status", value)
         return self
 
-    def get_subject(self) -> Reference | None:
+    def get_subject(self) -> Reference | None:  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
         return cast('Reference | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "UscoreBodyWeightProfile":
+    def set_subject(self, value: Reference) -> "UscoreBodyWeightProfile":  # Reference[Patient(http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient)]
         setattr(self._resource, "subject", value)
         return self
 
