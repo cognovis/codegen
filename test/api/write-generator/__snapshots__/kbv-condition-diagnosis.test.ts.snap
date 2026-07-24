@@ -1,0 +1,3821 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) FHIR schema: Condition 1`] = `
+"{
+  "name": "Condition",
+  "type": "Condition",
+  "kind": "resource",
+  "class": "resource",
+  "url": "http://hl7.org/fhir/StructureDefinition/Condition",
+  "version": "4.0.1",
+  "description": "A clinical condition, problem, diagnosis, or other event, situation, issue, or clinical concept that has risen to a level of concern.",
+  "derivation": "specialization",
+  "base": "http://hl7.org/fhir/StructureDefinition/DomainResource",
+  "elements": {
+    "identifier": {
+      "short": "External Ids for this condition",
+      "type": "Identifier",
+      "isSummary": true,
+      "array": true,
+      "index": 0
+    },
+    "clinicalStatus": {
+      "short": "active | recurrence | relapse | inactive | remission | resolved",
+      "type": "CodeableConcept",
+      "isModifier": true,
+      "isModifierReason": "This element is labeled as a modifier because the status contains codes that mark the condition as no longer active.",
+      "isSummary": true,
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/condition-clinical|4.0.1",
+        "bindingName": "ConditionClinicalStatus"
+      },
+      "index": 1
+    },
+    "verificationStatus": {
+      "short": "unconfirmed | provisional | differential | confirmed | refuted | entered-in-error",
+      "type": "CodeableConcept",
+      "isModifier": true,
+      "isModifierReason": "This element is labeled as a modifier because the status contains the code refuted and entered-in-error that mark the Condition as not currently valid.",
+      "isSummary": true,
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/condition-ver-status|4.0.1",
+        "bindingName": "ConditionVerificationStatus"
+      },
+      "index": 2
+    },
+    "category": {
+      "short": "problem-list-item | encounter-diagnosis",
+      "type": "CodeableConcept",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/condition-category",
+        "bindingName": "ConditionCategory"
+      },
+      "array": true,
+      "index": 3
+    },
+    "severity": {
+      "short": "Subjective severity of condition",
+      "type": "CodeableConcept",
+      "binding": {
+        "strength": "preferred",
+        "valueSet": "http://hl7.org/fhir/ValueSet/condition-severity",
+        "bindingName": "ConditionSeverity"
+      },
+      "index": 4
+    },
+    "code": {
+      "short": "Identification of the condition, problem or diagnosis",
+      "type": "CodeableConcept",
+      "isSummary": true,
+      "binding": {
+        "strength": "example",
+        "valueSet": "http://hl7.org/fhir/ValueSet/condition-code",
+        "bindingName": "ConditionKind"
+      },
+      "index": 5
+    },
+    "bodySite": {
+      "short": "Anatomical location, if relevant",
+      "type": "CodeableConcept",
+      "isSummary": true,
+      "binding": {
+        "strength": "example",
+        "valueSet": "http://hl7.org/fhir/ValueSet/body-site",
+        "bindingName": "BodySite"
+      },
+      "array": true,
+      "index": 6
+    },
+    "subject": {
+      "short": "Who has the condition?",
+      "type": "Reference",
+      "isSummary": true,
+      "refers": [
+        "http://hl7.org/fhir/StructureDefinition/Group",
+        "http://hl7.org/fhir/StructureDefinition/Patient"
+      ],
+      "index": 7
+    },
+    "encounter": {
+      "short": "Encounter created as part of",
+      "type": "Reference",
+      "isSummary": true,
+      "refers": [
+        "http://hl7.org/fhir/StructureDefinition/Encounter"
+      ],
+      "index": 8
+    },
+    "onset": {
+      "short": "Estimated or actual date,  date-time, or age",
+      "isSummary": true,
+      "choices": [
+        "onsetDateTime",
+        "onsetAge",
+        "onsetPeriod",
+        "onsetRange",
+        "onsetString"
+      ],
+      "index": 10
+    },
+    "onsetDateTime": {
+      "short": "Estimated or actual date,  date-time, or age",
+      "type": "dateTime",
+      "isSummary": true,
+      "choiceOf": "onset",
+      "index": 11
+    },
+    "onsetAge": {
+      "short": "Estimated or actual date,  date-time, or age",
+      "type": "Age",
+      "isSummary": true,
+      "choiceOf": "onset",
+      "index": 12
+    },
+    "onsetPeriod": {
+      "short": "Estimated or actual date,  date-time, or age",
+      "type": "Period",
+      "isSummary": true,
+      "choiceOf": "onset",
+      "index": 13
+    },
+    "onsetRange": {
+      "short": "Estimated or actual date,  date-time, or age",
+      "type": "Range",
+      "isSummary": true,
+      "choiceOf": "onset",
+      "index": 14
+    },
+    "onsetString": {
+      "short": "Estimated or actual date,  date-time, or age",
+      "type": "string",
+      "isSummary": true,
+      "choiceOf": "onset",
+      "index": 15
+    },
+    "abatement": {
+      "short": "When in resolution/remission",
+      "choices": [
+        "abatementDateTime",
+        "abatementAge",
+        "abatementPeriod",
+        "abatementRange",
+        "abatementString"
+      ],
+      "index": 17
+    },
+    "abatementDateTime": {
+      "short": "When in resolution/remission",
+      "type": "dateTime",
+      "choiceOf": "abatement",
+      "index": 18
+    },
+    "abatementAge": {
+      "short": "When in resolution/remission",
+      "type": "Age",
+      "choiceOf": "abatement",
+      "index": 19
+    },
+    "abatementPeriod": {
+      "short": "When in resolution/remission",
+      "type": "Period",
+      "choiceOf": "abatement",
+      "index": 20
+    },
+    "abatementRange": {
+      "short": "When in resolution/remission",
+      "type": "Range",
+      "choiceOf": "abatement",
+      "index": 21
+    },
+    "abatementString": {
+      "short": "When in resolution/remission",
+      "type": "string",
+      "choiceOf": "abatement",
+      "index": 22
+    },
+    "recordedDate": {
+      "short": "Date record was first recorded",
+      "type": "dateTime",
+      "isSummary": true,
+      "index": 23
+    },
+    "recorder": {
+      "short": "Who recorded the condition",
+      "type": "Reference",
+      "isSummary": true,
+      "refers": [
+        "http://hl7.org/fhir/StructureDefinition/Patient",
+        "http://hl7.org/fhir/StructureDefinition/Practitioner",
+        "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
+        "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+      ],
+      "index": 24
+    },
+    "asserter": {
+      "short": "Person who asserts this condition",
+      "type": "Reference",
+      "isSummary": true,
+      "refers": [
+        "http://hl7.org/fhir/StructureDefinition/Patient",
+        "http://hl7.org/fhir/StructureDefinition/Practitioner",
+        "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
+        "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+      ],
+      "index": 25
+    },
+    "stage": {
+      "short": "Stage/grade, usually assessed formally",
+      "type": "BackboneElement",
+      "constraint": {
+        "con-1": {
+          "expression": "summary.exists() or assessment.exists()",
+          "human": "Stage SHALL have summary or assessment",
+          "severity": "error"
+        }
+      },
+      "array": true,
+      "index": 26,
+      "elements": {
+        "summary": {
+          "short": "Simple summary (disease specific)",
+          "type": "CodeableConcept",
+          "binding": {
+            "strength": "example",
+            "valueSet": "http://hl7.org/fhir/ValueSet/condition-stage",
+            "bindingName": "ConditionStage"
+          },
+          "index": 27
+        },
+        "assessment": {
+          "short": "Formal record of assessment",
+          "type": "Reference",
+          "refers": [
+            "http://hl7.org/fhir/StructureDefinition/ClinicalImpression",
+            "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+            "http://hl7.org/fhir/StructureDefinition/Observation"
+          ],
+          "array": true,
+          "index": 28
+        },
+        "type": {
+          "short": "Kind of staging",
+          "type": "CodeableConcept",
+          "binding": {
+            "strength": "example",
+            "valueSet": "http://hl7.org/fhir/ValueSet/condition-stage-type",
+            "bindingName": "ConditionStageType"
+          },
+          "index": 29
+        }
+      }
+    },
+    "evidence": {
+      "short": "Supporting evidence",
+      "type": "BackboneElement",
+      "constraint": {
+        "con-2": {
+          "expression": "code.exists() or detail.exists()",
+          "human": "evidence SHALL have code or details",
+          "severity": "error"
+        }
+      },
+      "array": true,
+      "index": 30,
+      "elements": {
+        "code": {
+          "short": "Manifestation/symptom",
+          "type": "CodeableConcept",
+          "isSummary": true,
+          "binding": {
+            "strength": "example",
+            "valueSet": "http://hl7.org/fhir/ValueSet/manifestation-or-symptom",
+            "bindingName": "ManifestationOrSymptom"
+          },
+          "array": true,
+          "index": 31
+        },
+        "detail": {
+          "short": "Supporting information found elsewhere",
+          "type": "Reference",
+          "isSummary": true,
+          "refers": [
+            "http://hl7.org/fhir/StructureDefinition/Resource"
+          ],
+          "array": true,
+          "index": 32
+        }
+      }
+    },
+    "note": {
+      "short": "Additional information about the Condition",
+      "type": "Annotation",
+      "array": true,
+      "index": 33
+    }
+  },
+  "required": [
+    "subject"
+  ],
+  "package_meta": {
+    "name": "hl7.fhir.r4.core",
+    "version": "4.0.1"
+  }
+}"
+`;
+
+exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: Condition 1`] = `
+"{
+  "identifier": {
+    "kind": "resource",
+    "package": "hl7.fhir.r4.core",
+    "version": "4.0.1",
+    "name": "Condition",
+    "url": "http://hl7.org/fhir/StructureDefinition/Condition"
+  },
+  "base": {
+    "kind": "resource",
+    "package": "hl7.fhir.r4.core",
+    "version": "4.0.1",
+    "name": "DomainResource",
+    "url": "http://hl7.org/fhir/StructureDefinition/DomainResource"
+  },
+  "fields": {
+    "identifier": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Identifier",
+        "url": "http://hl7.org/fhir/StructureDefinition/Identifier"
+      },
+      "required": false,
+      "excluded": false,
+      "array": true
+    },
+    "clinicalStatus": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionClinicalStatus",
+        "url": "urn:fhir:binding:ConditionClinicalStatus"
+      },
+      "enum": {
+        "isOpen": false,
+        "values": [
+          "active",
+          "recurrence",
+          "relapse",
+          "inactive",
+          "remission",
+          "resolved"
+        ]
+      }
+    },
+    "verificationStatus": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionVerificationStatus",
+        "url": "urn:fhir:binding:ConditionVerificationStatus"
+      },
+      "enum": {
+        "isOpen": false,
+        "values": [
+          "unconfirmed",
+          "provisional",
+          "differential",
+          "confirmed",
+          "refuted",
+          "entered-in-error"
+        ]
+      }
+    },
+    "category": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": true,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionCategory",
+        "url": "urn:fhir:binding:ConditionCategory"
+      },
+      "enum": {
+        "isOpen": true,
+        "values": [
+          "problem-list-item",
+          "encounter-diagnosis"
+        ]
+      }
+    },
+    "severity": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionSeverity",
+        "url": "urn:fhir:binding:ConditionSeverity"
+      },
+      "enum": {
+        "isOpen": true,
+        "values": [
+          "24484000",
+          "6736007",
+          "255604002"
+        ]
+      }
+    },
+    "code": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionKind",
+        "url": "urn:fhir:binding:ConditionKind"
+      }
+    },
+    "bodySite": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": true,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "BodySite",
+        "url": "urn:fhir:binding:BodySite"
+      }
+    },
+    "subject": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": true,
+      "excluded": false,
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Group",
+            "url": "http://hl7.org/fhir/StructureDefinition/Group"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Patient",
+            "url": "http://hl7.org/fhir/StructureDefinition/Patient"
+          }
+        ]
+      },
+      "array": false
+    },
+    "encounter": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": false,
+      "excluded": false,
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Encounter",
+            "url": "http://hl7.org/fhir/StructureDefinition/Encounter"
+          }
+        ]
+      },
+      "array": false
+    },
+    "onset": {
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choices": [
+        "onsetDateTime",
+        "onsetAge",
+        "onsetPeriod",
+        "onsetRange",
+        "onsetString"
+      ]
+    },
+    "onsetDateTime": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "dateTime",
+        "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "onsetAge": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Age",
+        "url": "http://hl7.org/fhir/StructureDefinition/Age"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "onsetPeriod": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Period",
+        "url": "http://hl7.org/fhir/StructureDefinition/Period"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "onsetRange": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Range",
+        "url": "http://hl7.org/fhir/StructureDefinition/Range"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "onsetString": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "string",
+        "url": "http://hl7.org/fhir/StructureDefinition/string"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "abatement": {
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choices": [
+        "abatementDateTime",
+        "abatementAge",
+        "abatementPeriod",
+        "abatementRange",
+        "abatementString"
+      ]
+    },
+    "abatementDateTime": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "dateTime",
+        "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "abatementAge": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Age",
+        "url": "http://hl7.org/fhir/StructureDefinition/Age"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "abatementPeriod": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Period",
+        "url": "http://hl7.org/fhir/StructureDefinition/Period"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "abatementRange": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Range",
+        "url": "http://hl7.org/fhir/StructureDefinition/Range"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "abatementString": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "string",
+        "url": "http://hl7.org/fhir/StructureDefinition/string"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "recordedDate": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "dateTime",
+        "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false
+    },
+    "recorder": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": false,
+      "excluded": false,
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Patient",
+            "url": "http://hl7.org/fhir/StructureDefinition/Patient"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Practitioner",
+            "url": "http://hl7.org/fhir/StructureDefinition/Practitioner"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "PractitionerRole",
+            "url": "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "RelatedPerson",
+            "url": "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+          }
+        ]
+      },
+      "array": false
+    },
+    "asserter": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": false,
+      "excluded": false,
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Patient",
+            "url": "http://hl7.org/fhir/StructureDefinition/Patient"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Practitioner",
+            "url": "http://hl7.org/fhir/StructureDefinition/Practitioner"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "PractitionerRole",
+            "url": "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "RelatedPerson",
+            "url": "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+          }
+        ]
+      },
+      "array": false
+    },
+    "stage": {
+      "type": {
+        "kind": "nested",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "stage",
+        "url": "http://hl7.org/fhir/StructureDefinition/Condition#stage"
+      },
+      "array": true,
+      "required": false,
+      "excluded": false
+    },
+    "evidence": {
+      "type": {
+        "kind": "nested",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "evidence",
+        "url": "http://hl7.org/fhir/StructureDefinition/Condition#evidence"
+      },
+      "array": true,
+      "required": false,
+      "excluded": false
+    },
+    "note": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Annotation",
+        "url": "http://hl7.org/fhir/StructureDefinition/Annotation"
+      },
+      "required": false,
+      "excluded": false,
+      "array": true
+    }
+  },
+  "nested": [
+    {
+      "identifier": {
+        "kind": "nested",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "evidence",
+        "url": "http://hl7.org/fhir/StructureDefinition/Condition#evidence"
+      },
+      "base": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "BackboneElement",
+        "url": "http://hl7.org/fhir/StructureDefinition/BackboneElement"
+      },
+      "fields": {
+        "code": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "CodeableConcept",
+            "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+          },
+          "required": false,
+          "excluded": false,
+          "array": true,
+          "binding": {
+            "kind": "binding",
+            "package": "shared",
+            "version": "1.0.0",
+            "name": "ManifestationOrSymptom",
+            "url": "urn:fhir:binding:ManifestationOrSymptom"
+          }
+        },
+        "detail": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Reference",
+            "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+          },
+          "required": false,
+          "excluded": false,
+          "reference": {
+            "resource": [
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "Resource",
+                "url": "http://hl7.org/fhir/StructureDefinition/Resource"
+              }
+            ]
+          },
+          "array": true
+        }
+      }
+    },
+    {
+      "identifier": {
+        "kind": "nested",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "stage",
+        "url": "http://hl7.org/fhir/StructureDefinition/Condition#stage"
+      },
+      "base": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "BackboneElement",
+        "url": "http://hl7.org/fhir/StructureDefinition/BackboneElement"
+      },
+      "fields": {
+        "summary": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "CodeableConcept",
+            "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+          },
+          "required": false,
+          "excluded": false,
+          "array": false,
+          "binding": {
+            "kind": "binding",
+            "package": "shared",
+            "version": "1.0.0",
+            "name": "ConditionStage",
+            "url": "urn:fhir:binding:ConditionStage"
+          }
+        },
+        "assessment": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Reference",
+            "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+          },
+          "required": false,
+          "excluded": false,
+          "reference": {
+            "resource": [
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "ClinicalImpression",
+                "url": "http://hl7.org/fhir/StructureDefinition/ClinicalImpression"
+              },
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "DiagnosticReport",
+                "url": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport"
+              },
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "Observation",
+                "url": "http://hl7.org/fhir/StructureDefinition/Observation"
+              }
+            ]
+          },
+          "array": true
+        },
+        "type": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "CodeableConcept",
+            "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+          },
+          "required": false,
+          "excluded": false,
+          "array": false,
+          "binding": {
+            "kind": "binding",
+            "package": "shared",
+            "version": "1.0.0",
+            "name": "ConditionStageType",
+            "url": "urn:fhir:binding:ConditionStageType"
+          }
+        }
+      }
+    }
+  ],
+  "description": "A clinical condition, problem, diagnosis, or other event, situation, issue, or clinical concept that has risen to a level of concern.",
+  "dependencies": [
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Age",
+      "url": "http://hl7.org/fhir/StructureDefinition/Age"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Annotation",
+      "url": "http://hl7.org/fhir/StructureDefinition/Annotation"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "BackboneElement",
+      "url": "http://hl7.org/fhir/StructureDefinition/BackboneElement"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "CodeableConcept",
+      "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+    },
+    {
+      "kind": "primitive-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "dateTime",
+      "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+    },
+    {
+      "kind": "resource",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "DomainResource",
+      "url": "http://hl7.org/fhir/StructureDefinition/DomainResource"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Identifier",
+      "url": "http://hl7.org/fhir/StructureDefinition/Identifier"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Period",
+      "url": "http://hl7.org/fhir/StructureDefinition/Period"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Range",
+      "url": "http://hl7.org/fhir/StructureDefinition/Range"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Reference",
+      "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+    },
+    {
+      "kind": "primitive-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "string",
+      "url": "http://hl7.org/fhir/StructureDefinition/string"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "BodySite",
+      "url": "urn:fhir:binding:BodySite"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionCategory",
+      "url": "urn:fhir:binding:ConditionCategory"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionClinicalStatus",
+      "url": "urn:fhir:binding:ConditionClinicalStatus"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionKind",
+      "url": "urn:fhir:binding:ConditionKind"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionSeverity",
+      "url": "urn:fhir:binding:ConditionSeverity"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionStage",
+      "url": "urn:fhir:binding:ConditionStage"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionStageType",
+      "url": "urn:fhir:binding:ConditionStageType"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionVerificationStatus",
+      "url": "urn:fhir:binding:ConditionVerificationStatus"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ManifestationOrSymptom",
+      "url": "urn:fhir:binding:ManifestationOrSymptom"
+    }
+  ]
+}"
+`;
+
+exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) FHIR schema: KBV_PR_Base_Condition_Diagnosis 1`] = `
+"{
+  "name": "KBV_PR_Base_Condition_Diagnosis",
+  "type": "Condition",
+  "kind": "resource",
+  "class": "profile",
+  "url": "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Condition_Diagnosis",
+  "version": "1.9.0",
+  "description": "Dieses Profil bildet relevante Informationen zu einer Diagnoserstellung ab.",
+  "derivation": "constraint",
+  "base": "http://hl7.org/fhir/StructureDefinition/Condition",
+  "extensions": {
+    "Feststellungsdatum": {
+      "max": 1,
+      "short": "Feststellungsdatum",
+      "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+      "index": 1
+    }
+  },
+  "elements": {
+    "extension": {
+      "index": 0,
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "value",
+            "path": "url"
+          }
+        ],
+        "rules": "open",
+        "slices": {
+          "Feststellungsdatum": {
+            "match": {},
+            "schema": {
+              "short": "Feststellungsdatum",
+              "min": 0,
+              "max": 1,
+              "type": "Extension",
+              "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+              "index": 1
+            },
+            "max": 1
+          }
+        }
+      }
+    },
+    "clinicalStatus": {
+      "index": 2
+    },
+    "verificationStatus": {
+      "index": 3
+    },
+    "severity": {
+      "short": "Schweregrad der Diagnose",
+      "index": 4,
+      "elements": {
+        "coding": {
+          "index": 5,
+          "slicing": {
+            "discriminator": [
+              {
+                "type": "value",
+                "path": "$this"
+              }
+            ],
+            "rules": "open",
+            "slices": {
+              "snomed": {
+                "match": {
+                  "system": "http://snomed.info/sct"
+                },
+                "schema": {
+                  "pattern": {
+                    "type": "Coding",
+                    "value": {
+                      "system": "http://snomed.info/sct"
+                    }
+                  },
+                  "binding": {
+                    "strength": "required",
+                    "valueSet": "http://hl7.org/fhir/ValueSet/condition-severity"
+                  },
+                  "type": "Coding",
+                  "index": 6,
+                  "elements": {
+                    "system": {
+                      "index": 7
+                    },
+                    "version": {
+                      "index": 8
+                    },
+                    "code": {
+                      "index": 9
+                    },
+                    "display": {
+                      "index": 10
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "display",
+                    "system",
+                    "version"
+                  ]
+                },
+                "max": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "code": {
+      "index": 11,
+      "elements": {
+        "coding": {
+          "index": 12,
+          "slicing": {
+            "discriminator": [
+              {
+                "type": "value",
+                "path": "system"
+              }
+            ],
+            "rules": "open",
+            "min": 1,
+            "slices": {
+              "ICD-10-GM": {
+                "match": {},
+                "schema": {
+                  "type": "Coding",
+                  "index": 13,
+                  "extensions": {
+                    "Seitenlokalisation": {
+                      "index": 14
+                    },
+                    "Diagnosesicherheit": {
+                      "index": 15
+                    }
+                  },
+                  "elements": {
+                    "extension": {
+                      "index": 14,
+                      "slicing": {
+                        "slices": {
+                          "Seitenlokalisation": {
+                            "match": {},
+                            "schema": {
+                              "index": 14
+                            }
+                          },
+                          "Diagnosesicherheit": {
+                            "match": {},
+                            "schema": {
+                              "index": 15
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "code": {
+                      "index": 16
+                    }
+                  }
+                },
+                "max": 1
+              },
+              "alphaId": {
+                "match": {},
+                "schema": {
+                  "type": "Coding",
+                  "index": 17
+                },
+                "max": 1
+              },
+              "snomed": {
+                "match": {
+                  "system": "http://snomed.info/sct"
+                },
+                "schema": {
+                  "binding": {
+                    "strength": "required",
+                    "valueSet": "https://fhir.kbv.de/ValueSet/KBV_VS_Base_Diagnosis_SNOMED_CT"
+                  },
+                  "index": 18,
+                  "elements": {
+                    "system": {
+                      "fixed": {
+                        "type": "uri",
+                        "value": "http://snomed.info/sct"
+                      },
+                      "index": 19
+                    },
+                    "version": {
+                      "index": 20
+                    },
+                    "code": {
+                      "index": 21
+                    },
+                    "display": {
+                      "index": 22
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "display",
+                    "system",
+                    "version"
+                  ]
+                },
+                "max": 1
+              },
+              "orphanet": {
+                "match": {
+                  "system": "http://www.orpha.net"
+                },
+                "schema": {
+                  "index": 23,
+                  "elements": {
+                    "system": {
+                      "fixed": {
+                        "type": "uri",
+                        "value": "http://www.orpha.net"
+                      },
+                      "index": 24
+                    },
+                    "code": {
+                      "index": 25
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "system"
+                  ]
+                },
+                "max": 1
+              }
+            }
+          }
+        },
+        "text": {
+          "short": "Diagnoseerläuterung",
+          "index": 26
+        }
+      },
+      "required": [
+        "coding"
+      ]
+    },
+    "bodySite": {
+      "short": "Körperstelle",
+      "constraint": {
+        "bodysite-1": {
+          "expression": "(coding.empty() and text.empty()) or extension('http://hl7.org/fhir/StructureDefinition/bodySite').empty()",
+          "human": "Es wird entweder ein Code für die 'Körperstelle' (Element *.bodySite) verwendet oder eine Referenz auf den Datentyp 'Körperstruktur' (Reference BodyStructure), aber nicht beides gleichzeitig.",
+          "severity": "error"
+        }
+      },
+      "index": 27,
+      "extensions": {
+        "bodyStructure": {
+          "max": 1,
+          "url": "http://hl7.org/fhir/StructureDefinition/bodySite",
+          "index": 28
+        }
+      },
+      "elements": {
+        "extension": {
+          "min": 0,
+          "max": 1,
+          "type": "Extension",
+          "url": "http://hl7.org/fhir/StructureDefinition/bodySite",
+          "index": 28,
+          "slicing": {
+            "slices": {
+              "bodyStructure": {
+                "match": {},
+                "schema": {
+                  "min": 0,
+                  "max": 1,
+                  "type": "Extension",
+                  "url": "http://hl7.org/fhir/StructureDefinition/bodySite",
+                  "index": 28,
+                  "elements": {
+                    "value": {
+                      "choices": [
+                        "valueReference"
+                      ],
+                      "index": 30
+                    },
+                    "valueReference": {
+                      "type": "Reference",
+                      "choiceOf": "value",
+                      "refers": [
+                        "http://hl7.org/fhir/StructureDefinition/BodyStructure",
+                        "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_BodyStructure|1.9.0"
+                      ],
+                      "index": 31
+                    }
+                  }
+                },
+                "max": 1
+              }
+            }
+          }
+        },
+        "coding": {
+          "index": 32,
+          "slicing": {
+            "discriminator": [
+              {
+                "type": "value",
+                "path": "$this"
+              }
+            ],
+            "rules": "open",
+            "slices": {
+              "snomed": {
+                "match": {
+                  "system": "http://snomed.info/sct"
+                },
+                "schema": {
+                  "pattern": {
+                    "type": "Coding",
+                    "value": {
+                      "system": "http://snomed.info/sct"
+                    }
+                  },
+                  "binding": {
+                    "strength": "example",
+                    "valueSet": "http://hl7.org/fhir/ValueSet/body-site"
+                  },
+                  "type": "Coding",
+                  "index": 33,
+                  "elements": {
+                    "system": {
+                      "index": 34
+                    },
+                    "version": {
+                      "index": 35
+                    },
+                    "code": {
+                      "index": 36
+                    },
+                    "display": {
+                      "index": 37
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "display",
+                    "system",
+                    "version"
+                  ]
+                },
+                "max": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "subject": {
+      "type": "Reference",
+      "refers": [
+        "http://hl7.org/fhir/StructureDefinition/Group",
+        "http://hl7.org/fhir/StructureDefinition/Patient",
+        "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Patient|1.9.0"
+      ],
+      "index": 38
+    },
+    "onset": {
+      "short": "Klinisch relevanter Zeitraum Anfang",
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "type",
+            "path": "$this"
+          }
+        ],
+        "rules": "open"
+      },
+      "index": 39
+    },
+    "onsetPeriod": {
+      "type": "Period",
+      "choiceOf": "onset",
+      "index": 40,
+      "elements": {
+        "start": {
+          "index": 41
+        },
+        "end": {
+          "index": 42
+        }
+      }
+    },
+    "onsetRange": {
+      "short": "Lebensphase-von",
+      "type": "Range",
+      "choiceOf": "onset",
+      "index": 43,
+      "extensions": {
+        "lebensphase-von": {
+          "max": 1,
+          "url": "http://fhir.de/StructureDefinition/lebensphase",
+          "index": 44
+        }
+      },
+      "elements": {
+        "extension": {
+          "min": 0,
+          "max": 1,
+          "type": "Extension",
+          "url": "http://fhir.de/StructureDefinition/lebensphase",
+          "index": 44,
+          "slicing": {
+            "slices": {
+              "lebensphase-von": {
+                "match": {},
+                "schema": {
+                  "min": 0,
+                  "max": 1,
+                  "type": "Extension",
+                  "url": "http://fhir.de/StructureDefinition/lebensphase",
+                  "index": 44
+                },
+                "max": 1
+              }
+            }
+          }
+        },
+        "low": {
+          "index": 45,
+          "elements": {
+            "value": {
+              "index": 46
+            },
+            "unit": {
+              "index": 47
+            }
+          }
+        },
+        "high": {
+          "index": 48,
+          "elements": {
+            "value": {
+              "index": 49
+            },
+            "unit": {
+              "index": 50
+            }
+          }
+        }
+      }
+    },
+    "onsetDateTime": {
+      "short": "Datum Anfang",
+      "type": "dateTime",
+      "choiceOf": "onset",
+      "index": 51
+    },
+    "onsetAge": {
+      "short": "Alter",
+      "type": "Age",
+      "choiceOf": "onset",
+      "index": 52,
+      "elements": {
+        "value": {
+          "index": 53
+        },
+        "unit": {
+          "index": 54
+        }
+      }
+    },
+    "abatement": {
+      "short": "Klinischer Zeitraum Ende",
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "type",
+            "path": "$this"
+          }
+        ],
+        "rules": "open"
+      },
+      "index": 55
+    },
+    "abatementPeriod": {
+      "type": "Period",
+      "choiceOf": "abatement",
+      "index": 56,
+      "elements": {
+        "start": {
+          "index": 57
+        },
+        "end": {
+          "index": 58
+        }
+      }
+    },
+    "abatementRange": {
+      "type": "Range",
+      "choiceOf": "abatement",
+      "index": 59,
+      "extensions": {
+        "lebensphase-bis": {
+          "max": 1,
+          "url": "http://fhir.de/StructureDefinition/lebensphase",
+          "index": 60
+        }
+      },
+      "elements": {
+        "extension": {
+          "min": 0,
+          "max": 1,
+          "type": "Extension",
+          "url": "http://fhir.de/StructureDefinition/lebensphase",
+          "index": 60,
+          "slicing": {
+            "slices": {
+              "lebensphase-bis": {
+                "match": {},
+                "schema": {
+                  "min": 0,
+                  "max": 1,
+                  "type": "Extension",
+                  "url": "http://fhir.de/StructureDefinition/lebensphase",
+                  "index": 60
+                },
+                "max": 1
+              }
+            }
+          }
+        },
+        "low": {
+          "index": 61,
+          "elements": {
+            "value": {
+              "index": 62
+            },
+            "unit": {
+              "index": 63
+            }
+          }
+        },
+        "high": {
+          "index": 64,
+          "elements": {
+            "value": {
+              "index": 65
+            },
+            "unit": {
+              "index": 66
+            }
+          }
+        }
+      }
+    },
+    "abatementDateTime": {
+      "short": "Datum bis",
+      "type": "dateTime",
+      "choiceOf": "abatement",
+      "index": 67
+    },
+    "abatementAge": {
+      "short": "Lebenphase bis",
+      "type": "Age",
+      "choiceOf": "abatement",
+      "index": 68,
+      "elements": {
+        "value": {
+          "index": 69
+        },
+        "unit": {
+          "index": 70
+        }
+      }
+    },
+    "recordedDate": {
+      "short": "Dokumentationsdatum",
+      "index": 71
+    },
+    "asserter": {
+      "index": 72
+    },
+    "stage": {
+      "index": 73,
+      "elements": {
+        "summary": {
+          "index": 74,
+          "elements": {
+            "coding": {
+              "index": 75
+            },
+            "text": {
+              "index": 76
+            }
+          }
+        },
+        "assessment": {
+          "index": 77
+        },
+        "type": {
+          "index": 78,
+          "elements": {
+            "coding": {
+              "index": 79
+            },
+            "text": {
+              "index": 80
+            }
+          }
+        }
+      }
+    },
+    "note": {
+      "short": "Freitextbeschreibung",
+      "index": 81,
+      "elements": {
+        "author": {
+          "slicing": {
+            "discriminator": [
+              {
+                "type": "type",
+                "path": "$this"
+              }
+            ],
+            "rules": "open"
+          },
+          "index": 82
+        },
+        "authorReference": {
+          "type": "Reference",
+          "choiceOf": "author",
+          "refers": [
+            "http://hl7.org/fhir/StructureDefinition/Organization",
+            "http://hl7.org/fhir/StructureDefinition/Patient",
+            "http://hl7.org/fhir/StructureDefinition/Practitioner",
+            "http://hl7.org/fhir/StructureDefinition/RelatedPerson",
+            "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Organization|1.9.0",
+            "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Patient|1.9.0",
+            "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Practitioner|1.9.0",
+            "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_RelatedPerson|1.9.0"
+          ],
+          "index": 83
+        },
+        "authorString": {
+          "type": "string",
+          "choiceOf": "author",
+          "index": 84
+        },
+        "time": {
+          "index": 85
+        },
+        "text": {
+          "index": 86
+        }
+      }
+    }
+  },
+  "required": [
+    "code"
+  ],
+  "package_meta": {
+    "name": "kbv.basis",
+    "version": "1.9.0"
+  }
+}"
+`;
+
+exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: KBV_PR_Base_Condition_Diagnosis profile 1`] = `
+"{
+  "identifier": {
+    "kind": "profile",
+    "package": "kbv.basis",
+    "version": "1.9.0",
+    "name": "KBV_PR_Base_Condition_Diagnosis",
+    "url": "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Condition_Diagnosis"
+  },
+  "base": {
+    "kind": "resource",
+    "package": "hl7.fhir.r4.core",
+    "version": "4.0.1",
+    "name": "Condition",
+    "url": "http://hl7.org/fhir/StructureDefinition/Condition"
+  },
+  "fields": {
+    "extension": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Extension",
+        "url": "http://hl7.org/fhir/StructureDefinition/Extension"
+      },
+      "required": false,
+      "excluded": false,
+      "array": true,
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "value",
+            "path": "url"
+          }
+        ],
+        "rules": "open",
+        "slices": {
+          "Feststellungsdatum": {
+            "max": 1,
+            "nameCandidates": {
+              "candidates": [
+                "Feststellungsdatum",
+                "ExtensionFeststellungsdatum",
+                "ExtensionFeststellungsdatumSlice"
+              ],
+              "recommended": "ExtensionFeststellungsdatum"
+            }
+          }
+        }
+      }
+    },
+    "clinicalStatus": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionClinicalStatus",
+        "url": "urn:fhir:binding:ConditionClinicalStatus"
+      },
+      "enum": {
+        "isOpen": false,
+        "values": [
+          "active",
+          "recurrence",
+          "relapse",
+          "inactive",
+          "remission",
+          "resolved"
+        ]
+      }
+    },
+    "verificationStatus": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionVerificationStatus",
+        "url": "urn:fhir:binding:ConditionVerificationStatus"
+      },
+      "enum": {
+        "isOpen": false,
+        "values": [
+          "unconfirmed",
+          "provisional",
+          "differential",
+          "confirmed",
+          "refuted",
+          "entered-in-error"
+        ]
+      }
+    },
+    "severity": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionSeverity",
+        "url": "urn:fhir:binding:ConditionSeverity"
+      },
+      "enum": {
+        "isOpen": true,
+        "values": [
+          "24484000",
+          "6736007",
+          "255604002"
+        ]
+      }
+    },
+    "code": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": true,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionKind",
+        "url": "urn:fhir:binding:ConditionKind"
+      }
+    },
+    "bodySite": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": true,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "BodySite",
+        "url": "urn:fhir:binding:BodySite"
+      }
+    },
+    "subject": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": true,
+      "excluded": false,
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Group",
+            "url": "http://hl7.org/fhir/StructureDefinition/Group"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Patient",
+            "url": "http://hl7.org/fhir/StructureDefinition/Patient"
+          }
+        ],
+        "profiles": [
+          {
+            "kind": "profile",
+            "package": "kbv.basis",
+            "version": "1.9.0",
+            "name": "KBV_PR_Base_Patient",
+            "url": "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Patient"
+          }
+        ]
+      },
+      "array": false
+    },
+    "onset": {
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "type",
+            "path": "$this"
+          }
+        ],
+        "rules": "open"
+      },
+      "choices": [
+        "onsetDateTime",
+        "onsetAge",
+        "onsetPeriod",
+        "onsetRange",
+        "onsetString"
+      ]
+    },
+    "onsetPeriod": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Period",
+        "url": "http://hl7.org/fhir/StructureDefinition/Period"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "onsetRange": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Range",
+        "url": "http://hl7.org/fhir/StructureDefinition/Range"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "onsetDateTime": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "dateTime",
+        "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "onsetAge": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Age",
+        "url": "http://hl7.org/fhir/StructureDefinition/Age"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "abatement": {
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "type",
+            "path": "$this"
+          }
+        ],
+        "rules": "open"
+      },
+      "choices": [
+        "abatementDateTime",
+        "abatementAge",
+        "abatementPeriod",
+        "abatementRange",
+        "abatementString"
+      ]
+    },
+    "abatementPeriod": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Period",
+        "url": "http://hl7.org/fhir/StructureDefinition/Period"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "abatementRange": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Range",
+        "url": "http://hl7.org/fhir/StructureDefinition/Range"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "abatementDateTime": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "dateTime",
+        "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "abatementAge": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Age",
+        "url": "http://hl7.org/fhir/StructureDefinition/Age"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "recordedDate": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "dateTime",
+        "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false
+    },
+    "asserter": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": false,
+      "excluded": false,
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Patient",
+            "url": "http://hl7.org/fhir/StructureDefinition/Patient"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Practitioner",
+            "url": "http://hl7.org/fhir/StructureDefinition/Practitioner"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "PractitionerRole",
+            "url": "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "RelatedPerson",
+            "url": "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+          }
+        ]
+      },
+      "array": false
+    },
+    "stage": {
+      "type": {
+        "kind": "nested",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "stage",
+        "url": "http://hl7.org/fhir/StructureDefinition/Condition#stage"
+      },
+      "array": true,
+      "required": false,
+      "excluded": false
+    },
+    "note": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Annotation",
+        "url": "http://hl7.org/fhir/StructureDefinition/Annotation"
+      },
+      "required": false,
+      "excluded": false,
+      "array": true
+    }
+  },
+  "nested": [
+    {
+      "identifier": {
+        "kind": "nested",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "stage",
+        "url": "http://hl7.org/fhir/StructureDefinition/Condition#stage"
+      },
+      "base": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "BackboneElement",
+        "url": "http://hl7.org/fhir/StructureDefinition/BackboneElement"
+      },
+      "fields": {
+        "summary": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "CodeableConcept",
+            "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+          },
+          "required": false,
+          "excluded": false,
+          "array": false,
+          "binding": {
+            "kind": "binding",
+            "package": "shared",
+            "version": "1.0.0",
+            "name": "ConditionStage",
+            "url": "urn:fhir:binding:ConditionStage"
+          }
+        },
+        "assessment": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Reference",
+            "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+          },
+          "required": false,
+          "excluded": false,
+          "reference": {
+            "resource": [
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "ClinicalImpression",
+                "url": "http://hl7.org/fhir/StructureDefinition/ClinicalImpression"
+              },
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "DiagnosticReport",
+                "url": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport"
+              },
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "Observation",
+                "url": "http://hl7.org/fhir/StructureDefinition/Observation"
+              }
+            ]
+          },
+          "array": true
+        },
+        "type": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "CodeableConcept",
+            "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+          },
+          "required": false,
+          "excluded": false,
+          "array": false,
+          "binding": {
+            "kind": "binding",
+            "package": "shared",
+            "version": "1.0.0",
+            "name": "ConditionStageType",
+            "url": "urn:fhir:binding:ConditionStageType"
+          }
+        }
+      }
+    }
+  ],
+  "description": "Dieses Profil bildet relevante Informationen zu einer Diagnoserstellung ab.",
+  "dependencies": [
+    {
+      "kind": "profile",
+      "package": "de.basisprofil.r4",
+      "version": "1.5.4",
+      "name": "ExtensionLebensphase",
+      "url": "http://fhir.de/StructureDefinition/lebensphase"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Age",
+      "url": "http://hl7.org/fhir/StructureDefinition/Age"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Annotation",
+      "url": "http://hl7.org/fhir/StructureDefinition/Annotation"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "BackboneElement",
+      "url": "http://hl7.org/fhir/StructureDefinition/BackboneElement"
+    },
+    {
+      "kind": "profile",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "BodyStructure Reference",
+      "url": "http://hl7.org/fhir/StructureDefinition/bodySite"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "CodeableConcept",
+      "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+    },
+    {
+      "kind": "resource",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Condition",
+      "url": "http://hl7.org/fhir/StructureDefinition/Condition"
+    },
+    {
+      "kind": "profile",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "assertedDate",
+      "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate"
+    },
+    {
+      "kind": "nested",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "stage",
+      "url": "http://hl7.org/fhir/StructureDefinition/Condition#stage"
+    },
+    {
+      "kind": "primitive-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "dateTime",
+      "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Extension",
+      "url": "http://hl7.org/fhir/StructureDefinition/Extension"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Period",
+      "url": "http://hl7.org/fhir/StructureDefinition/Period"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Range",
+      "url": "http://hl7.org/fhir/StructureDefinition/Range"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Reference",
+      "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "BodySite",
+      "url": "urn:fhir:binding:BodySite"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionClinicalStatus",
+      "url": "urn:fhir:binding:ConditionClinicalStatus"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionKind",
+      "url": "urn:fhir:binding:ConditionKind"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionSeverity",
+      "url": "urn:fhir:binding:ConditionSeverity"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionStage",
+      "url": "urn:fhir:binding:ConditionStage"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionStageType",
+      "url": "urn:fhir:binding:ConditionStageType"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionVerificationStatus",
+      "url": "urn:fhir:binding:ConditionVerificationStatus"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "Feststellungsdatum",
+      "path": "extension",
+      "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+      "profile": {
+        "kind": "profile",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "assertedDate",
+        "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate"
+      },
+      "max": "1",
+      "valueFieldTypes": [
+        {
+          "kind": "primitive-type",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "dateTime",
+          "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+        }
+      ],
+      "nameCandidates": {
+        "candidates": [
+          "Feststellungsdatum",
+          "Feststellungsdatum",
+          "FeststellungsdatumExtension"
+        ],
+        "recommended": "Feststellungsdatum"
+      }
+    },
+    {
+      "name": "bodyStructure",
+      "path": "bodySite.extension",
+      "url": "http://hl7.org/fhir/StructureDefinition/bodySite",
+      "profile": {
+        "kind": "profile",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "BodyStructure Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/bodySite"
+      },
+      "max": "1",
+      "valueFieldTypes": [
+        {
+          "kind": "complex-type",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "Reference",
+          "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+        }
+      ],
+      "nameCandidates": {
+        "candidates": [
+          "BodyStructure",
+          "BodySiteBodyStructure",
+          "BodySiteBodyStructureExtension"
+        ],
+        "recommended": "BodyStructure"
+      }
+    },
+    {
+      "name": "lebensphase-von",
+      "path": "onsetRange.extension",
+      "url": "http://fhir.de/StructureDefinition/lebensphase",
+      "profile": {
+        "kind": "profile",
+        "package": "de.basisprofil.r4",
+        "version": "1.5.4",
+        "name": "ExtensionLebensphase",
+        "url": "http://fhir.de/StructureDefinition/lebensphase"
+      },
+      "max": "1",
+      "valueFieldTypes": [
+        {
+          "kind": "complex-type",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "CodeableConcept",
+          "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+        }
+      ],
+      "nameCandidates": {
+        "candidates": [
+          "LebensphaseVon",
+          "OnsetRangeLebensphaseVon",
+          "OnsetRangeLebensphaseVonExtension"
+        ],
+        "recommended": "LebensphaseVon"
+      }
+    },
+    {
+      "name": "lebensphase-bis",
+      "path": "abatementRange.extension",
+      "url": "http://fhir.de/StructureDefinition/lebensphase",
+      "profile": {
+        "kind": "profile",
+        "package": "de.basisprofil.r4",
+        "version": "1.5.4",
+        "name": "ExtensionLebensphase",
+        "url": "http://fhir.de/StructureDefinition/lebensphase"
+      },
+      "max": "1",
+      "valueFieldTypes": [
+        {
+          "kind": "complex-type",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "CodeableConcept",
+          "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+        }
+      ],
+      "nameCandidates": {
+        "candidates": [
+          "LebensphaseBis",
+          "AbatementRangeLebensphaseBis",
+          "AbatementRangeLebensphaseBisExtension"
+        ],
+        "recommended": "LebensphaseBis"
+      }
+    }
+  ]
+}"
+`;
+
+exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: KBV_PR_Base_Condition_Diagnosis snapshot 1`] = `
+"{
+  "identifier": {
+    "kind": "profile-snapshot",
+    "package": "kbv.basis",
+    "version": "1.9.0",
+    "name": "KBV_PR_Base_Condition_Diagnosis",
+    "url": "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Condition_Diagnosis"
+  },
+  "base": {
+    "kind": "resource",
+    "package": "hl7.fhir.r4.core",
+    "version": "4.0.1",
+    "name": "Condition",
+    "url": "http://hl7.org/fhir/StructureDefinition/Condition"
+  },
+  "description": "Dieses Profil bildet relevante Informationen zu einer Diagnoserstellung ab.",
+  "fields": {
+    "extension": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Extension",
+        "url": "http://hl7.org/fhir/StructureDefinition/Extension"
+      },
+      "required": false,
+      "excluded": false,
+      "array": true,
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "value",
+            "path": "url"
+          }
+        ],
+        "rules": "open",
+        "slices": {
+          "Feststellungsdatum": {
+            "max": 1,
+            "nameCandidates": {
+              "candidates": [
+                "Feststellungsdatum",
+                "ExtensionFeststellungsdatum",
+                "ExtensionFeststellungsdatumSlice"
+              ],
+              "recommended": "ExtensionFeststellungsdatum"
+            }
+          }
+        }
+      }
+    },
+    "clinicalStatus": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionClinicalStatus",
+        "url": "urn:fhir:binding:ConditionClinicalStatus"
+      },
+      "enum": {
+        "isOpen": false,
+        "values": [
+          "active",
+          "recurrence",
+          "relapse",
+          "inactive",
+          "remission",
+          "resolved"
+        ]
+      }
+    },
+    "verificationStatus": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionVerificationStatus",
+        "url": "urn:fhir:binding:ConditionVerificationStatus"
+      },
+      "enum": {
+        "isOpen": false,
+        "values": [
+          "unconfirmed",
+          "provisional",
+          "differential",
+          "confirmed",
+          "refuted",
+          "entered-in-error"
+        ]
+      }
+    },
+    "severity": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionSeverity",
+        "url": "urn:fhir:binding:ConditionSeverity"
+      },
+      "enum": {
+        "isOpen": true,
+        "values": [
+          "24484000",
+          "6736007",
+          "255604002"
+        ]
+      }
+    },
+    "code": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": true,
+      "excluded": false,
+      "array": false,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "ConditionKind",
+        "url": "urn:fhir:binding:ConditionKind"
+      }
+    },
+    "bodySite": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "CodeableConcept",
+        "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+      },
+      "required": false,
+      "excluded": false,
+      "array": true,
+      "binding": {
+        "kind": "binding",
+        "package": "shared",
+        "version": "1.0.0",
+        "name": "BodySite",
+        "url": "urn:fhir:binding:BodySite"
+      }
+    },
+    "subject": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": true,
+      "excluded": false,
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Group",
+            "url": "http://hl7.org/fhir/StructureDefinition/Group"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Patient",
+            "url": "http://hl7.org/fhir/StructureDefinition/Patient"
+          }
+        ],
+        "profiles": [
+          {
+            "kind": "profile",
+            "package": "kbv.basis",
+            "version": "1.9.0",
+            "name": "KBV_PR_Base_Patient",
+            "url": "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Patient"
+          }
+        ]
+      },
+      "array": false
+    },
+    "onset": {
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "type",
+            "path": "$this"
+          }
+        ],
+        "rules": "open"
+      },
+      "choices": [
+        "onsetDateTime",
+        "onsetAge",
+        "onsetPeriod",
+        "onsetRange",
+        "onsetString"
+      ]
+    },
+    "onsetPeriod": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Period",
+        "url": "http://hl7.org/fhir/StructureDefinition/Period"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "onsetRange": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Range",
+        "url": "http://hl7.org/fhir/StructureDefinition/Range"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "onsetDateTime": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "dateTime",
+        "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "onsetAge": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Age",
+        "url": "http://hl7.org/fhir/StructureDefinition/Age"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "onset"
+    },
+    "abatement": {
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "type",
+            "path": "$this"
+          }
+        ],
+        "rules": "open"
+      },
+      "choices": [
+        "abatementDateTime",
+        "abatementAge",
+        "abatementPeriod",
+        "abatementRange",
+        "abatementString"
+      ]
+    },
+    "abatementPeriod": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Period",
+        "url": "http://hl7.org/fhir/StructureDefinition/Period"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "abatementRange": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Range",
+        "url": "http://hl7.org/fhir/StructureDefinition/Range"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "abatementDateTime": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "dateTime",
+        "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "abatementAge": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Age",
+        "url": "http://hl7.org/fhir/StructureDefinition/Age"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false,
+      "choiceOf": "abatement"
+    },
+    "recordedDate": {
+      "type": {
+        "kind": "primitive-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "dateTime",
+        "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+      },
+      "required": false,
+      "excluded": false,
+      "array": false
+    },
+    "asserter": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+      },
+      "required": false,
+      "excluded": false,
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Patient",
+            "url": "http://hl7.org/fhir/StructureDefinition/Patient"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Practitioner",
+            "url": "http://hl7.org/fhir/StructureDefinition/Practitioner"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "PractitionerRole",
+            "url": "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "RelatedPerson",
+            "url": "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+          }
+        ]
+      },
+      "array": false
+    },
+    "stage": {
+      "type": {
+        "kind": "nested",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "stage",
+        "url": "http://hl7.org/fhir/StructureDefinition/Condition#stage"
+      },
+      "array": true,
+      "required": false,
+      "excluded": false
+    },
+    "note": {
+      "type": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "Annotation",
+        "url": "http://hl7.org/fhir/StructureDefinition/Annotation"
+      },
+      "required": false,
+      "excluded": false,
+      "array": true
+    }
+  },
+  "extensions": [
+    {
+      "name": "Feststellungsdatum",
+      "path": "extension",
+      "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+      "profile": {
+        "kind": "profile",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "assertedDate",
+        "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate"
+      },
+      "max": "1",
+      "valueFieldTypes": [
+        {
+          "kind": "primitive-type",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "dateTime",
+          "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+        }
+      ],
+      "nameCandidates": {
+        "candidates": [
+          "Feststellungsdatum",
+          "Feststellungsdatum",
+          "FeststellungsdatumExtension"
+        ],
+        "recommended": "Feststellungsdatum"
+      }
+    },
+    {
+      "name": "bodyStructure",
+      "path": "bodySite.extension",
+      "url": "http://hl7.org/fhir/StructureDefinition/bodySite",
+      "profile": {
+        "kind": "profile",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "BodyStructure Reference",
+        "url": "http://hl7.org/fhir/StructureDefinition/bodySite"
+      },
+      "max": "1",
+      "valueFieldTypes": [
+        {
+          "kind": "complex-type",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "Reference",
+          "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+        }
+      ],
+      "nameCandidates": {
+        "candidates": [
+          "BodyStructure",
+          "BodySiteBodyStructure",
+          "BodySiteBodyStructureExtension"
+        ],
+        "recommended": "BodyStructure"
+      }
+    },
+    {
+      "name": "lebensphase-von",
+      "path": "onsetRange.extension",
+      "url": "http://fhir.de/StructureDefinition/lebensphase",
+      "profile": {
+        "kind": "profile",
+        "package": "de.basisprofil.r4",
+        "version": "1.5.4",
+        "name": "ExtensionLebensphase",
+        "url": "http://fhir.de/StructureDefinition/lebensphase"
+      },
+      "max": "1",
+      "valueFieldTypes": [
+        {
+          "kind": "complex-type",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "CodeableConcept",
+          "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+        }
+      ],
+      "nameCandidates": {
+        "candidates": [
+          "LebensphaseVon",
+          "OnsetRangeLebensphaseVon",
+          "OnsetRangeLebensphaseVonExtension"
+        ],
+        "recommended": "LebensphaseVon"
+      }
+    },
+    {
+      "name": "lebensphase-bis",
+      "path": "abatementRange.extension",
+      "url": "http://fhir.de/StructureDefinition/lebensphase",
+      "profile": {
+        "kind": "profile",
+        "package": "de.basisprofil.r4",
+        "version": "1.5.4",
+        "name": "ExtensionLebensphase",
+        "url": "http://fhir.de/StructureDefinition/lebensphase"
+      },
+      "max": "1",
+      "valueFieldTypes": [
+        {
+          "kind": "complex-type",
+          "package": "hl7.fhir.r4.core",
+          "version": "4.0.1",
+          "name": "CodeableConcept",
+          "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+        }
+      ],
+      "nameCandidates": {
+        "candidates": [
+          "LebensphaseBis",
+          "AbatementRangeLebensphaseBis",
+          "AbatementRangeLebensphaseBisExtension"
+        ],
+        "recommended": "LebensphaseBis"
+      }
+    }
+  ],
+  "dependencies": [
+    {
+      "kind": "profile",
+      "package": "de.basisprofil.r4",
+      "version": "1.5.4",
+      "name": "ExtensionLebensphase",
+      "url": "http://fhir.de/StructureDefinition/lebensphase"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Age",
+      "url": "http://hl7.org/fhir/StructureDefinition/Age"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Annotation",
+      "url": "http://hl7.org/fhir/StructureDefinition/Annotation"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "BackboneElement",
+      "url": "http://hl7.org/fhir/StructureDefinition/BackboneElement"
+    },
+    {
+      "kind": "profile",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "BodyStructure Reference",
+      "url": "http://hl7.org/fhir/StructureDefinition/bodySite"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "CodeableConcept",
+      "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+    },
+    {
+      "kind": "resource",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Condition",
+      "url": "http://hl7.org/fhir/StructureDefinition/Condition"
+    },
+    {
+      "kind": "profile",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "assertedDate",
+      "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate"
+    },
+    {
+      "kind": "nested",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "stage",
+      "url": "http://hl7.org/fhir/StructureDefinition/Condition#stage"
+    },
+    {
+      "kind": "primitive-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "dateTime",
+      "url": "http://hl7.org/fhir/StructureDefinition/dateTime"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Extension",
+      "url": "http://hl7.org/fhir/StructureDefinition/Extension"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Period",
+      "url": "http://hl7.org/fhir/StructureDefinition/Period"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Range",
+      "url": "http://hl7.org/fhir/StructureDefinition/Range"
+    },
+    {
+      "kind": "complex-type",
+      "package": "hl7.fhir.r4.core",
+      "version": "4.0.1",
+      "name": "Reference",
+      "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "BodySite",
+      "url": "urn:fhir:binding:BodySite"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionClinicalStatus",
+      "url": "urn:fhir:binding:ConditionClinicalStatus"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionKind",
+      "url": "urn:fhir:binding:ConditionKind"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionSeverity",
+      "url": "urn:fhir:binding:ConditionSeverity"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionStage",
+      "url": "urn:fhir:binding:ConditionStage"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionStageType",
+      "url": "urn:fhir:binding:ConditionStageType"
+    },
+    {
+      "kind": "binding",
+      "package": "shared",
+      "version": "1.0.0",
+      "name": "ConditionVerificationStatus",
+      "url": "urn:fhir:binding:ConditionVerificationStatus"
+    }
+  ],
+  "nested": [
+    {
+      "identifier": {
+        "kind": "nested",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "stage",
+        "url": "http://hl7.org/fhir/StructureDefinition/Condition#stage"
+      },
+      "base": {
+        "kind": "complex-type",
+        "package": "hl7.fhir.r4.core",
+        "version": "4.0.1",
+        "name": "BackboneElement",
+        "url": "http://hl7.org/fhir/StructureDefinition/BackboneElement"
+      },
+      "fields": {
+        "summary": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "CodeableConcept",
+            "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+          },
+          "required": false,
+          "excluded": false,
+          "array": false,
+          "binding": {
+            "kind": "binding",
+            "package": "shared",
+            "version": "1.0.0",
+            "name": "ConditionStage",
+            "url": "urn:fhir:binding:ConditionStage"
+          }
+        },
+        "assessment": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Reference",
+            "url": "http://hl7.org/fhir/StructureDefinition/Reference"
+          },
+          "required": false,
+          "excluded": false,
+          "reference": {
+            "resource": [
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "ClinicalImpression",
+                "url": "http://hl7.org/fhir/StructureDefinition/ClinicalImpression"
+              },
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "DiagnosticReport",
+                "url": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport"
+              },
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "Observation",
+                "url": "http://hl7.org/fhir/StructureDefinition/Observation"
+              }
+            ]
+          },
+          "array": true
+        },
+        "type": {
+          "type": {
+            "kind": "complex-type",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "CodeableConcept",
+            "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept"
+          },
+          "required": false,
+          "excluded": false,
+          "array": false,
+          "binding": {
+            "kind": "binding",
+            "package": "shared",
+            "version": "1.0.0",
+            "name": "ConditionStageType",
+            "url": "urn:fhir:binding:ConditionStageType"
+          }
+        }
+      }
+    }
+  ]
+}"
+`;
+
+exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) generated type: Condition.ts 1`] = `
+"// WARNING: This file is autogenerated by @atomic-ehr/codegen.
+// GitHub: https://github.com/atomic-ehr/codegen
+// Any manual changes made to this file may be overwritten.
+
+import type { Age } from "../hl7-fhir-r4-core/Age";
+import type { Annotation } from "../hl7-fhir-r4-core/Annotation";
+import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
+import type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept";
+import type { DomainResource } from "../hl7-fhir-r4-core/DomainResource";
+import type { Identifier } from "../hl7-fhir-r4-core/Identifier";
+import type { Period } from "../hl7-fhir-r4-core/Period";
+import type { Range } from "../hl7-fhir-r4-core/Range";
+import type { Reference } from "../hl7-fhir-r4-core/Reference";
+
+import type { Element } from "../hl7-fhir-r4-core/Element";
+export type { Age } from "../hl7-fhir-r4-core/Age";
+export type { Annotation } from "../hl7-fhir-r4-core/Annotation";
+export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
+export type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept";
+export type { Identifier } from "../hl7-fhir-r4-core/Identifier";
+export type { Period } from "../hl7-fhir-r4-core/Period";
+export type { Range } from "../hl7-fhir-r4-core/Range";
+export type { Reference } from "../hl7-fhir-r4-core/Reference";
+
+export interface ConditionEvidence extends BackboneElement {
+    code?: CodeableConcept[];
+    detail?: Reference<string /* Resource */>[];
+}
+
+export interface ConditionStage extends BackboneElement {
+    assessment?: Reference<"ClinicalImpression" | "DiagnosticReport" | "Observation">[];
+    summary?: CodeableConcept;
+    type?: CodeableConcept;
+}
+
+// CanonicalURL: http://hl7.org/fhir/StructureDefinition/Condition (pkg: hl7.fhir.r4.core#4.0.1)
+export interface Condition extends DomainResource {
+    resourceType: "Condition";
+
+    abatementAge?: Age;
+    abatementDateTime?: string;
+    _abatementDateTime?: Element;
+    abatementPeriod?: Period;
+    abatementRange?: Range;
+    abatementString?: string;
+    _abatementString?: Element;
+    asserter?: Reference<"Patient" | "Practitioner" | "PractitionerRole" | "RelatedPerson">;
+    bodySite?: CodeableConcept[];
+    category?: CodeableConcept<("problem-list-item" | "encounter-diagnosis" | string)>[];
+    clinicalStatus?: CodeableConcept<("active" | "recurrence" | "relapse" | "inactive" | "remission" | "resolved")>;
+    code?: CodeableConcept;
+    encounter?: Reference<"Encounter">;
+    evidence?: ConditionEvidence[];
+    identifier?: Identifier[];
+    note?: Annotation[];
+    onsetAge?: Age;
+    onsetDateTime?: string;
+    _onsetDateTime?: Element;
+    onsetPeriod?: Period;
+    onsetRange?: Range;
+    onsetString?: string;
+    _onsetString?: Element;
+    recordedDate?: string;
+    _recordedDate?: Element;
+    recorder?: Reference<"Patient" | "Practitioner" | "PractitionerRole" | "RelatedPerson">;
+    severity?: CodeableConcept<("24484000" | "6736007" | "255604002" | string)>;
+    stage?: ConditionStage[];
+    subject: Reference<"Group" | "Patient">;
+    verificationStatus?: CodeableConcept<("unconfirmed" | "provisional" | "differential" | "confirmed" | "refuted" | "entered-in-error")>;
+}
+export const isCondition = (resource: unknown): resource is Condition => {
+    return resource !== null && typeof resource === "object" && (resource as {resourceType: string}).resourceType === "Condition";
+}
+"
+`;
+
+exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) generated profile: Condition_KBV_PR_Base_Condition_Diagnosis.ts 1`] = `
+"// WARNING: This file is autogenerated by @atomic-ehr/codegen.
+// GitHub: https://github.com/atomic-ehr/codegen
+// Any manual changes made to this file may be overwritten.
+
+import type { Age } from "../../hl7-fhir-r4-core/Age";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
+import type { Condition } from "../../hl7-fhir-r4-core/Condition";
+import type { Extension } from "../../hl7-fhir-r4-core/Extension";
+import type { Period } from "../../hl7-fhir-r4-core/Period";
+import type { Range } from "../../hl7-fhir-r4-core/Range";
+import type { Reference } from "../../hl7-fhir-r4-core/Reference";
+
+import {
+    ensureProfile,
+    ensurePath,
+    isExtension,
+    getExtensionValue,
+    pushExtension,
+    upsertExtension,
+    validateRequired,
+    validateExcluded,
+    validateFixedValue,
+    validateSliceCardinality,
+    validateSliceFields,
+    validateEnum,
+    validateReference,
+    validateChoiceRequired,
+    validateChoiceProhibited,
+    validateMustSupport,
+} from "../../profile-helpers";
+
+export type KBV_PR_Base_Condition_DiagnosisProfileRaw = {
+    code: CodeableConcept;
+    subject: Reference<"Group" | "Patient">;
+}
+
+// CanonicalURL: https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Condition_Diagnosis (pkg: kbv.basis#1.9.0)
+export class KBV_PR_Base_Condition_DiagnosisProfile {
+    static readonly canonicalUrl = "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Condition_Diagnosis";
+
+    private resource: Condition;
+
+    constructor (resource: Condition) {
+        this.resource = resource;
+    }
+
+    static from (resource: Condition) : KBV_PR_Base_Condition_DiagnosisProfile {
+        if (!resource.meta?.profile?.includes(KBV_PR_Base_Condition_DiagnosisProfile.canonicalUrl)) {
+            throw new Error(\`KBV_PR_Base_Condition_DiagnosisProfile: meta.profile must include \${KBV_PR_Base_Condition_DiagnosisProfile.canonicalUrl}\`)
+        }
+        const profile = new KBV_PR_Base_Condition_DiagnosisProfile(resource);
+        const { errors } = profile.validate();
+        if (errors.length > 0) throw new Error(errors.join("; "))
+        return profile;
+    }
+
+    static is (resource: unknown) : resource is Condition {
+        if (typeof resource !== "object" || resource === null) return false;
+        const r = resource as { resourceType?: string; meta?: { profile?: string[] } };
+        if (r.resourceType !== "Condition") return false;
+        return (r.meta?.profile ?? []).includes(KBV_PR_Base_Condition_DiagnosisProfile.canonicalUrl);
+    }
+
+    static apply (resource: Condition) : KBV_PR_Base_Condition_DiagnosisProfile {
+        ensureProfile(resource, KBV_PR_Base_Condition_DiagnosisProfile.canonicalUrl);
+        return new KBV_PR_Base_Condition_DiagnosisProfile(resource);
+    }
+
+    static createResource (args: KBV_PR_Base_Condition_DiagnosisProfileRaw) : Condition {
+        const resource: Condition = {
+            resourceType: "Condition",
+            code: args.code,
+            subject: args.subject,
+            meta: { profile: [KBV_PR_Base_Condition_DiagnosisProfile.canonicalUrl] },
+        }
+        return resource;
+    }
+
+    static create (args: KBV_PR_Base_Condition_DiagnosisProfileRaw) : KBV_PR_Base_Condition_DiagnosisProfile {
+        const resource = KBV_PR_Base_Condition_DiagnosisProfile.createResource(args);
+        return KBV_PR_Base_Condition_DiagnosisProfile.apply(resource);
+    }
+
+    toResource () : Condition {
+        return this.resource;
+    }
+
+    // Field accessors
+    getCode () : CodeableConcept | undefined {
+        return this.resource.code as CodeableConcept | undefined;
+    }
+
+    setCode (value: CodeableConcept) : this {
+        Object.assign(this.resource, { code: value });
+        return this;
+    }
+
+    getSubject () : Reference<"Group" | "Patient"> | undefined {
+        return this.resource.subject as Reference<"Group" | "Patient"> | undefined;
+    }
+
+    setSubject (value: Reference<"Group" | "Patient">) : this {
+        Object.assign(this.resource, { subject: value });
+        return this;
+    }
+
+    getOnsetPeriod () : Period | undefined {
+        return this.resource.onsetPeriod as Period | undefined;
+    }
+
+    setOnsetPeriod (value: Period) : this {
+        this.clearOnset();
+        Object.assign(this.resource, { onsetPeriod: value });
+        return this;
+    }
+
+    getOnsetRange () : Range | undefined {
+        return this.resource.onsetRange as Range | undefined;
+    }
+
+    setOnsetRange (value: Range) : this {
+        this.clearOnset();
+        Object.assign(this.resource, { onsetRange: value });
+        return this;
+    }
+
+    getOnsetDateTime () : string | undefined {
+        return this.resource.onsetDateTime as string | undefined;
+    }
+
+    setOnsetDateTime (value: string) : this {
+        this.clearOnset();
+        Object.assign(this.resource, { onsetDateTime: value });
+        return this;
+    }
+
+    getOnsetAge () : Age | undefined {
+        return this.resource.onsetAge as Age | undefined;
+    }
+
+    setOnsetAge (value: Age) : this {
+        this.clearOnset();
+        Object.assign(this.resource, { onsetAge: value });
+        return this;
+    }
+
+    getAbatementPeriod () : Period | undefined {
+        return this.resource.abatementPeriod as Period | undefined;
+    }
+
+    setAbatementPeriod (value: Period) : this {
+        this.clearAbatement();
+        Object.assign(this.resource, { abatementPeriod: value });
+        return this;
+    }
+
+    getAbatementRange () : Range | undefined {
+        return this.resource.abatementRange as Range | undefined;
+    }
+
+    setAbatementRange (value: Range) : this {
+        this.clearAbatement();
+        Object.assign(this.resource, { abatementRange: value });
+        return this;
+    }
+
+    getAbatementDateTime () : string | undefined {
+        return this.resource.abatementDateTime as string | undefined;
+    }
+
+    setAbatementDateTime (value: string) : this {
+        this.clearAbatement();
+        Object.assign(this.resource, { abatementDateTime: value });
+        return this;
+    }
+
+    getAbatementAge () : Age | undefined {
+        return this.resource.abatementAge as Age | undefined;
+    }
+
+    setAbatementAge (value: Age) : this {
+        this.clearAbatement();
+        Object.assign(this.resource, { abatementAge: value });
+        return this;
+    }
+
+    clearOnset () : void {
+        delete this.resource.onsetPeriod;
+        delete this.resource.onsetRange;
+        delete this.resource.onsetDateTime;
+        delete this.resource.onsetAge;
+    }
+
+    clearAbatement () : void {
+        delete this.resource.abatementPeriod;
+        delete this.resource.abatementRange;
+        delete this.resource.abatementDateTime;
+        delete this.resource.abatementAge;
+    }
+
+    // Extensions
+    public setFeststellungsdatum (value: string): this {
+        upsertExtension(this.resource, { url: "http://hl7.org/fhir/StructureDefinition/condition-assertedDate", valueDateTime: value } as Extension)
+        return this
+    }
+
+    public getFeststellungsdatum(mode: 'flat'): string | undefined;
+    public getFeststellungsdatum(mode: 'raw'): Extension | undefined;
+    public getFeststellungsdatum(): string | undefined;
+    public getFeststellungsdatum (mode: 'flat' | 'raw' = 'flat'): string | Extension | undefined {
+        const ext = this.resource.extension?.find(e => e.url === "http://hl7.org/fhir/StructureDefinition/condition-assertedDate")
+        if (!ext) return undefined
+        if (mode === 'raw') return ext
+        return getExtensionValue<string>(ext, "valueDateTime")
+    }
+
+    public setBodyStructure (value: Reference): this {
+        const target = ensurePath(this.resource as unknown as Record<string, unknown>, ["bodySite"])
+        if (!Array.isArray(target.extension)) target.extension = [] as Extension[]
+        upsertExtension(target as unknown as { extension?: Extension[] }, { url: "http://hl7.org/fhir/StructureDefinition/bodySite", valueReference: value } as Extension)
+        return this
+    }
+
+    public getBodyStructure(mode: 'flat'): Reference | undefined;
+    public getBodyStructure(mode: 'raw'): Extension | undefined;
+    public getBodyStructure(): Reference | undefined;
+    public getBodyStructure (mode: 'flat' | 'raw' = 'flat'): Reference | Extension | undefined {
+        const target = ensurePath(this.resource as unknown as Record<string, unknown>, ["bodySite"])
+        const ext = (target.extension as Extension[] | undefined)?.find(e => e.url === "http://hl7.org/fhir/StructureDefinition/bodySite")
+        if (!ext) return undefined
+        if (mode === 'raw') return ext
+        return getExtensionValue<Reference>(ext, "valueReference")
+    }
+
+    public setLebensphaseVon (value: CodeableConcept): this {
+        const target = ensurePath(this.resource as unknown as Record<string, unknown>, ["onsetRange"])
+        if (!Array.isArray(target.extension)) target.extension = [] as Extension[]
+        upsertExtension(target as unknown as { extension?: Extension[] }, { url: "http://fhir.de/StructureDefinition/lebensphase", valueCodeableConcept: value } as Extension)
+        return this
+    }
+
+    public getLebensphaseVon(mode: 'flat'): CodeableConcept | undefined;
+    public getLebensphaseVon(mode: 'raw'): Extension | undefined;
+    public getLebensphaseVon(): CodeableConcept | undefined;
+    public getLebensphaseVon (mode: 'flat' | 'raw' = 'flat'): CodeableConcept | Extension | undefined {
+        const target = ensurePath(this.resource as unknown as Record<string, unknown>, ["onsetRange"])
+        const ext = (target.extension as Extension[] | undefined)?.find(e => e.url === "http://fhir.de/StructureDefinition/lebensphase")
+        if (!ext) return undefined
+        if (mode === 'raw') return ext
+        return getExtensionValue<CodeableConcept>(ext, "valueCodeableConcept")
+    }
+
+    public setLebensphaseBis (value: CodeableConcept): this {
+        const target = ensurePath(this.resource as unknown as Record<string, unknown>, ["abatementRange"])
+        if (!Array.isArray(target.extension)) target.extension = [] as Extension[]
+        upsertExtension(target as unknown as { extension?: Extension[] }, { url: "http://fhir.de/StructureDefinition/lebensphase", valueCodeableConcept: value } as Extension)
+        return this
+    }
+
+    public getLebensphaseBis(mode: 'flat'): CodeableConcept | undefined;
+    public getLebensphaseBis(mode: 'raw'): Extension | undefined;
+    public getLebensphaseBis(): CodeableConcept | undefined;
+    public getLebensphaseBis (mode: 'flat' | 'raw' = 'flat'): CodeableConcept | Extension | undefined {
+        const target = ensurePath(this.resource as unknown as Record<string, unknown>, ["abatementRange"])
+        const ext = (target.extension as Extension[] | undefined)?.find(e => e.url === "http://fhir.de/StructureDefinition/lebensphase")
+        if (!ext) return undefined
+        if (mode === 'raw') return ext
+        return getExtensionValue<CodeableConcept>(ext, "valueCodeableConcept")
+    }
+
+    // Slices
+    // Validation
+    validate(): { errors: string[]; warnings: string[] } {
+        const profileName = "KBV_PR_Base_Condition_Diagnosis"
+        const res = this.resource
+        return {
+            errors: [
+                ...validateEnum(res, profileName, "clinicalStatus", ["active","recurrence","relapse","inactive","remission","resolved"]),
+                ...validateEnum(res, profileName, "verificationStatus", ["unconfirmed","provisional","differential","confirmed","refuted","entered-in-error"]),
+                ...validateRequired(res, profileName, "code"),
+                ...validateRequired(res, profileName, "subject"),
+                ...validateReference(res, profileName, "subject", ["Group","Patient"]),
+                ...validateReference(res, profileName, "asserter", ["Patient","Practitioner","PractitionerRole","RelatedPerson"]),
+            ],
+            warnings: [
+                ...validateEnum(res, profileName, "severity", ["24484000","6736007","255604002"]),
+            ],
+        }
+    }
+
+}
+
+"
+`;
