@@ -99,9 +99,9 @@ export const assignRecommendedBaseNames = (profile: ProfileTypeSchema): void => 
             candidates: ext.nameCandidates.candidates,
         }));
 
-    const sliceEntries: NameEntry[] = Object.entries(profile.fields ?? {}).flatMap(([fieldName, field]) => {
-        if (!("slicing" in field) || !field.slicing?.slices) return [];
-        return Object.entries(field.slicing.slices).map(([sliceName, slice]) => ({
+    const sliceEntries: NameEntry[] = Object.entries(profile.slicing ?? {}).flatMap(([fieldName, fieldSlicing]) => {
+        if (!fieldSlicing.slices) return [];
+        return Object.entries(fieldSlicing.slices).map(([sliceName, slice]) => ({
             key: `slice:${fieldName}:${sliceName}`,
             candidates: slice.nameCandidates.candidates,
         }));
@@ -121,9 +121,9 @@ export const assignRecommendedBaseNames = (profile: ProfileTypeSchema): void => 
         if (resolved[key]) ext.nameCandidates.recommended = resolved[key];
     }
 
-    for (const [fieldName, field] of Object.entries(profile.fields ?? {})) {
-        if (!("slicing" in field) || !field.slicing?.slices) continue;
-        for (const [sliceName, slice] of Object.entries(field.slicing.slices)) {
+    for (const [fieldName, fieldSlicing] of Object.entries(profile.slicing ?? {})) {
+        if (!fieldSlicing.slices) continue;
+        for (const [sliceName, slice] of Object.entries(fieldSlicing.slices)) {
             const key = `slice:${fieldName}:${sliceName}`;
             if (resolved[key]) slice.nameCandidates.recommended = resolved[key];
         }

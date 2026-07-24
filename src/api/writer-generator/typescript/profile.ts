@@ -166,7 +166,7 @@ export const collectProfileFactoryInfo = (
         }
 
         if (isNotChoiceDeclarationField(field)) {
-            const sliceNames = collectRequiredSliceNames(field);
+            const sliceNames = collectRequiredSliceNames(field, snapshot.slicing?.[name]);
             if (sliceNames) {
                 if (field.type) {
                     const tsType = fieldTsType(field, resolveRef, isFamilyType);

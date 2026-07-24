@@ -255,6 +255,8 @@ export interface NestedTypeSchema {
     identifier: NestedIdentifier;
     base: TypeIdentifier;
     fields: Record<string, Field>;
+    /** Slicing definitions keyed by field name, kept apart from `fields` */
+    slicing?: Record<string, FieldSlicing>;
     generic?: GenericInfo;
 }
 
@@ -263,6 +265,8 @@ export interface ProfileTypeSchema {
     base: TypeIdentifier;
     description?: string;
     fields?: Record<string, Field>;
+    /** Slicing definitions keyed by field name, kept apart from `fields` */
+    slicing?: Record<string, FieldSlicing>;
     extensions?: ProfileExtension[];
     dependencies?: TypeIdentifier[];
     nested?: NestedTypeSchema[];
@@ -274,6 +278,8 @@ export interface SnapshotProfileTypeSchema {
     base: TypeIdentifier;
     description?: string;
     fields: Record<string, Field>;
+    /** Slicing definitions keyed by field name, kept apart from `fields` */
+    slicing?: Record<string, FieldSlicing>;
     /** Top-level required field names inherited from the base resource that the
      *  profile chain does not re-state in its differential. Needed so that
      *  validate() emits validateRequired() for base-FHIR cardinality (e.g. for
@@ -291,12 +297,21 @@ export const isSnapshotProfileTypeSchema = (s: TypeSchemaGuardInput): s is Snaps
     return s?.identifier.kind === "profile-snapshot";
 };
 
+export type SliceDiscriminator = {
+    type: "value" | "exists" | "pattern" | "type" | "profile" | "position";
+    path: string;
+};
+
 export interface FieldSlicing {
-    discriminator?: FS.FHIRSchemaDiscriminator[];
-    rules?: FS.SlicingRules;
+    discriminator?: SliceDiscriminator[];
+    rules?: "open" | "closed" | "openAtEnd";
     ordered?: boolean;
     slices?: Record<string, FieldSlice>;
 }
+
+/** Whether the slicing discriminates by type (`$this`/type — e.g. Bundle.entry.resource by resourceType) */
+export const isTypeDiscriminated = (slicing: FieldSlicing | undefined): boolean =>
+    slicing?.discriminator?.some((d) => d.type === "type") ?? false;
 
 export type ConstrainedChoiceInfo = {
     choiceBase: string;
@@ -352,6 +367,8 @@ type SpecializationTypeSchemaBody = {
     base?: TypeIdentifier;
     description?: string;
     fields?: { [k: string]: Field };
+    /** Slicing definitions keyed by field name, kept apart from `fields` */
+    slicing?: Record<string, FieldSlicing>;
     nested?: NestedTypeSchema[];
     dependencies?: Identifier[];
     /** Transitive children grouped by kind (e.g. Resource → { resources: [DomainResource, Patient, …] }) */
@@ -385,7 +402,6 @@ export interface RegularField {
     enum?: EnumDefinition;
     min?: number;
     max?: number;
-    slicing?: FieldSlicing;
     valueConstraint?: ValueConstraint;
     mustSupport?: boolean;
 }
@@ -411,7 +427,6 @@ export interface ChoiceFieldInstance {
     enum?: EnumDefinition;
     min?: number;
     max?: number;
-    slicing?: FieldSlicing;
     valueConstraint?: ValueConstraint;
     mustSupport?: boolean;
 }

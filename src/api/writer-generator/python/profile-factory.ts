@@ -174,7 +174,7 @@ export const collectProfileFactoryInfo = (
         }
 
         if (isNotChoiceDeclarationField(field)) {
-            const sliceNames = collectRequiredSliceNames(field);
+            const sliceNames = collectRequiredSliceNames(field, flatProfile.slicing?.[name]);
             if (sliceNames) {
                 if (field.type) {
                     const pyType = fieldPyType(field, resolveRef, tsIndex);
