@@ -59,6 +59,66 @@ describe("treeShake specific TypeSchema", async () => {
             expect(shaked.entityTree()).toMatchSnapshot();
         });
     });
+
+    describe("followReferences", () => {
+        const patientUrl = "http://hl7.org/fhir/StructureDefinition/Patient" as CanonicalUrl;
+        const observationRule = (rule: object) =>
+            treeShake(tsIndex, {
+                "hl7.fhir.r4.core": { "http://hl7.org/fhir/StructureDefinition/Observation": rule },
+            });
+
+        it("drops reference targets by default", () => {
+            const shaked = observationRule({});
+            expect(shaked.resolveByUrl("hl7.fhir.r4.core", patientUrl)).toBeUndefined();
+        });
+
+        it("keeps reference targets when enabled", () => {
+            const shaked = observationRule({ followReferences: true });
+            const patient = shaked.resolveByUrl("hl7.fhir.r4.core", patientUrl);
+            expect(patient).toBeDefined();
+            expect(patient?.identifier.kind).toBe("resource");
+            // Nested-type references are followed too (Observation.component has none,
+            // but Observation.performer lives on the root; device covers another target).
+            const device = shaked.resolveByUrl(
+                "hl7.fhir.r4.core",
+                "http://hl7.org/fhir/StructureDefinition/Device" as CanonicalUrl,
+            );
+            expect(device).toBeDefined();
+        });
+
+        it("treeShakeDefaults enables following for every root", () => {
+            const shaked = treeShake(
+                tsIndex,
+                { "hl7.fhir.r4.core": { "http://hl7.org/fhir/StructureDefinition/Observation": {} } },
+                { followReferences: true },
+            );
+            expect(shaked.resolveByUrl("hl7.fhir.r4.core", patientUrl)).toBeDefined();
+        });
+
+        it("rule-level followReferences wins over the default", () => {
+            const shaked = treeShake(
+                tsIndex,
+                {
+                    "hl7.fhir.r4.core": {
+                        "http://hl7.org/fhir/StructureDefinition/Observation": { followReferences: false },
+                    },
+                },
+                { followReferences: true },
+            );
+            expect(shaked.resolveByUrl("hl7.fhir.r4.core", patientUrl)).toBeUndefined();
+        });
+
+        it("does not follow references transitively", () => {
+            // Account is referenced by Encounter (followed) but not by Observation
+            // itself — followed types keep their own reference targets as literals.
+            const shaked = observationRule({ followReferences: true });
+            const account = shaked.resolveByUrl(
+                "hl7.fhir.r4.core",
+                "http://hl7.org/fhir/StructureDefinition/Account" as CanonicalUrl,
+            );
+            expect(account).toBeUndefined();
+        });
+    });
 });
 
 describe("treeShake specific TypeSchema", async () => {
