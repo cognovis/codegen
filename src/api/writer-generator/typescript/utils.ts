@@ -79,8 +79,8 @@ export const resolveFieldTsType = (
         if (field.type.name === "CodeableConcept") return `CodeableConcept<${tsEnumType(field.enum)}>`;
         return tsEnumType(field.enum);
     }
-    if (field.reference && field.reference.length > 0) {
-        const resolved = field.reference.map((ref) => (resolveRef ? resolveRef(ref) : ref));
+    if (field.reference && field.reference.resource.length > 0) {
+        const resolved = field.reference.resource.map((ref) => (resolveRef ? resolveRef(ref) : ref));
         const references = resolved
             .map((ref) => (isFamilyType?.(ref) ? `string /* ${ref.name} */` : `"${ref.name}"`))
             .join(" | ");

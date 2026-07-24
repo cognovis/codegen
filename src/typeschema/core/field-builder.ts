@@ -7,15 +7,17 @@
 import type { FHIRCoding, FHIRSchemaDiscriminator, FHIRSchemaElement } from "@atomic-ehr/fhirschema";
 import type { Register } from "@root/typeschema/register";
 import type { CodegenLog } from "@root/utils/log";
-import { packageMetaToFhir } from "@typeschema/types";
+import { isProfileIdentifier, packageMetaToFhir } from "@typeschema/types";
 import type {
     BindingIdentifier,
     EnumDefinition,
     Field,
+    FieldReference,
     FieldSlice,
     FieldSlicing,
     Name,
     PackageMeta,
+    ProfileIdentifier,
     RegularField,
     RichFHIRSchema,
     TypeIdentifier,
@@ -90,18 +92,37 @@ function isExcluded(register: Register, fhirSchema: RichFHIRSchema, path: string
     return new Set(requires).has(fieldName);
 }
 
+/** Resolve reference targets into two independent facts: `resource` — the base
+ *  resource types a reference literal may point at (profiles resolve to their
+ *  base specialization, deduped) — and `profiles` — the profile conformance
+ *  expectations, preserved for profile-aware consumers. */
 const buildReferences = (
     register: Register,
     fhirSchema: RichFHIRSchema,
     element: FHIRSchemaElement,
-): TypeIdentifier[] | undefined => {
+): FieldReference | undefined => {
     if (!element.refers) return undefined;
-    return element.refers.map((ref) => {
+    const resource: TypeIdentifier[] = [];
+    const profiles: ProfileIdentifier[] = [];
+    const seen = new Set<string>();
+    for (const ref of element.refers) {
         const curl = register.ensureSpecializationCanonicalUrl(ref as Name);
         const fs = register.resolveFs(fhirSchema.package_meta, curl);
         if (!fs) throw new Error(`Failed to resolve fs for ${curl}`);
-        return mkIdentifier(fs);
-    });
+        const id = mkIdentifier(fs);
+        let resolved: TypeIdentifier = id;
+        if (isProfileIdentifier(id)) {
+            profiles.push(id);
+            const baseFs = register.resolveFsSpecializations(fs.package_meta, fs.url)[0];
+            if (!baseFs) throw new Error(`Failed to resolve base specialization for ${curl}`);
+            resolved = mkIdentifier(baseFs);
+        }
+        if (!seen.has(resolved.url)) {
+            seen.add(resolved.url);
+            resource.push(resolved);
+        }
+    }
+    return { resource, profiles: profiles.length > 0 ? profiles : undefined };
 };
 
 const extractSliceFieldNames = (schema: FHIRSchemaElement): Pick<FieldSlice, "required" | "excluded" | "elements"> => {

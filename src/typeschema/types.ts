@@ -370,9 +370,14 @@ export type LogicalTypeSchema = { identifier: LogicalIdentifier } & Specializati
 
 export type SpecializationTypeSchema = ResourceTypeSchema | ComplexTypeTypeSchema | LogicalTypeSchema;
 
+export type FieldReference = {
+    resource: TypeIdentifier[];
+    profiles?: ProfileIdentifier[];
+};
+
 export interface RegularField {
     type: TypeIdentifier;
-    reference?: TypeIdentifier[];
+    reference?: FieldReference;
     required?: boolean;
     excluded?: boolean;
     array?: boolean;
@@ -401,7 +406,7 @@ export interface ChoiceFieldInstance {
     required?: boolean;
     excluded?: boolean;
     array?: boolean;
-    reference?: TypeIdentifier[];
+    reference?: FieldReference;
     binding?: BindingIdentifier;
     enum?: EnumDefinition;
     min?: number;
