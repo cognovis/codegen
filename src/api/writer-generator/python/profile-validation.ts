@@ -1,6 +1,5 @@
 import {
     type ChoiceFieldInstance,
-    type Field,
     isChoiceDeclarationField,
     isChoiceInstanceField,
     isNotChoiceDeclarationField,
@@ -27,16 +26,20 @@ export const collectValidateBody = (
     const fields = flatProfile.fields;
     for (const [name, field] of Object.entries(fields)) {
         const pyName = pyFieldName(name, formatName);
-        if (isChoiceInstanceField(field)) {
-            collectProhibitedChoiceValidation(fields, name, pyName, helpers, errorLines);
-            continue;
-        }
+        if (isChoiceInstanceField(field)) continue;
         if (isChoiceDeclarationField(field)) {
             if (field.required) {
                 helpers.add("validate_choice_required");
                 const pyChoices = field.choices.map((c) => pyFieldName(c, formatName));
                 errorLines.push(
                     `errors.extend(validate_choice_required(self._resource, profile_name, ${JSON.stringify(pyChoices)}))`,
+                );
+            }
+            if (field.prohibited?.length) {
+                helpers.add("validate_choice_prohibited");
+                const pyProhibited = field.prohibited.map((c) => pyFieldName(c, formatName));
+                errorLines.push(
+                    `errors.extend(validate_choice_prohibited(self._resource, profile_name, ${JSON.stringify(pyProhibited)}))`,
                 );
             }
             continue;
@@ -89,21 +92,6 @@ export const collectValidateBody = (
         }
     }
     return helpers;
-};
-
-const collectProhibitedChoiceValidation = (
-    fields: Record<string, Field>,
-    name: string,
-    pyName: string,
-    helpers: Set<string>,
-    errorLines: string[],
-): void => {
-    const field = fields[name];
-    if (!field || !isChoiceInstanceField(field)) return;
-    const decl = fields[field.choiceOf];
-    if (!decl || !isChoiceDeclarationField(decl) || !decl.prohibited?.includes(name)) return;
-    helpers.add("validate_excluded");
-    errorLines.push(`errors.extend(validate_excluded(self._resource, profile_name, ${JSON.stringify(pyName)}))`);
 };
 
 const collectSliceCardinalityValidation = (

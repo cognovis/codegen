@@ -451,6 +451,17 @@ def validate_choice_required(res: object, profile_name: str, choices: Sequence[s
     return [f"{profile_name}: at least one of {', '.join(choices)} is required"]
 
 
+def validate_choice_prohibited(res: object, profile_name: str, prohibited: Sequence[str]) -> list[str]:
+    """Checks that none of the listed prohibited choice-type variants is present.
+    E.g. a profile narrowing ``value[x]`` to ``value_quantity`` prohibits every
+    other variant."""
+    return [
+        f"{profile_name}: field '{c}' must not be present"
+        for c in prohibited
+        if _get_field(res, c) is not None
+    ]
+
+
 def validate_enum(res: object, profile_name: str, field: str, allowed: Sequence[str]) -> list[str]:
     """Checks that the value of ``field`` has a code within ``allowed``.
     Handles plain strings, Coding, and CodeableConcept."""
