@@ -5253,29 +5253,31 @@ exports[`treeShake specific TypeSchema Original Patient 1`] = `
       },
       "required": false,
       "excluded": false,
-      "reference": [
-        {
-          "kind": "resource",
-          "package": "hl7.fhir.r4.core",
-          "version": "4.0.1",
-          "name": "Organization",
-          "url": "http://hl7.org/fhir/StructureDefinition/Organization"
-        },
-        {
-          "kind": "resource",
-          "package": "hl7.fhir.r4.core",
-          "version": "4.0.1",
-          "name": "Practitioner",
-          "url": "http://hl7.org/fhir/StructureDefinition/Practitioner"
-        },
-        {
-          "kind": "resource",
-          "package": "hl7.fhir.r4.core",
-          "version": "4.0.1",
-          "name": "PractitionerRole",
-          "url": "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
-        }
-      ],
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Organization",
+            "url": "http://hl7.org/fhir/StructureDefinition/Organization"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Practitioner",
+            "url": "http://hl7.org/fhir/StructureDefinition/Practitioner"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "PractitionerRole",
+            "url": "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+          }
+        ]
+      },
       "array": true
     },
     "managingOrganization": {
@@ -5288,15 +5290,17 @@ exports[`treeShake specific TypeSchema Original Patient 1`] = `
       },
       "required": false,
       "excluded": false,
-      "reference": [
-        {
-          "kind": "resource",
-          "package": "hl7.fhir.r4.core",
-          "version": "4.0.1",
-          "name": "Organization",
-          "url": "http://hl7.org/fhir/StructureDefinition/Organization"
-        }
-      ],
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Organization",
+            "url": "http://hl7.org/fhir/StructureDefinition/Organization"
+          }
+        ]
+      },
       "array": false
     },
     "link": {
@@ -5532,15 +5536,17 @@ exports[`treeShake specific TypeSchema Original Patient 1`] = `
           },
           "required": false,
           "excluded": false,
-          "reference": [
-            {
-              "kind": "resource",
-              "package": "hl7.fhir.r4.core",
-              "version": "4.0.1",
-              "name": "Organization",
-              "url": "http://hl7.org/fhir/StructureDefinition/Organization"
-            }
-          ],
+          "reference": {
+            "resource": [
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "Organization",
+                "url": "http://hl7.org/fhir/StructureDefinition/Organization"
+              }
+            ]
+          },
           "array": false
         },
         "period": {
@@ -5583,22 +5589,24 @@ exports[`treeShake specific TypeSchema Original Patient 1`] = `
           },
           "required": true,
           "excluded": false,
-          "reference": [
-            {
-              "kind": "resource",
-              "package": "hl7.fhir.r4.core",
-              "version": "4.0.1",
-              "name": "Patient",
-              "url": "http://hl7.org/fhir/StructureDefinition/Patient"
-            },
-            {
-              "kind": "resource",
-              "package": "hl7.fhir.r4.core",
-              "version": "4.0.1",
-              "name": "RelatedPerson",
-              "url": "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
-            }
-          ],
+          "reference": {
+            "resource": [
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "Patient",
+                "url": "http://hl7.org/fhir/StructureDefinition/Patient"
+              },
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "RelatedPerson",
+                "url": "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+              }
+            ]
+          },
           "array": false
         },
         "type": {
@@ -6018,29 +6026,31 @@ exports[`treeShake specific TypeSchema ignoreFields regular field 1`] = `
       },
       "required": false,
       "excluded": false,
-      "reference": [
-        {
-          "kind": "resource",
-          "package": "hl7.fhir.r4.core",
-          "version": "4.0.1",
-          "name": "Organization",
-          "url": "http://hl7.org/fhir/StructureDefinition/Organization"
-        },
-        {
-          "kind": "resource",
-          "package": "hl7.fhir.r4.core",
-          "version": "4.0.1",
-          "name": "Practitioner",
-          "url": "http://hl7.org/fhir/StructureDefinition/Practitioner"
-        },
-        {
-          "kind": "resource",
-          "package": "hl7.fhir.r4.core",
-          "version": "4.0.1",
-          "name": "PractitionerRole",
-          "url": "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
-        }
-      ],
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Organization",
+            "url": "http://hl7.org/fhir/StructureDefinition/Organization"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Practitioner",
+            "url": "http://hl7.org/fhir/StructureDefinition/Practitioner"
+          },
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "PractitionerRole",
+            "url": "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+          }
+        ]
+      },
       "array": true
     },
     "managingOrganization": {
@@ -6053,15 +6063,17 @@ exports[`treeShake specific TypeSchema ignoreFields regular field 1`] = `
       },
       "required": false,
       "excluded": false,
-      "reference": [
-        {
-          "kind": "resource",
-          "package": "hl7.fhir.r4.core",
-          "version": "4.0.1",
-          "name": "Organization",
-          "url": "http://hl7.org/fhir/StructureDefinition/Organization"
-        }
-      ],
+      "reference": {
+        "resource": [
+          {
+            "kind": "resource",
+            "package": "hl7.fhir.r4.core",
+            "version": "4.0.1",
+            "name": "Organization",
+            "url": "http://hl7.org/fhir/StructureDefinition/Organization"
+          }
+        ]
+      },
       "array": false
     },
     "link": {
@@ -6297,15 +6309,17 @@ exports[`treeShake specific TypeSchema ignoreFields regular field 1`] = `
           },
           "required": false,
           "excluded": false,
-          "reference": [
-            {
-              "kind": "resource",
-              "package": "hl7.fhir.r4.core",
-              "version": "4.0.1",
-              "name": "Organization",
-              "url": "http://hl7.org/fhir/StructureDefinition/Organization"
-            }
-          ],
+          "reference": {
+            "resource": [
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "Organization",
+                "url": "http://hl7.org/fhir/StructureDefinition/Organization"
+              }
+            ]
+          },
           "array": false
         },
         "period": {
@@ -6348,22 +6362,24 @@ exports[`treeShake specific TypeSchema ignoreFields regular field 1`] = `
           },
           "required": true,
           "excluded": false,
-          "reference": [
-            {
-              "kind": "resource",
-              "package": "hl7.fhir.r4.core",
-              "version": "4.0.1",
-              "name": "Patient",
-              "url": "http://hl7.org/fhir/StructureDefinition/Patient"
-            },
-            {
-              "kind": "resource",
-              "package": "hl7.fhir.r4.core",
-              "version": "4.0.1",
-              "name": "RelatedPerson",
-              "url": "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
-            }
-          ],
+          "reference": {
+            "resource": [
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "Patient",
+                "url": "http://hl7.org/fhir/StructureDefinition/Patient"
+              },
+              {
+                "kind": "resource",
+                "package": "hl7.fhir.r4.core",
+                "version": "4.0.1",
+                "name": "RelatedPerson",
+                "url": "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+              }
+            ]
+          },
           "array": false
         },
         "type": {

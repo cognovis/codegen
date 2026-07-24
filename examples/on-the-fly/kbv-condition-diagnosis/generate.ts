@@ -25,9 +25,6 @@ if (require.main === module) {
             treeShake: {
                 "kbv.basis": {
                     "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Condition_Diagnosis": {},
-                    // Referenced as a Condition.subject target; included so the
-                    // reference type resolves to the profile's base resource.
-                    "https://fhir.kbv.de/StructureDefinition/KBV_PR_Base_Patient": {},
                 },
             },
         })

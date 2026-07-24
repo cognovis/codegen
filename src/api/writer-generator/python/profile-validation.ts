@@ -76,9 +76,9 @@ export const collectValidateBody = (
                     `warnings.extend(validate_must_support(self._resource, profile_name, ${JSON.stringify(pyName)}))`,
                 );
             }
-            if (field.reference && field.reference.length > 0) {
+            if (field.reference && field.reference.resource.length > 0) {
                 helpers.add("validate_reference");
-                const allowed = field.reference.map((ref) => resolveRef(ref).name);
+                const allowed = field.reference.resource.map((ref) => resolveRef(ref).name);
                 errorLines.push(
                     `errors.extend(validate_reference(self._resource, profile_name, ${JSON.stringify(pyName)}, ${JSON.stringify(allowed)}))`,
                 );
