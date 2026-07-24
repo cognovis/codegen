@@ -23,7 +23,6 @@ export const collectValidateBody = (
     formatName: (s: string) => string,
 ): Set<string> => {
     const helpers = new Set<string>();
-    const resolveRef = tsIndex.findLastSpecializationByIdentifier;
     const fields = flatProfile.fields;
     for (const [name, field] of Object.entries(fields)) {
         const pyName = pyFieldName(name, formatName);
@@ -45,54 +44,72 @@ export const collectValidateBody = (
             }
             continue;
         }
-        if (field.excluded) {
-            helpers.add("validate_excluded");
-            errorLines.push(
-                `errors.extend(validate_excluded(self._resource, profile_name, ${JSON.stringify(pyName)}))`,
-            );
-            continue;
-        }
-        if (field.required) {
-            helpers.add("validate_required");
-            errorLines.push(
-                `errors.extend(validate_required(self._resource, profile_name, ${JSON.stringify(pyName)}))`,
-            );
-        }
-        if (field.valueConstraint) {
-            helpers.add("validate_fixed_value");
-            const value = JSON.stringify(field.valueConstraint.value);
-            errorLines.push(
-                `errors.extend(validate_fixed_value(self._resource, profile_name, ${JSON.stringify(pyName)}, ${value}))`,
-            );
-        }
-        if (isNotChoiceDeclarationField(field)) {
-            if (field.enum) {
-                helpers.add("validate_enum");
-                const target = field.enum.isOpen ? warningLines : errorLines;
-                const listName = field.enum.isOpen ? "warnings" : "errors";
-                target.push(
-                    `${listName}.extend(validate_enum(self._resource, profile_name, ${JSON.stringify(pyName)}, ${JSON.stringify(field.enum.values)}))`,
-                );
-            }
-            if (field.mustSupport && !field.required) {
-                helpers.add("validate_must_support");
-                warningLines.push(
-                    `warnings.extend(validate_must_support(self._resource, profile_name, ${JSON.stringify(pyName)}))`,
-                );
-            }
-            if (field.reference && field.reference.resource.length > 0) {
-                helpers.add("validate_reference");
-                const allowed = field.reference.resource.map((ref) => resolveRef(ref).name);
-                errorLines.push(
-                    `errors.extend(validate_reference(self._resource, profile_name, ${JSON.stringify(pyName)}, ${JSON.stringify(allowed)}))`,
-                );
-            }
-            if (field.slicing?.slices) {
-                collectSliceValidation(field, pyName, helpers, errorLines, tsIndex, formatName);
-            }
-        }
+        collectRegularFieldValidation(field, pyName, helpers, errorLines, warningLines, tsIndex, formatName);
+    }
+    // Base-resource required fields the profile chain did not re-state.
+    // Emitted here (not via the regular field loop) because they intentionally
+    // live outside `fields` to avoid pulling unrelated base metadata into the
+    // profile's getter/setter surface.
+    for (const inheritedName of flatProfile.inheritedRequiredFields ?? []) {
+        helpers.add("validate_required");
+        errorLines.push(
+            `errors.extend(validate_required(self._resource, profile_name, ${JSON.stringify(pyFieldName(inheritedName, formatName))}))`,
+        );
     }
     return helpers;
+};
+
+const collectRegularFieldValidation = (
+    field: RegularField | ChoiceFieldInstance,
+    pyName: string,
+    helpers: Set<string>,
+    errorLines: string[],
+    warningLines: string[],
+    tsIndex: TypeSchemaIndex,
+    formatName: (s: string) => string,
+): void => {
+    if (field.excluded) {
+        helpers.add("validate_excluded");
+        errorLines.push(`errors.extend(validate_excluded(self._resource, profile_name, ${JSON.stringify(pyName)}))`);
+        return;
+    }
+    if (field.required) {
+        helpers.add("validate_required");
+        errorLines.push(`errors.extend(validate_required(self._resource, profile_name, ${JSON.stringify(pyName)}))`);
+    }
+    if (field.valueConstraint) {
+        helpers.add("validate_fixed_value");
+        const value = JSON.stringify(field.valueConstraint.value);
+        errorLines.push(
+            `errors.extend(validate_fixed_value(self._resource, profile_name, ${JSON.stringify(pyName)}, ${value}))`,
+        );
+    }
+    if (isNotChoiceDeclarationField(field)) {
+        if (field.enum) {
+            helpers.add("validate_enum");
+            const target = field.enum.isOpen ? warningLines : errorLines;
+            const listName = field.enum.isOpen ? "warnings" : "errors";
+            target.push(
+                `${listName}.extend(validate_enum(self._resource, profile_name, ${JSON.stringify(pyName)}, ${JSON.stringify(field.enum.values)}))`,
+            );
+        }
+        if (field.mustSupport && !field.required) {
+            helpers.add("validate_must_support");
+            warningLines.push(
+                `warnings.extend(validate_must_support(self._resource, profile_name, ${JSON.stringify(pyName)}))`,
+            );
+        }
+        if (field.reference && field.reference.resource.length > 0) {
+            helpers.add("validate_reference");
+            const allowed = field.reference.resource.map((ref) => tsIndex.findLastSpecializationByIdentifier(ref).name);
+            errorLines.push(
+                `errors.extend(validate_reference(self._resource, profile_name, ${JSON.stringify(pyName)}, ${JSON.stringify(allowed)}))`,
+            );
+        }
+        if (field.slicing?.slices) {
+            collectSliceValidation(field, pyName, helpers, errorLines, tsIndex, formatName);
+        }
+    }
 };
 
 const collectSliceValidation = (
