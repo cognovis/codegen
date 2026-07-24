@@ -394,7 +394,10 @@ class UscoreBloodPressureProfile:
         errors.extend(validate_required(self._resource, profile_name, "subject"))
         errors.extend(validate_reference(self._resource, profile_name, "subject", ["Patient"]))
         errors.extend(validate_choice_required(self._resource, profile_name, ["effectiveDateTime","effectivePeriod"]))
-        errors.extend(validate_choice_prohibited(self._resource, profile_name, ["effectiveTiming","effectiveInstant"]))
+        errors.extend(validate_choice_prohibited(self._resource, profile_name, [
+            "effectiveTiming",
+            "effectiveInstant",
+        ]))
         errors.extend(validate_reference(self._resource, profile_name, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]))
         errors.extend(validate_reference(self._resource, profile_name, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]))
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "component", {"code":{"coding":[{"system":"http://loinc.org","code":"8480-6"}]}}, "systolic", 1, 1))

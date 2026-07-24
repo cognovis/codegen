@@ -143,7 +143,10 @@ class ObservationVitalsignsProfile:
         errors.extend(validate_required(self._resource, profile_name, "subject"))
         errors.extend(validate_reference(self._resource, profile_name, "subject", ["Patient"]))
         errors.extend(validate_choice_required(self._resource, profile_name, ["effectiveDateTime","effectivePeriod"]))
-        errors.extend(validate_choice_prohibited(self._resource, profile_name, ["effectiveTiming","effectiveInstant"]))
+        errors.extend(validate_choice_prohibited(self._resource, profile_name, [
+            "effectiveTiming",
+            "effectiveInstant",
+        ]))
         errors.extend(validate_reference(self._resource, profile_name, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]))
         errors.extend(validate_reference(self._resource, profile_name, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]))
         warnings.extend(validate_enum(self._resource, profile_name, "category", ["social-history","vital-signs","imaging","laboratory","procedure","survey","exam","therapy","activity"]))
