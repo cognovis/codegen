@@ -13,6 +13,24 @@ import { pyFieldName } from "./profile-naming";
 // Validation body collection
 // ---------------------------------------------------------------------------
 
+/** Emit `<target>.extend(<fn>(self._resource, profile_name, <args>, [<items>]))`
+ *  with the call and its trailing list argument split across lines:
+ *
+ *      errors.extend(
+ *          validate_enum(self._resource, profile_name, "code", [
+ *              "85353-1","9279-1",...
+ *      ]))
+ */
+const pushListValidation = (lines: string[], target: string, fn: string, args: string[], items: string[]): void => {
+    const argList = ["self._resource", "profile_name", ...args].join(", ");
+    lines.push(
+        `${target}.extend(`,
+        `    ${fn}(${argList}, [`,
+        `        ${items.map((i) => JSON.stringify(i)).join(",")}`,
+        "]))",
+    );
+};
+
 /** Walk fields once and emit validate() body lines into `out`, returning the
  *  set of helper function names referenced. Pure: no writer side effects. */
 export const collectValidateBody = (
@@ -31,18 +49,12 @@ export const collectValidateBody = (
             if (field.required) {
                 helpers.add("validate_choice_required");
                 const pyChoices = field.choices.map((c) => pyFieldName(c, formatName));
-                errorLines.push(
-                    `errors.extend(validate_choice_required(self._resource, profile_name, ${JSON.stringify(pyChoices)}))`,
-                );
+                pushListValidation(errorLines, "errors", "validate_choice_required", [], pyChoices);
             }
             if (field.prohibited?.length) {
                 helpers.add("validate_choice_prohibited");
                 const pyProhibited = field.prohibited.map((c) => pyFieldName(c, formatName));
-                errorLines.push(
-                    "errors.extend(validate_choice_prohibited(self._resource, profile_name, [",
-                    ...pyProhibited.map((c) => `    ${JSON.stringify(c)},`),
-                    "]))",
-                );
+                pushListValidation(errorLines, "errors", "validate_choice_prohibited", [], pyProhibited);
             }
             continue;
         }
@@ -91,9 +103,7 @@ const collectRegularFieldValidation = (
             helpers.add("validate_enum");
             const target = field.enum.isOpen ? warningLines : errorLines;
             const listName = field.enum.isOpen ? "warnings" : "errors";
-            target.push(
-                `${listName}.extend(validate_enum(self._resource, profile_name, ${JSON.stringify(pyName)}, ${JSON.stringify(field.enum.values)}))`,
-            );
+            pushListValidation(target, listName, "validate_enum", [JSON.stringify(pyName)], field.enum.values);
         }
         if (field.mustSupport && !field.required) {
             helpers.add("validate_must_support");
@@ -104,9 +114,7 @@ const collectRegularFieldValidation = (
         if (field.reference && field.reference.resource.length > 0) {
             helpers.add("validate_reference");
             const allowed = field.reference.resource.map((ref) => tsIndex.findLastSpecializationByIdentifier(ref).name);
-            errorLines.push(
-                `errors.extend(validate_reference(self._resource, profile_name, ${JSON.stringify(pyName)}, ${JSON.stringify(allowed)}))`,
-            );
+            pushListValidation(errorLines, "errors", "validate_reference", [JSON.stringify(pyName)], allowed);
         }
         if (field.slicing?.slices) {
             collectSliceValidation(field, pyName, helpers, errorLines, tsIndex, formatName);
@@ -147,8 +155,12 @@ const collectSliceValidation = (
         }
         if (sliceRequiredFields.length > 0) {
             helpers.add("validate_slice_fields");
-            errorLines.push(
-                `errors.extend(validate_slice_fields(self._resource, profile_name, ${JSON.stringify(name)}, ${JSON.stringify(match)}, ${JSON.stringify(sliceName)}, ${JSON.stringify(sliceRequiredFields)}))`,
+            pushListValidation(
+                errorLines,
+                "errors",
+                "validate_slice_fields",
+                [JSON.stringify(name), JSON.stringify(match), JSON.stringify(sliceName)],
+                sliceRequiredFields,
             );
         }
     }
