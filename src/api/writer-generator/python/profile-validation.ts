@@ -1,5 +1,6 @@
 import {
     type ChoiceFieldInstance,
+    type FieldSlicing,
     isChoiceDeclarationField,
     isChoiceInstanceField,
     isNotChoiceDeclarationField,
@@ -58,7 +59,16 @@ export const collectValidateBody = (
             }
             continue;
         }
-        collectRegularFieldValidation(field, pyName, helpers, errorLines, warningLines, tsIndex, formatName);
+        collectRegularFieldValidation(
+            field,
+            flatProfile.slicing?.[name],
+            pyName,
+            helpers,
+            errorLines,
+            warningLines,
+            tsIndex,
+            formatName,
+        );
     }
     // Base-resource required fields the profile chain did not re-state.
     // Emitted here (not via the regular field loop) because they intentionally
@@ -75,6 +85,7 @@ export const collectValidateBody = (
 
 const collectRegularFieldValidation = (
     field: RegularField | ChoiceFieldInstance,
+    fieldSlicing: FieldSlicing | undefined,
     pyName: string,
     helpers: Set<string>,
     errorLines: string[],
@@ -116,22 +127,23 @@ const collectRegularFieldValidation = (
             const allowed = field.reference.resource.map((ref) => tsIndex.findLastSpecializationByIdentifier(ref).name);
             pushListValidation(errorLines, "errors", "validate_reference", [JSON.stringify(pyName)], allowed);
         }
-        if (field.slicing?.slices) {
-            collectSliceValidation(field, pyName, helpers, errorLines, tsIndex, formatName);
+        if (fieldSlicing?.slices) {
+            collectSliceValidation(field, fieldSlicing, pyName, helpers, errorLines, tsIndex, formatName);
         }
     }
 };
 
 const collectSliceValidation = (
     field: RegularField | ChoiceFieldInstance,
+    fieldSlicing: FieldSlicing,
     name: string,
     helpers: Set<string>,
     errorLines: string[],
     tsIndex: TypeSchemaIndex,
     formatName: (s: string) => string,
 ): void => {
-    if (!field.slicing?.slices) return;
-    for (const [sliceName, slice] of Object.entries(field.slicing.slices)) {
+    if (!fieldSlicing.slices) return;
+    for (const [sliceName, slice] of Object.entries(fieldSlicing.slices)) {
         const match = slice.match ?? {};
         if (Object.keys(match).length === 0) continue;
         if (slice.min !== undefined || slice.max !== undefined) {

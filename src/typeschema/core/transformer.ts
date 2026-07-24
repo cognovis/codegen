@@ -13,6 +13,7 @@ import {
     concatIdentifiers,
     extractExtensionDeps,
     type Field,
+    type FieldSlicing,
     type Identifier,
     isNestedIdentifier,
     type NestedTypeSchema,
@@ -28,7 +29,7 @@ import {
 } from "@typeschema/types";
 
 import { collectBindingSchemas, extractValueSetConceptsByUrl } from "./binding";
-import { mkField, mkNestedField } from "./field-builder";
+import { buildSlicing, mkField, mkNestedField } from "./field-builder";
 import { mkIdentifier, mkValueSetIdentifierByUrl } from "./identifier";
 import { assignRecommendedBaseNames } from "./name-candidates";
 import { extractNestedDependencies, isNestedElement, mkNestedTypes } from "./nested-types";
@@ -40,10 +41,11 @@ export function mkFields(
     parentPath: string[],
     elements: Record<string, FHIRSchemaElement> | undefined,
     logger?: CodegenLog,
-): Record<string, Field> | undefined {
-    if (!elements) return undefined;
+): { fields?: Record<string, Field>; slicing?: Record<string, FieldSlicing> } {
+    if (!elements) return {};
 
     const fields: Record<string, Field> = {};
+    const slicing: Record<string, FieldSlicing> = {};
     for (const key of register.getAllElementKeys(elements)) {
         const path = [...parentPath, key];
         const elemSnapshot = register.resolveElementSnapshot(fhirSchema, path);
@@ -60,9 +62,11 @@ export function mkFields(
         } else {
             fields[key] = mkField(register, fhirSchema, path, elemSnapshot, logger, elements[key]);
         }
+        const fieldSlicing = buildSlicing(key, elemSnapshot);
+        if (fieldSlicing) slicing[key] = fieldSlicing;
     }
 
-    return fields;
+    return { fields, slicing: Object.keys(slicing).length > 0 ? slicing : undefined };
 }
 
 function extractFieldDependencies(fields: Record<string, Field>): TypeIdentifier[] {
@@ -153,7 +157,7 @@ export function transformFhirSchema(register: Register, fhirSchema: RichFHIRSche
         base = baseId;
     }
 
-    const fields = mkFields(register, fhirSchema, [], fhirSchema.elements, logger);
+    const { fields, slicing } = mkFields(register, fhirSchema, [], fhirSchema.elements, logger);
     const nested = mkNestedTypes(register, fhirSchema, logger);
     const bindingSchemas = collectBindingSchemas(register, fhirSchema, logger);
 
@@ -167,6 +171,7 @@ export function transformFhirSchema(register: Register, fhirSchema: RichFHIRSche
             identifier,
             base,
             fields,
+            slicing,
             nested,
             description: fhirSchema.description,
             dependencies: concatIdentifiers(rawDeps, extensionDeps),
@@ -195,6 +200,7 @@ export function transformFhirSchema(register: Register, fhirSchema: RichFHIRSche
         identifier,
         base,
         fields,
+        slicing,
         nested,
         description: fhirSchema.description,
         dependencies: extractDependencies(identifier, base, fields, nested),

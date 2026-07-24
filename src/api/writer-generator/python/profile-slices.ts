@@ -1,8 +1,10 @@
 import {
     type ConstrainedChoiceInfo,
+    type FieldSlicing,
     isChoiceDeclarationField,
     isNotChoiceDeclarationField,
     isPrimitiveIdentifier,
+    isTypeDiscriminated,
     type NameCandidates,
     type RegularField,
     type SnapshotProfileTypeSchema,
@@ -33,11 +35,14 @@ export type SliceDef = {
     nameCandidates: NameCandidates;
 };
 
-export const collectRequiredSliceNames = (field: RegularField): string[] | undefined => {
-    if (!field.array || !field.slicing?.slices) return undefined;
+export const collectRequiredSliceNames = (
+    field: RegularField,
+    fieldSlicing: FieldSlicing | undefined,
+): string[] | undefined => {
+    if (!field.array || !fieldSlicing?.slices) return undefined;
     // Type-discriminated slices ("type" discriminator) require explicit typed setters — no stubs.
-    if (field.slicing.discriminator?.some((d) => d.type === "type")) return undefined;
-    const names = Object.entries(field.slicing.slices)
+    if (isTypeDiscriminated(fieldSlicing)) return undefined;
+    const names = Object.entries(fieldSlicing.slices)
         .filter(([_, s]) => s.min !== undefined && s.min >= 1 && s.match && Object.keys(s.match).length > 0)
         .map(([name]) => name);
     return names.length > 0 ? names : undefined;
@@ -104,8 +109,9 @@ const extractTypeDiscriminatorResource = (
 
 export const collectSliceDefs = (tsIndex: TypeSchemaIndex, flatProfile: SnapshotProfileTypeSchema): SliceDef[] => {
     const pkgName = flatProfile.identifier.package;
-    return Object.entries(flatProfile.fields).flatMap(([fieldName, field]) => {
-        if (!isNotChoiceDeclarationField(field) || !field.slicing?.slices || !field.type) return [];
+    return Object.entries(flatProfile.slicing ?? {}).flatMap(([fieldName, fieldSlicing]) => {
+        const field = flatProfile.fields[fieldName];
+        if (!isNotChoiceDeclarationField(field) || !fieldSlicing.slices || !field.type) return [];
         const choiceBaseNames = new Set<string>();
         const baseSchema = tsIndex.resolveType(field.type);
         if (baseSchema && "fields" in baseSchema && baseSchema.fields) {
@@ -113,7 +119,7 @@ export const collectSliceDefs = (tsIndex: TypeSchemaIndex, flatProfile: Snapshot
                 if (isChoiceDeclarationField(f)) choiceBaseNames.add(n);
             }
         }
-        return Object.entries(field.slicing.slices)
+        return Object.entries(fieldSlicing.slices)
             .filter(([_, slice]) => Object.keys(slice.match ?? {}).length > 0)
             .map(([sliceName, slice]) => {
                 const matchFields = Object.keys(slice.match ?? {});
@@ -123,9 +129,9 @@ export const collectSliceDefs = (tsIndex: TypeSchemaIndex, flatProfile: Snapshot
                 const cc = slice.elements ? tsIndex.constrainedChoice(pkgName, field.type, slice.elements) : undefined;
                 // Skip flattening for primitive types — can't wrap/unwrap under a variant key.
                 const constrainedChoice = cc && !isPrimitiveIdentifier(cc.variantType) ? cc : undefined;
-                const isTypeDiscriminated = field.slicing?.discriminator?.some((d) => d.type === "type") ?? false;
+                const typeDiscriminated = isTypeDiscriminated(fieldSlicing);
                 const typeDiscriminatorResource = extractTypeDiscriminatorResource(
-                    isTypeDiscriminated,
+                    typeDiscriminated,
                     slice.match as Record<string, unknown> | undefined,
                 );
                 return {
@@ -139,7 +145,7 @@ export const collectSliceDefs = (tsIndex: TypeSchemaIndex, flatProfile: Snapshot
                     elementTypeName:
                         field.type && !isPrimitiveIdentifier(field.type) ? pyTypeFromIdentifier(field.type) : undefined,
                     elementTypeId: field.type && !isPrimitiveIdentifier(field.type) ? field.type : undefined,
-                    isTypeDiscriminated,
+                    isTypeDiscriminated: typeDiscriminated,
                     typeDiscriminatorResource,
                     nameCandidates: slice.nameCandidates,
                 };

@@ -290,7 +290,7 @@ const computeMatchFromSchema = (
     return result;
 };
 
-const buildSlicing = (fieldName: string, element: FHIRSchemaElement): FieldSlicing | undefined => {
+export const buildSlicing = (fieldName: string, element: FHIRSchemaElement): FieldSlicing | undefined => {
     const slicing = element.slicing;
     if (!slicing) return undefined;
 
@@ -435,7 +435,6 @@ export const mkField = (
         array: element.array || false,
         min: element.min,
         max: element.max,
-        slicing: buildSlicing(path[path.length - 1] ?? "", element),
 
         choices: element.choices,
         choiceOf: element.choiceOf,
@@ -459,6 +458,5 @@ export function mkNestedField(
         array: element.array || false,
         required: isRequired(register, fhirSchema, path),
         excluded: isExcluded(register, fhirSchema, path),
-        slicing: buildSlicing(path[path.length - 1] ?? "", element),
     };
 }

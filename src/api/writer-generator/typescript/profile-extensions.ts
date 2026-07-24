@@ -82,9 +82,10 @@ export const valueFieldToTsType = (valueField: string): string => {
  */
 export const collectSubExtensionSlices = (extProfile: SnapshotProfileTypeSchema): SubExtensionSliceInfo[] => {
     const extensionField = extProfile.fields.extension;
-    if (!extensionField || isChoiceDeclarationField(extensionField) || !extensionField.slicing?.slices) return [];
+    const extensionSlicing = extProfile.slicing?.extension;
+    if (!extensionField || isChoiceDeclarationField(extensionField) || !extensionSlicing?.slices) return [];
     const result: SubExtensionSliceInfo[] = [];
-    for (const [sliceName, slice] of Object.entries(extensionField.slicing.slices)) {
+    for (const [sliceName, slice] of Object.entries(extensionSlicing.slices)) {
         const valueField = extractValueField(slice.elements);
         if (!valueField) continue;
         const tsType = valueFieldToTsType(valueField);

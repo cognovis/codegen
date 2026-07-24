@@ -1850,29 +1850,7 @@ exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: KBV_PR
       },
       "required": false,
       "excluded": false,
-      "array": true,
-      "slicing": {
-        "discriminator": [
-          {
-            "type": "value",
-            "path": "url"
-          }
-        ],
-        "rules": "open",
-        "slices": {
-          "Feststellungsdatum": {
-            "max": 1,
-            "nameCandidates": {
-              "candidates": [
-                "Feststellungsdatum",
-                "ExtensionFeststellungsdatum",
-                "ExtensionFeststellungsdatumSlice"
-              ],
-              "recommended": "ExtensionFeststellungsdatum"
-            }
-          }
-        }
-      }
+      "array": true
     },
     "clinicalStatus": {
       "type": {
@@ -2042,15 +2020,6 @@ exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: KBV_PR
       "required": false,
       "excluded": false,
       "array": false,
-      "slicing": {
-        "discriminator": [
-          {
-            "type": "type",
-            "path": "$this"
-          }
-        ],
-        "rules": "open"
-      },
       "choices": [
         "onsetDateTime",
         "onsetAge",
@@ -2115,15 +2084,6 @@ exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: KBV_PR
       "required": false,
       "excluded": false,
       "array": false,
-      "slicing": {
-        "discriminator": [
-          {
-            "type": "type",
-            "path": "$this"
-          }
-        ],
-        "rules": "open"
-      },
       "choices": [
         "abatementDateTime",
         "abatementAge",
@@ -2263,6 +2223,48 @@ exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: KBV_PR
       "required": false,
       "excluded": false,
       "array": true
+    }
+  },
+  "slicing": {
+    "extension": {
+      "discriminator": [
+        {
+          "type": "value",
+          "path": "url"
+        }
+      ],
+      "rules": "open",
+      "slices": {
+        "Feststellungsdatum": {
+          "max": 1,
+          "nameCandidates": {
+            "candidates": [
+              "Feststellungsdatum",
+              "ExtensionFeststellungsdatum",
+              "ExtensionFeststellungsdatumSlice"
+            ],
+            "recommended": "ExtensionFeststellungsdatum"
+          }
+        }
+      }
+    },
+    "onset": {
+      "discriminator": [
+        {
+          "type": "type",
+          "path": "$this"
+        }
+      ],
+      "rules": "open"
+    },
+    "abatement": {
+      "discriminator": [
+        {
+          "type": "type",
+          "path": "$this"
+        }
+      ],
+      "rules": "open"
     }
   },
   "nested": [
@@ -2663,29 +2665,7 @@ exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: KBV_PR
       },
       "required": false,
       "excluded": false,
-      "array": true,
-      "slicing": {
-        "discriminator": [
-          {
-            "type": "value",
-            "path": "url"
-          }
-        ],
-        "rules": "open",
-        "slices": {
-          "Feststellungsdatum": {
-            "max": 1,
-            "nameCandidates": {
-              "candidates": [
-                "Feststellungsdatum",
-                "ExtensionFeststellungsdatum",
-                "ExtensionFeststellungsdatumSlice"
-              ],
-              "recommended": "ExtensionFeststellungsdatum"
-            }
-          }
-        }
-      }
+      "array": true
     },
     "clinicalStatus": {
       "type": {
@@ -2855,15 +2835,6 @@ exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: KBV_PR
       "required": false,
       "excluded": false,
       "array": false,
-      "slicing": {
-        "discriminator": [
-          {
-            "type": "type",
-            "path": "$this"
-          }
-        ],
-        "rules": "open"
-      },
       "choices": [
         "onsetDateTime",
         "onsetAge",
@@ -2928,15 +2899,6 @@ exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: KBV_PR
       "required": false,
       "excluded": false,
       "array": false,
-      "slicing": {
-        "discriminator": [
-          {
-            "type": "type",
-            "path": "$this"
-          }
-        ],
-        "rules": "open"
-      },
       "choices": [
         "abatementDateTime",
         "abatementAge",
@@ -3076,6 +3038,48 @@ exports[`KBV Condition Diagnosis generation (kbv.basis@1.9.0) TypeSchema: KBV_PR
       "required": false,
       "excluded": false,
       "array": true
+    }
+  },
+  "slicing": {
+    "extension": {
+      "discriminator": [
+        {
+          "type": "value",
+          "path": "url"
+        }
+      ],
+      "rules": "open",
+      "slices": {
+        "Feststellungsdatum": {
+          "max": 1,
+          "nameCandidates": {
+            "candidates": [
+              "Feststellungsdatum",
+              "ExtensionFeststellungsdatum",
+              "ExtensionFeststellungsdatumSlice"
+            ],
+            "recommended": "ExtensionFeststellungsdatum"
+          }
+        }
+      }
+    },
+    "onset": {
+      "discriminator": [
+        {
+          "type": "type",
+          "path": "$this"
+        }
+      ],
+      "rules": "open"
+    },
+    "abatement": {
+      "discriminator": [
+        {
+          "type": "type",
+          "path": "$this"
+        }
+      ],
+      "rules": "open"
     }
   },
   "extensions": [

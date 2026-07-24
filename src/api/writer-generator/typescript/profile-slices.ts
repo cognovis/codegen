@@ -1,8 +1,10 @@
 import {
     type ConstrainedChoiceInfo,
+    type FieldSlicing,
     isChoiceDeclarationField,
     isNotChoiceDeclarationField,
     isPrimitiveIdentifier,
+    isTypeDiscriminated,
     type RegularField,
     type SnapshotProfileTypeSchema,
     type TypeIdentifier,
@@ -49,10 +51,11 @@ export const collectTypesFromSlices = (
     addType: (typeId: TypeIdentifier) => void,
 ) => {
     const pkgName = snapshot.identifier.package;
-    for (const field of Object.values(snapshot.fields)) {
-        if (!isNotChoiceDeclarationField(field) || !field.slicing?.slices || !field.type) continue;
-        const isTypeDisc = field.slicing.discriminator?.some((d) => d.type === "type") ?? false;
-        for (const slice of Object.values(field.slicing.slices)) {
+    for (const [fieldName, fieldSlicing] of Object.entries(snapshot.slicing ?? {})) {
+        const field = snapshot.fields[fieldName];
+        if (!isNotChoiceDeclarationField(field) || !fieldSlicing.slices || !field.type) continue;
+        const isTypeDisc = isTypeDiscriminated(fieldSlicing);
+        for (const slice of Object.values(fieldSlicing.slices)) {
             if (Object.keys(slice.match ?? {}).length > 0) {
                 addType(field.type);
                 const cc = slice.elements ? tsIndex.constrainedChoice(pkgName, field.type, slice.elements) : undefined;
@@ -79,11 +82,13 @@ export const collectTypesFromSlices = (
  * - The field uses a type discriminator (e.g. Bundle entry.resource) — the stub only sets
  *   resourceType, the user must provide the actual typed resource
  */
-export const collectRequiredSliceNames = (field: RegularField): string[] | undefined => {
-    if (!field.array || !field.slicing?.slices) return undefined;
-    const isTypeDisc = field.slicing.discriminator?.some((d) => d.type === "type") ?? false;
-    if (isTypeDisc) return undefined;
-    const names = Object.entries(field.slicing.slices)
+export const collectRequiredSliceNames = (
+    field: RegularField,
+    fieldSlicing: FieldSlicing | undefined,
+): string[] | undefined => {
+    if (!field.array || !fieldSlicing?.slices) return undefined;
+    if (isTypeDiscriminated(fieldSlicing)) return undefined;
+    const names = Object.entries(fieldSlicing.slices)
         .filter(([_, s]) => {
             if (s.min === undefined || s.min < 1 || !s.match || Object.keys(s.match).length === 0) return false;
             const matchKeys = new Set(Object.keys(s.match));
@@ -115,44 +120,41 @@ export type SliceDef = {
 };
 
 export const collectSliceDefs = (tsIndex: TypeSchemaIndex, snapshot: SnapshotProfileTypeSchema): SliceDef[] =>
-    Object.entries(snapshot.fields)
-        .filter(([_, field]) => isNotChoiceDeclarationField(field) && field.slicing?.slices)
-        .flatMap(([fieldName, field]) => {
-            if (!isNotChoiceDeclarationField(field) || !field.slicing?.slices || !field.type) return [];
-            const baseType = tsTypeFromIdentifier(field.type);
-            const pkgName = snapshot.identifier.package;
-            const choiceBaseNames = collectChoiceBaseNames(tsIndex, field.type);
-            const isTypeDisc = field.slicing.discriminator?.some((d) => d.type === "type") ?? false;
-            return Object.entries(field.slicing.slices)
-                .filter(([_, slice]) => Object.keys(slice.match ?? {}).length > 0)
-                .map(([sliceName, slice]) => {
-                    const matchFields = Object.keys(slice.match ?? {});
-                    const required = (slice.required ?? []).filter(
-                        (name) => !matchFields.includes(name) && !choiceBaseNames.has(name),
-                    );
-                    const cc = slice.elements
-                        ? tsIndex.constrainedChoice(pkgName, field.type, slice.elements)
-                        : undefined;
-                    // Skip flattening for primitive types — can't intersect object with boolean/string/etc.
-                    const constrainedChoice = cc && !isPrimitiveIdentifier(cc.variantType) ? cc : undefined;
-                    const resourceType = isTypeDisc ? extractResourceTypeFromMatch(slice.match ?? {}) : undefined;
-                    const typedBaseType = resourceType ? `${baseType}<${resourceType}>` : baseType;
-                    return {
-                        fieldName,
-                        baseType,
-                        typedBaseType,
-                        sliceName,
-                        baseName: slice.nameCandidates.recommended,
-                        match: slice.match ?? {},
-                        required,
-                        excluded: slice.excluded ?? [],
-                        array: Boolean(field.array),
-                        constrainedChoice,
-                        typeDiscriminator: isTypeDisc,
-                        max: slice.max ?? 0,
-                    };
-                });
-        });
+    Object.entries(snapshot.slicing ?? {}).flatMap(([fieldName, fieldSlicing]) => {
+        const field = snapshot.fields[fieldName];
+        if (!isNotChoiceDeclarationField(field) || !fieldSlicing.slices || !field.type) return [];
+        const baseType = tsTypeFromIdentifier(field.type);
+        const pkgName = snapshot.identifier.package;
+        const choiceBaseNames = collectChoiceBaseNames(tsIndex, field.type);
+        const isTypeDisc = isTypeDiscriminated(fieldSlicing);
+        return Object.entries(fieldSlicing.slices)
+            .filter(([_, slice]) => Object.keys(slice.match ?? {}).length > 0)
+            .map(([sliceName, slice]) => {
+                const matchFields = Object.keys(slice.match ?? {});
+                const required = (slice.required ?? []).filter(
+                    (name) => !matchFields.includes(name) && !choiceBaseNames.has(name),
+                );
+                const cc = slice.elements ? tsIndex.constrainedChoice(pkgName, field.type, slice.elements) : undefined;
+                // Skip flattening for primitive types — can't intersect object with boolean/string/etc.
+                const constrainedChoice = cc && !isPrimitiveIdentifier(cc.variantType) ? cc : undefined;
+                const resourceType = isTypeDisc ? extractResourceTypeFromMatch(slice.match ?? {}) : undefined;
+                const typedBaseType = resourceType ? `${baseType}<${resourceType}>` : baseType;
+                return {
+                    fieldName,
+                    baseType,
+                    typedBaseType,
+                    sliceName,
+                    baseName: slice.nameCandidates.recommended,
+                    match: slice.match ?? {},
+                    required,
+                    excluded: slice.excluded ?? [],
+                    array: Boolean(field.array),
+                    constrainedChoice,
+                    typeDiscriminator: isTypeDisc,
+                    max: slice.max ?? 0,
+                };
+            });
+    });
 
 export const generateSliceSetters = (w: TypeScript, sliceDefs: SliceDef[], snapshot: SnapshotProfileTypeSchema) => {
     const profileClassName = tsProfileClassName(snapshot);
