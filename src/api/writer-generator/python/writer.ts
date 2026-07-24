@@ -24,6 +24,7 @@ import {
     type SpecializationTypeSchema,
     type TypeIdentifier,
 } from "@typeschema/types.ts";
+import { pyReferenceTypeParam } from "./naming-utils";
 import { generateNewProfiles } from "./profile";
 
 export const resolvePyAssets = (fn: string) => {
@@ -48,6 +49,7 @@ const MAX_IMPORT_LINE_LENGTH = 100;
 const GENERIC_FIELD_REWRITES: Record<string, Record<string, string>> = {
     Coding: { code: "T" },
     CodeableConcept: { coding: "Coding[T]" },
+    Reference: { type: "T" },
 };
 
 const leafOf = (path: string[]): string => path[path.length - 1] ?? "";
@@ -588,6 +590,12 @@ export class Python extends Writer<PythonGeneratorOptions> {
                 const s: string = field.enum.values.map((e: string) => `"${e}"`).join(", ");
                 fieldType = `Literal[${s}]`;
             }
+        }
+
+        if (fieldType === "Reference" && "reference" in field && field.reference) {
+            assert(this.tsIndex !== undefined);
+            const typeParam = pyReferenceTypeParam(field, this.tsIndex);
+            if (typeParam) fieldType = `Reference[${typeParam}]`;
         }
 
         if (field.array) {
