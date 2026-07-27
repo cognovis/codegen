@@ -102,7 +102,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           name: ${{ github.ref_name }}
-          draft: true
+          draft: false
           prerelease: false
           generate_release_notes: true
           token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
