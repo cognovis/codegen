@@ -384,10 +384,11 @@ describe("TypeSchema Index", () => {
 
             expect(result.fields).toBeDefined();
             expect(result.fields?.constraintField).toBeDefined();
-            expect((result.fields?.constraintField as RegularField).type).toEqual(numberType);
-            expect((result.fields?.constraintField as RegularField).required).toBe(false);
-            expect((result.fields?.constraintField as RegularField).array).toBe(false);
-            expect((result.fields?.constraintField as RegularField).min).toBe(1);
+            const constraintField = result.fields?.constraintField as RegularField;
+            expect(constraintField.type).toEqual(numberType);
+            expect(constraintField.required).toBe(false);
+            expect(constraintField.array).toBe(false);
+            expect(constraintField.min).toBe(1);
         });
 
         it("should merge fields from multiple constraints", () => {
@@ -454,8 +455,10 @@ describe("TypeSchema Index", () => {
             expect(result.fields).toBeDefined();
             expect(result.fields?.fieldA).toBeDefined();
             expect(result.fields?.fieldB).toBeDefined();
-            expect((result.fields?.fieldA as RegularField).type).toEqual(numberType);
-            expect((result.fields?.fieldB as RegularField).type).toEqual(booleanType);
+            const fieldA = result.fields?.fieldA as RegularField;
+            const fieldB = result.fields?.fieldB as RegularField;
+            expect(fieldA.type).toEqual(numberType);
+            expect(fieldB.type).toEqual(booleanType);
         });
 
         it("should override fields when merged", () => {
@@ -518,7 +521,8 @@ describe("TypeSchema Index", () => {
             // Check specific properties rather than exact equality
             expect(result.fields).toBeDefined();
             expect(result.fields?.common).toBeDefined();
-            expect((result.fields?.common as RegularField).type).toEqual(booleanType);
+            const common = result.fields?.common as RegularField;
+            expect(common.type).toEqual(booleanType);
         });
 
         it("should handle constraints without fields", () => {
@@ -574,7 +578,8 @@ describe("TypeSchema Index", () => {
             // Check specific properties rather than exact equality
             expect(result.fields).toBeDefined();
             expect(result.fields?.fieldA).toBeDefined();
-            expect((result.fields?.fieldA as RegularField).type).toEqual(numberType);
+            const fieldA = result.fields?.fieldA as RegularField;
+            expect(fieldA.type).toEqual(numberType);
         });
 
         it("should throw error when no non-constraint schema is found", () => {
