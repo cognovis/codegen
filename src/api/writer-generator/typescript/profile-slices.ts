@@ -8,6 +8,7 @@ import {
     type TypeIdentifier,
 } from "@root/typeschema/types";
 import type { TypeSchemaIndex } from "@root/typeschema/utils";
+import { uppercaseFirstLetter } from "../utils";
 import {
     tsFieldName,
     tsProfileClassName,
@@ -18,6 +19,16 @@ import {
 } from "./name";
 import { tsGet, tsTypeFromIdentifier } from "./utils";
 import type { TypeScript } from "./writer";
+
+export const sliceAccessorBaseName = (
+    candidates: readonly string[],
+    recommended: string,
+    fieldNames: readonly string[],
+): string => {
+    const reserved = new Set(fieldNames.map((name) => uppercaseFirstLetter(name)));
+    if (!reserved.has(recommended)) return recommended;
+    return candidates.find((candidate) => !reserved.has(candidate)) ?? recommended;
+};
 
 /** Collect choice declaration field names from a base type schema */
 const collectChoiceBaseNames = (tsIndex: TypeSchemaIndex, typeId: TypeIdentifier): Set<string> => {
@@ -142,7 +153,11 @@ export const collectSliceDefs = (tsIndex: TypeSchemaIndex, snapshot: SnapshotPro
                         baseType,
                         typedBaseType,
                         sliceName,
-                        baseName: slice.nameCandidates.recommended,
+                        baseName: sliceAccessorBaseName(
+                            slice.nameCandidates.candidates,
+                            slice.nameCandidates.recommended,
+                            Object.keys(snapshot.fields),
+                        ),
                         match: slice.match ?? {},
                         required,
                         excluded: slice.excluded ?? [],
