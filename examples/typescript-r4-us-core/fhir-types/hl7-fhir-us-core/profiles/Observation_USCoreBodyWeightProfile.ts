@@ -38,7 +38,7 @@ import {
 
 export type USCoreBodyWeightProfileRaw = {
     status: ("registered" | "preliminary" | "final" | "amended" | "corrected" | "cancelled" | "entered-in-error" | "unknown");
-    subject: Reference<"Patient">;
+    subject: Reference<"Patient" /* http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient */>;
     category?: CodeableConcept<("social-history" | "vital-signs" | "imaging" | "laboratory" | "procedure" | "survey" | "exam" | "therapy" | "activity" | string)>[];
 }
 
@@ -119,11 +119,11 @@ export class USCoreBodyWeightProfile {
         return this;
     }
 
-    getSubject () : Reference<"Patient"> | undefined {
-        return this.resource.subject as Reference<"Patient"> | undefined;
+    getSubject () : Reference<"Patient" /* http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient */> | undefined {
+        return this.resource.subject as Reference<"Patient" /* http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient */> | undefined;
     }
 
-    setSubject (value: Reference<"Patient">) : this {
+    setSubject (value: Reference<"Patient" /* http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient */>) : this {
         Object.assign(this.resource, { subject: value });
         return this;
     }

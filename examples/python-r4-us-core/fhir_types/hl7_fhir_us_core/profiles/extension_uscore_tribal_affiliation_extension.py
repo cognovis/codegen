@@ -11,7 +11,7 @@ from fhir_types.hl7_fhir_r4_core.base import Extension
 from fhir_types.profile_helpers import (
     _get_key, apply_slice_match, build_resource, ensure_slice_defaults, get_array_slice, get_extension_value, \
     is_extension, is_record, matches_value, push_extension, set_array_slice, strip_match_keys, unwrap_slice_choice, \
-    validate_fixed_value, validate_required, validate_slice_cardinality, wrap_slice_choice
+    validate_fixed_value, validate_required, validate_slice_cardinality, validate_slice_fields, wrap_slice_choice
 )
 
 
@@ -165,7 +165,15 @@ class UscoreTribalAffiliationExtension:
         warnings: list[str] = []
         errors.extend(validate_required(self._resource, profile_name, "extension"))
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "extension", {"url":"tribalAffiliation"}, "tribalAffiliation", 1, 1))
+        errors.extend(
+            validate_slice_fields(self._resource, profile_name, "extension", {"url":"tribalAffiliation"}, "tribalAffiliation", [
+                "value","valueCodeableConcept"
+        ]))
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "extension", {"url":"isEnrolled"}, "isEnrolled", 0, 1))
+        errors.extend(
+            validate_slice_fields(self._resource, profile_name, "extension", {"url":"isEnrolled"}, "isEnrolled", [
+                "value","valueBoolean"
+        ]))
         errors.extend(validate_required(self._resource, profile_name, "url"))
         errors.extend(validate_fixed_value(self._resource, profile_name, "url", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation"))
         return {"errors": errors, "warnings": warnings}

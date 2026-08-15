@@ -290,7 +290,7 @@ const computeMatchFromSchema = (
     return result;
 };
 
-const buildSlicing = (fieldName: string, element: FHIRSchemaElement): FieldSlicing | undefined => {
+export const buildSlicing = (fieldName: string, element: FHIRSchemaElement): FieldSlicing | undefined => {
     const slicing = element.slicing;
     if (!slicing) return undefined;
 
@@ -397,7 +397,10 @@ export const mkField = (
         valueConstraint = { kind: "fixed", type: element.fixed.type, value: element.fixed.value };
     }
 
-    // Auto-populate valueConstraint for CodeableConcept fields with fixed coding slices.
+    // Auto-populate valueConstraint only when required coding slices fully fix
+    // each Coding. A discriminator-only match (for example a fixed system with
+    // a required user-supplied code) constrains the slice but does not fix the
+    // parent CodeableConcept value.
     // Uses rawElement because the resolved element snapshot has sub-elements stripped.
     const elemForCodingCheck = rawElement ?? element;
     if (!valueConstraint && elemForCodingCheck.elements?.coding?.slicing?.slices) {
@@ -411,7 +414,8 @@ export const mkField = (
                     s.min >= 1 &&
                     s.match &&
                     typeof s.match === "object" &&
-                    Object.keys(s.match as object).length > 0,
+                    typeof (s.match as FHIRCoding).system === "string" &&
+                    typeof (s.match as FHIRCoding).code === "string",
             );
         if (allRequired) {
             const codingValues = allSliceValues.flatMap((s) => (s.match ? [s.match as FHIRCoding] : []));
@@ -435,7 +439,6 @@ export const mkField = (
         array: element.array || false,
         min: element.min,
         max: element.max,
-        slicing: buildSlicing(path[path.length - 1] ?? "", element),
 
         choices: element.choices,
         choiceOf: element.choiceOf,
@@ -459,6 +462,5 @@ export function mkNestedField(
         array: element.array || false,
         required: isRequired(register, fhirSchema, path),
         excluded: isExcluded(register, fhirSchema, path),
-        slicing: buildSlicing(path[path.length - 1] ?? "", element),
     };
 }

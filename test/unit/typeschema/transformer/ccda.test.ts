@@ -2,13 +2,11 @@ import { describe, expect, it } from "bun:test";
 import type { CanonicalUrl, SpecializationTypeSchema } from "@root/typeschema/types";
 import { ccdaPackage, mkCCDARegister, mkTestLogger, registerFsAndMkTs } from "@typeschema-test/utils";
 
-const skipMe = false;
-
 describe("TypeSchema CCDA generation", async () => {
     const ccda = await mkCCDARegister();
     const logger = mkTestLogger();
 
-    it.skipIf(skipMe)("http://hl7.org/fhir/StructureDefinition/workflow-protectiveFactor", async () => {
+    it("http://hl7.org/fhir/StructureDefinition/workflow-protectiveFactor", async () => {
         const resource = ccda.resolveFs(
             ccdaPackage,
             "http://hl7.org/fhir/StructureDefinition/workflow-protectiveFactor" as CanonicalUrl,
@@ -67,7 +65,7 @@ describe("TypeSchema CCDA generation", async () => {
         });
     });
 
-    it.skipIf(skipMe)("http://hl7.org/cda/stds/core/StructureDefinition/ON", async () => {
+    it("http://hl7.org/cda/stds/core/StructureDefinition/ON", async () => {
         const resource = ccda.resolveFs(
             ccdaPackage,
             "http://hl7.org/cda/stds/core/StructureDefinition/ON" as CanonicalUrl,
@@ -159,7 +157,7 @@ describe("TypeSchema CCDA generation", async () => {
         });
     });
 
-    it.skipIf(skipMe)("http://hl7.org/fhir/StructureDefinition/ehrsrle-auditevent", async () => {
+    it("http://hl7.org/fhir/StructureDefinition/ehrsrle-auditevent", async () => {
         const resource = ccda.resolveFs(
             ccdaPackage,
             "http://hl7.org/fhir/StructureDefinition/ehrsrle-auditevent" as CanonicalUrl,

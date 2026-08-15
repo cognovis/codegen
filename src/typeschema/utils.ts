@@ -15,6 +15,7 @@ import {
     type ConstrainedChoiceInfo,
     concatIdentifiers,
     type Field,
+    type FieldSlicing,
     type GenericParam,
     type Identifier,
     isChoiceDeclarationField,
@@ -630,8 +631,11 @@ export const mkTypeSchemaIndex = (
             throw new Error(`No non-constraint schema found in hierarchy for ${schema.identifier.name}`);
 
         const mergedFields = {} as Record<string, Field>;
+        const mergedSlicing = {} as Record<string, FieldSlicing>;
         for (const anySchema of constraintSchemas.slice().reverse()) {
             const schema = anySchema as SpecializationTypeSchema;
+            // Leaf-most slicing wins per field, mirroring the field merge below.
+            if (schema.slicing) Object.assign(mergedSlicing, schema.slicing);
             if (!schema.fields) continue;
 
             for (const [fieldName, fieldConstraints] of Object.entries(schema.fields)) {
@@ -680,6 +684,7 @@ export const mkTypeSchemaIndex = (
             ...schema,
             base: nonConstraintSchema.identifier,
             fields: narrowedFields,
+            slicing: Object.keys(mergedSlicing).length > 0 ? mergedSlicing : undefined,
             dependencies: dependencies,
             extensions: mergedExtensions.length > 0 ? mergedExtensions : undefined,
         };
@@ -730,6 +735,7 @@ export const mkTypeSchemaIndex = (
             base: flat.base,
             description: flat.description,
             fields: flatFields,
+            slicing: flat.slicing,
             inheritedRequiredFields: inheritedRequiredFields.length > 0 ? inheritedRequiredFields : undefined,
             extensions: flat.extensions,
             dependencies: flat.dependencies,

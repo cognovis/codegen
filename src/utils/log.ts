@@ -20,8 +20,7 @@ export type CodegenTag =
     | "#duplicateCanonical"
     | "#resolveBase"
     | "#resolveCollisionMiss"
-    | "#nonMonotonicChoice"
-    | "#canonicalManagerFallback";
+    | "#nonMonotonicChoice";
 
 export type CodegenLog = Log<CodegenTag>;
 export type CodegenLogManager = LogManager<CodegenTag>;

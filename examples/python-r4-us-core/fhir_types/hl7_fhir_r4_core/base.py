@@ -61,7 +61,7 @@ class Age(Quantity):
 
 class Annotation(Element):
     model_config = ConfigDict(validate_by_name=True, serialize_by_alias=True, extra="forbid")
-    authorReference: Reference | None = Field(None, alias="authorReference", serialization_alias="authorReference")
+    authorReference: Reference[Literal["Organization", "Patient", "Practitioner", "RelatedPerson"]] | None = Field(None, alias="authorReference", serialization_alias="authorReference")
     authorString: str | None = Field(None, alias="authorString", serialization_alias="authorString")
     authorStringExtension: Element | None = Field(None, alias="_authorString", serialization_alias="_authorString")
     text: str = Field(alias="text", serialization_alias="text")
@@ -183,7 +183,7 @@ class DataRequirement(Element):
     profileExtension: PyList[Element | None] | None = Field(None, alias="_profile", serialization_alias="_profile")
     sort: PyList[DataRequirementSort] | None = Field(None, alias="sort", serialization_alias="sort")
     subjectCodeableConcept: CodeableConcept | None = Field(None, alias="subjectCodeableConcept", serialization_alias="subjectCodeableConcept")
-    subjectReference: Reference | None = Field(None, alias="subjectReference", serialization_alias="subjectReference")
+    subjectReference: Reference[Literal["Group"]] | None = Field(None, alias="subjectReference", serialization_alias="subjectReference")
     type: str = Field(alias="type", serialization_alias="type")
     typeExtension: Element | None = Field(None, alias="_type", serialization_alias="_type")
 
@@ -346,7 +346,7 @@ class HumanName(Element):
 
 class Identifier(Element):
     model_config = ConfigDict(validate_by_name=True, serialize_by_alias=True, extra="forbid")
-    assigner: Reference | None = Field(None, alias="assigner", serialization_alias="assigner")
+    assigner: Reference[Literal["Organization"]] | None = Field(None, alias="assigner", serialization_alias="assigner")
     period: Period | None = Field(None, alias="period", serialization_alias="period")
     system: str | None = Field(None, alias="system", serialization_alias="system")
     systemExtension: Element | None = Field(None, alias="_system", serialization_alias="_system")
@@ -425,14 +425,14 @@ class Ratio(Element):
     numerator: Quantity | None = Field(None, alias="numerator", serialization_alias="numerator")
 
 
-class Reference(Element):
+class Reference(Element, Generic[T]):
     model_config = ConfigDict(validate_by_name=True, serialize_by_alias=True, extra="forbid")
     display: str | None = Field(None, alias="display", serialization_alias="display")
     displayExtension: Element | None = Field(None, alias="_display", serialization_alias="_display")
     identifier: Identifier | None = Field(None, alias="identifier", serialization_alias="identifier")
     reference: str | None = Field(None, alias="reference", serialization_alias="reference")
     referenceExtension: Element | None = Field(None, alias="_reference", serialization_alias="_reference")
-    type: str | None = Field(None, alias="type", serialization_alias="type")
+    type: T | None = Field(None, alias="type", serialization_alias="type")
     typeExtension: Element | None = Field(None, alias="_type", serialization_alias="_type")
 
 
@@ -474,7 +474,7 @@ class Signature(Element):
     model_config = ConfigDict(validate_by_name=True, serialize_by_alias=True, extra="forbid")
     data: str | None = Field(None, alias="data", serialization_alias="data")
     dataExtension: Element | None = Field(None, alias="_data", serialization_alias="_data")
-    onBehalfOf: Reference | None = Field(None, alias="onBehalfOf", serialization_alias="onBehalfOf")
+    onBehalfOf: Reference[Literal["Device", "Organization", "Patient", "Practitioner", "PractitionerRole", "RelatedPerson"]] | None = Field(None, alias="onBehalfOf", serialization_alias="onBehalfOf")
     sigFormat: str | None = Field(None, alias="sigFormat", serialization_alias="sigFormat")
     sigFormatExtension: Element | None = Field(None, alias="_sigFormat", serialization_alias="_sigFormat")
     targetFormat: str | None = Field(None, alias="targetFormat", serialization_alias="targetFormat")
@@ -482,7 +482,7 @@ class Signature(Element):
     type: PyList[Coding[Literal["1.2.840.10065.1.12.1.1", "1.2.840.10065.1.12.1.2", "1.2.840.10065.1.12.1.3", "1.2.840.10065.1.12.1.4", "1.2.840.10065.1.12.1.5", "1.2.840.10065.1.12.1.6", "1.2.840.10065.1.12.1.7", "1.2.840.10065.1.12.1.8", "1.2.840.10065.1.12.1.9", "1.2.840.10065.1.12.1.10", "1.2.840.10065.1.12.1.11", "1.2.840.10065.1.12.1.12", "1.2.840.10065.1.12.1.13", "1.2.840.10065.1.12.1.14", "1.2.840.10065.1.12.1.15", "1.2.840.10065.1.12.1.16", "1.2.840.10065.1.12.1.17", "1.2.840.10065.1.12.1.18"] | str]] = Field(alias="type", serialization_alias="type")
     when: str = Field(alias="when", serialization_alias="when")
     whenExtension: Element | None = Field(None, alias="_when", serialization_alias="_when")
-    who: Reference = Field(alias="who", serialization_alias="who")
+    who: Reference[Literal["Device", "Organization", "Patient", "Practitioner", "PractitionerRole", "RelatedPerson"]] = Field(alias="who", serialization_alias="who")
 
 
 class TimingRepeat(Element):
@@ -524,7 +524,7 @@ class TriggerDefinition(Element):
     timingDateExtension: Element | None = Field(None, alias="_timingDate", serialization_alias="_timingDate")
     timingDateTime: str | None = Field(None, alias="timingDateTime", serialization_alias="timingDateTime")
     timingDateTimeExtension: Element | None = Field(None, alias="_timingDateTime", serialization_alias="_timingDateTime")
-    timingReference: Reference | None = Field(None, alias="timingReference", serialization_alias="timingReference")
+    timingReference: Reference[Literal["Schedule"]] | None = Field(None, alias="timingReference", serialization_alias="timingReference")
     timingTiming: Timing | None = Field(None, alias="timingTiming", serialization_alias="timingTiming")
     type: Literal["named-event", "periodic", "data-changed", "data-added", "data-modified", "data-removed", "data-accessed", "data-access-ended"] = Field(alias="type", serialization_alias="type")
     typeExtension: Element | None = Field(None, alias="_type", serialization_alias="_type")
@@ -536,6 +536,6 @@ class UsageContext(Element):
     valueCodeableConcept: CodeableConcept | None = Field(None, alias="valueCodeableConcept", serialization_alias="valueCodeableConcept")
     valueQuantity: Quantity | None = Field(None, alias="valueQuantity", serialization_alias="valueQuantity")
     valueRange: Range | None = Field(None, alias="valueRange", serialization_alias="valueRange")
-    valueReference: Reference | None = Field(None, alias="valueReference", serialization_alias="valueReference")
+    valueReference: Reference[Literal["Group", "HealthcareService", "InsurancePlan", "Location", "Organization", "PlanDefinition", "ResearchStudy"]] | None = Field(None, alias="valueReference", serialization_alias="valueReference")
 
 

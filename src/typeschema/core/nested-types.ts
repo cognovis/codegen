@@ -10,13 +10,14 @@ import type { CodegenLog } from "@root/utils/log";
 import type {
     CanonicalUrl,
     Field,
+    FieldSlicing,
     Name,
     NestedIdentifier,
     NestedTypeSchema,
     RichFHIRSchema,
     TypeIdentifier,
 } from "../types";
-import { mkField, mkNestedField } from "./field-builder";
+import { buildSlicing, mkField, mkNestedField } from "./field-builder";
 
 /**
  * Check whether the specialization chain defines structural sub-elements at `path`.
@@ -123,8 +124,9 @@ function transformNestedElements(
     parentPath: string[],
     elements: Record<string, FHIRSchemaElement>,
     logger?: CodegenLog,
-): Record<string, Field> {
+): { fields: Record<string, Field>; slicing?: Record<string, FieldSlicing> } {
     const fields: Record<string, Field> = {};
+    const slicing: Record<string, FieldSlicing> = {};
 
     // Collect all sub-element keys from the genealogy chain, not just the current type.
     // This ensures constraint profiles include inherited sub-elements from base types.
@@ -148,9 +150,11 @@ function transformNestedElements(
         } else {
             fields[key] = mkField(register, fhirSchema, path, elemSnapshot, logger);
         }
+        const fieldSlicing = buildSlicing(key, elemSnapshot);
+        if (fieldSlicing) slicing[key] = fieldSlicing;
     }
 
-    return fields;
+    return { fields, slicing: Object.keys(slicing).length > 0 ? slicing : undefined };
 }
 
 export function mkNestedTypes(
@@ -193,12 +197,13 @@ export function mkNestedTypes(
             url: baseUrl,
         };
 
-        const fields = transformNestedElements(register, fhirSchema, path, element.elements ?? {}, logger);
+        const { fields, slicing } = transformNestedElements(register, fhirSchema, path, element.elements ?? {}, logger);
 
         const nestedType: NestedTypeSchema = {
             identifier,
             base,
             fields,
+            slicing,
         };
         nestedTypes.push(nestedType);
     }

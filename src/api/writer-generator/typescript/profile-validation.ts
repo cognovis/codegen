@@ -1,5 +1,6 @@
 import {
     type ChoiceFieldInstance,
+    type FieldSlicing,
     isChoiceDeclarationField,
     isChoiceInstanceField,
     type RegularField,
@@ -18,6 +19,7 @@ export const collectRegularFieldValidation = (
     resolveRef: (ref: TypeIdentifier) => TypeIdentifier,
     canonicalUrlExpr?: { url: string; expr: string },
     tsIndex?: TypeSchemaIndex,
+    fieldSlicing?: FieldSlicing,
 ) => {
     if (field.excluded) {
         errors.push(`...validateExcluded(res, profileName, ${JSON.stringify(name)})`);
@@ -47,8 +49,8 @@ export const collectRegularFieldValidation = (
             `...validateReference(res, profileName, ${JSON.stringify(name)}, ${JSON.stringify(field.reference.resource.map((ref) => resolveRef(ref).name))})`,
         );
 
-    if (field.slicing?.slices) {
-        for (const [sliceName, slice] of Object.entries(field.slicing.slices)) {
+    if (fieldSlicing?.slices) {
+        for (const [sliceName, slice] of Object.entries(fieldSlicing.slices)) {
             const match = slice.match ?? {};
             if (Object.keys(match).length === 0) continue;
             if (slice.min !== undefined || slice.max !== undefined) {
@@ -114,6 +116,7 @@ export const generateValidateMethod = (
                 tsIndex.findLastSpecializationByIdentifier,
                 canonicalUrlExpr,
                 tsIndex,
+                snapshot.slicing?.[name],
             );
         }
 

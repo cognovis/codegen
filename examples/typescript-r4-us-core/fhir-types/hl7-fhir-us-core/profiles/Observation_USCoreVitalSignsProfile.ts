@@ -38,7 +38,7 @@ import {
 export type USCoreVitalSignsProfileRaw = {
     status: ("registered" | "preliminary" | "final" | "amended" | "corrected" | "cancelled" | "entered-in-error" | "unknown");
     code: CodeableConcept<("2708-6" | "29463-7" | "3140-1" | "3150-0" | "3151-8" | "39156-5" | "59408-5" | "59575-1" | "59576-9" | "77606-2" | "8287-5" | "8289-1" | "8302-2" | "8306-3" | "8310-5" | "8462-4" | "8478-0" | "8480-6" | "8867-4" | "9279-1" | "9843-4" | string)>;
-    subject: Reference<"Patient">;
+    subject: Reference<"Patient" /* http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient */>;
     category?: CodeableConcept<("social-history" | "vital-signs" | "imaging" | "laboratory" | "procedure" | "survey" | "exam" | "therapy" | "activity" | string)>[];
 }
 
@@ -127,11 +127,11 @@ export class USCoreVitalSignsProfile {
         return this;
     }
 
-    getSubject () : Reference<"Patient"> | undefined {
-        return this.resource.subject as Reference<"Patient"> | undefined;
+    getSubject () : Reference<"Patient" /* http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient */> | undefined {
+        return this.resource.subject as Reference<"Patient" /* http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient */> | undefined;
     }
 
-    setSubject (value: Reference<"Patient">) : this {
+    setSubject (value: Reference<"Patient" /* http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient */>) : this {
         Object.assign(this.resource, { subject: value });
         return this;
     }

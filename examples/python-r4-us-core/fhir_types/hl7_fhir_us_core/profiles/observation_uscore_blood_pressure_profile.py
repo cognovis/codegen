@@ -13,8 +13,9 @@ from fhir_types.hl7_fhir_r4_core.base import (
 from fhir_types.hl7_fhir_r4_core.observation import ObservationComponent
 from fhir_types.profile_helpers import (
     apply_slice_match, build_resource, ensure_profile, ensure_slice_defaults, get_array_slice, matches_value, \
-    set_array_slice, strip_match_keys, unwrap_slice_choice, validate_choice_required, validate_enum, validate_fixed_value, \
-    validate_must_support, validate_reference, validate_required, validate_slice_cardinality, wrap_slice_choice
+    set_array_slice, strip_match_keys, unwrap_slice_choice, validate_choice_prohibited, validate_choice_required, \
+    validate_enum, validate_fixed_value, validate_must_support, validate_reference, validate_required, validate_slice_cardinality, \
+    validate_slice_fields, wrap_slice_choice
 )
 
 
@@ -51,7 +52,7 @@ class UscoreBloodPressureProfile:
         return cls(resource)
 
     @classmethod
-    def create_resource(cls, *, category: list[CodeableConcept] | None = None, component: list[BackboneElement] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference) -> Observation:
+    def create_resource(cls, *, category: list[CodeableConcept] | None = None, component: list[BackboneElement] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference[Literal["Patient"]]) -> Observation:
         category_with_defaults = ensure_slice_defaults(list(category or []), cls._vscat_slice_match)
         component_with_defaults = ensure_slice_defaults(
             list(component or []),
@@ -71,7 +72,7 @@ class UscoreBloodPressureProfile:
         )
 
     @classmethod
-    def create(cls, *, category: list[CodeableConcept] | None = None, component: list[BackboneElement] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference) -> "UscoreBloodPressureProfile":
+    def create(cls, *, category: list[CodeableConcept] | None = None, component: list[BackboneElement] | None = None, status: Literal["registered", "preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error", "unknown"], subject: Reference[Literal["Patient"]]) -> "UscoreBloodPressureProfile":
         return cls.apply(cls.create_resource(category=category, component=component, status=status, subject=subject))
 
     def to_resource(self) -> Observation:
@@ -84,10 +85,10 @@ class UscoreBloodPressureProfile:
         setattr(self._resource, "status", value)
         return self
 
-    def get_subject(self) -> Reference | None:
-        return cast('Reference | None', getattr(self._resource, "subject", None))
+    def get_subject(self) -> Reference[Literal["Patient"]] | None:  # http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient
+        return cast('Reference[Literal["Patient"]] | None', getattr(self._resource, "subject", None))
 
-    def set_subject(self, value: Reference) -> "UscoreBloodPressureProfile":
+    def set_subject(self, value: Reference[Literal["Patient"]]) -> "UscoreBloodPressureProfile":  # http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient
         setattr(self._resource, "subject", value)
         return self
 
@@ -385,22 +386,61 @@ class UscoreBloodPressureProfile:
         errors: list[str] = []
         warnings: list[str] = []
         errors.extend(validate_required(self._resource, profile_name, "status"))
-        errors.extend(validate_enum(self._resource, profile_name, "status", ["registered","preliminary","final","amended","corrected","cancelled","entered-in-error","unknown"]))
+        errors.extend(
+            validate_enum(self._resource, profile_name, "status", [
+                "registered","preliminary","final","amended","corrected","cancelled","entered-in-error","unknown"
+        ]))
         errors.extend(validate_required(self._resource, profile_name, "category"))
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "category", {"coding":[{"code":"vital-signs","system":"http://terminology.hl7.org/CodeSystem/observation-category"}]}, "VSCat", 1, 1))
         errors.extend(validate_required(self._resource, profile_name, "code"))
         errors.extend(validate_fixed_value(self._resource, profile_name, "code", {"coding":[{"system":"http://loinc.org","code":"85354-9"}]}))
         errors.extend(validate_required(self._resource, profile_name, "subject"))
-        errors.extend(validate_reference(self._resource, profile_name, "subject", ["Patient"]))
-        errors.extend(validate_choice_required(self._resource, profile_name, ["effectiveDateTime","effectivePeriod"]))
-        errors.extend(validate_reference(self._resource, profile_name, "hasMember", ["MolecularSequence","QuestionnaireResponse","Observation"]))
-        errors.extend(validate_reference(self._resource, profile_name, "derivedFrom", ["DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"]))
+        errors.extend(
+            validate_reference(self._resource, profile_name, "subject", [
+                "Patient"
+        ]))
+        errors.extend(
+            validate_choice_required(self._resource, profile_name, [
+                "effectiveDateTime","effectivePeriod"
+        ]))
+        errors.extend(
+            validate_choice_prohibited(self._resource, profile_name, [
+                "effectiveTiming","effectiveInstant"
+        ]))
+        errors.extend(
+            validate_reference(self._resource, profile_name, "hasMember", [
+                "MolecularSequence","QuestionnaireResponse","Observation"
+        ]))
+        errors.extend(
+            validate_reference(self._resource, profile_name, "derivedFrom", [
+                "DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"
+        ]))
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "component", {"code":{"coding":[{"system":"http://loinc.org","code":"8480-6"}]}}, "systolic", 1, 1))
+        errors.extend(
+            validate_slice_fields(self._resource, profile_name, "component", {"code":{"coding":[{"system":"http://loinc.org","code":"8480-6"}]}}, "systolic", [
+                "valueQuantity"
+        ]))
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "component", {"code":{"coding":[{"system":"http://loinc.org","code":"8462-4"}]}}, "diastolic", 1, 1))
-        errors.extend(validate_reference(self._resource, profile_name, "performer", ["PractitionerRole","CareTeam","Organization","Patient","Practitioner","RelatedPerson"]))
-        warnings.extend(validate_enum(self._resource, profile_name, "category", ["social-history","vital-signs","imaging","laboratory","procedure","survey","exam","therapy","activity"]))
-        warnings.extend(validate_enum(self._resource, profile_name, "code", ["2708-6","29463-7","3140-1","3150-0","3151-8","39156-5","59408-5","59575-1","59576-9","77606-2","8287-5","8289-1","8302-2","8306-3","8310-5","8462-4","8478-0","8480-6","8867-4","9279-1","9843-4"]))
-        warnings.extend(validate_enum(self._resource, profile_name, "dataAbsentReason", ["unknown","asked-unknown","temp-unknown","not-asked","asked-declined","masked","not-applicable","unsupported","as-text","error","not-a-number","negative-infinity","positive-infinity","not-performed","not-permitted"]))
+        errors.extend(
+            validate_slice_fields(self._resource, profile_name, "component", {"code":{"coding":[{"system":"http://loinc.org","code":"8462-4"}]}}, "diastolic", [
+                "valueQuantity"
+        ]))
+        errors.extend(
+            validate_reference(self._resource, profile_name, "performer", [
+                "PractitionerRole","CareTeam","Organization","Patient","Practitioner","RelatedPerson"
+        ]))
+        warnings.extend(
+            validate_enum(self._resource, profile_name, "category", [
+                "social-history","vital-signs","imaging","laboratory","procedure","survey","exam","therapy","activity"
+        ]))
+        warnings.extend(
+            validate_enum(self._resource, profile_name, "code", [
+                "2708-6","29463-7","3140-1","3150-0","3151-8","39156-5","59408-5","59575-1","59576-9","77606-2","8287-5","8289-1","8302-2","8306-3","8310-5","8462-4","8478-0","8480-6","8867-4","9279-1","9843-4"
+        ]))
+        warnings.extend(
+            validate_enum(self._resource, profile_name, "dataAbsentReason", [
+                "unknown","asked-unknown","temp-unknown","not-asked","asked-declined","masked","not-applicable","unsupported","as-text","error","not-a-number","negative-infinity","positive-infinity","not-performed","not-permitted"
+        ]))
         warnings.extend(validate_must_support(self._resource, profile_name, "dataAbsentReason"))
         warnings.extend(validate_must_support(self._resource, profile_name, "performer"))
         return {"errors": errors, "warnings": warnings}

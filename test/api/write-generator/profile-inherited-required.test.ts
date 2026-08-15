@@ -72,3 +72,41 @@ describe("Profile inherited base-required fields (codegen-8iw)", async () => {
         expect(file).toMatch(/import\s*\{[^}]*\bvalidateRequired\b/);
     });
 });
+
+describe("Profile inherited base-required fields, Python writer (codegen-8iw)", async () => {
+    const result = await new APIBuilder({ logger: mkSilentLogger() })
+        .localStructureDefinitions({
+            package: { name: "cognovis.test.praxis", version: "0.0.1" },
+            path: FIXTURE_PATH,
+            dependencies: [{ name: "hl7.fhir.r4.core", version: "4.0.1" }],
+        })
+        .python({ inMemoryOnly: true, generateProfile: true, client: "none" })
+        .generate();
+
+    const profileKey = Object.keys(result.filesGenerated.python ?? {}).find((k) =>
+        k.includes("provenance_praxis_proposal_provenance"),
+    );
+    const profileFile = () => (profileKey ? result.filesGenerated.python![profileKey] : undefined);
+
+    it("should succeed", () => {
+        expect(result.success).toBeTrue();
+    });
+
+    it("generates the Provenance profile class", () => {
+        expect(profileKey).toBeDefined();
+    });
+
+    it("emits validate_required() for the differential-stated required fields", () => {
+        const file = profileFile();
+        expect(file).toBeDefined();
+        expect(file).toContain('validate_required(self._resource, profile_name, "activity")');
+        expect(file).toContain('validate_required(self._resource, profile_name, "agent")');
+    });
+
+    it("emits validate_required() for base-R4 required fields the profile inherits", () => {
+        const file = profileFile();
+        expect(file).toBeDefined();
+        expect(file).toContain('validate_required(self._resource, profile_name, "target")');
+        expect(file).toContain('validate_required(self._resource, profile_name, "recorded")');
+    });
+});

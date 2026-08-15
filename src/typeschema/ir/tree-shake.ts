@@ -212,6 +212,12 @@ export const treeShakeTypeSchema = (schema: TypeSchema, rule: TreeShakeRule, _lo
         mutableIgnoreExtensions(schema, rule.ignoreExtensions);
     }
 
+    // Slicing entries follow their fields: drop slicing for fields removed above.
+    if (schema.slicing) {
+        const kept = Object.fromEntries(Object.entries(schema.slicing).filter(([name]) => schema.fields?.[name]));
+        schema.slicing = Object.keys(kept).length > 0 ? kept : undefined;
+    }
+
     if (schema.nested) {
         const usedTypes = new Set<CanonicalUrl>();
         const collectUsedNestedTypes = (s: { fields?: Record<string, Field> }) => {
