@@ -16,4 +16,14 @@ describe("sliceAccessorBaseName", () => {
             "SystolicBP",
         );
     });
+
+    test("allocates a distinct accessor when an earlier slice selected the same candidate", () => {
+        const candidates = ["Category", "ComponentCategory", "OtherComponentCategory"];
+        const fieldNames = ["category", "component"];
+        const first = sliceAccessorBaseName(candidates, "Category", fieldNames);
+        const second = sliceAccessorBaseName(candidates, "Category", fieldNames, new Set([first]));
+
+        expect(first).toBe("ComponentCategory");
+        expect(second).toBe("OtherComponentCategory");
+    });
 });

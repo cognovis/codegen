@@ -26,8 +26,9 @@ export const sliceAccessorBaseName = (
     candidates: readonly string[],
     recommended: string,
     fieldNames: readonly string[],
+    reservedNames: ReadonlySet<string> = new Set(),
 ): string => {
-    const reserved = new Set(fieldNames.map((name) => uppercaseFirstLetter(name)));
+    const reserved = new Set([...fieldNames.map((name) => uppercaseFirstLetter(name)), ...reservedNames]);
     if (!reserved.has(recommended)) return recommended;
     return candidates.find((candidate) => !reserved.has(candidate)) ?? recommended;
 };
@@ -130,8 +131,9 @@ export type SliceDef = {
     max: number;
 };
 
-export const collectSliceDefs = (tsIndex: TypeSchemaIndex, snapshot: SnapshotProfileTypeSchema): SliceDef[] =>
-    Object.entries(snapshot.slicing ?? {}).flatMap(([fieldName, fieldSlicing]) => {
+export const collectSliceDefs = (tsIndex: TypeSchemaIndex, snapshot: SnapshotProfileTypeSchema): SliceDef[] => {
+    const reservedBaseNames = new Set<string>();
+    return Object.entries(snapshot.slicing ?? {}).flatMap(([fieldName, fieldSlicing]) => {
         const field = snapshot.fields[fieldName];
         if (!isNotChoiceDeclarationField(field) || !fieldSlicing.slices || !field.type) return [];
         const baseType = tsTypeFromIdentifier(field.type);
@@ -150,16 +152,19 @@ export const collectSliceDefs = (tsIndex: TypeSchemaIndex, snapshot: SnapshotPro
                 const constrainedChoice = cc && !isPrimitiveIdentifier(cc.variantType) ? cc : undefined;
                 const resourceType = isTypeDisc ? extractResourceTypeFromMatch(slice.match ?? {}) : undefined;
                 const typedBaseType = resourceType ? `${baseType}<${resourceType}>` : baseType;
+                const baseName = sliceAccessorBaseName(
+                    slice.nameCandidates.candidates,
+                    slice.nameCandidates.recommended,
+                    Object.keys(snapshot.fields),
+                    reservedBaseNames,
+                );
+                reservedBaseNames.add(baseName);
                 return {
                     fieldName,
                     baseType,
                     typedBaseType,
                     sliceName,
-                    baseName: sliceAccessorBaseName(
-                        slice.nameCandidates.candidates,
-                        slice.nameCandidates.recommended,
-                        Object.keys(snapshot.fields),
-                    ),
+                    baseName,
                     match: slice.match ?? {},
                     required,
                     excluded: slice.excluded ?? [],
@@ -170,6 +175,7 @@ export const collectSliceDefs = (tsIndex: TypeSchemaIndex, snapshot: SnapshotPro
                 };
             });
     });
+};
 
 export const generateSliceSetters = (w: TypeScript, sliceDefs: SliceDef[], snapshot: SnapshotProfileTypeSchema) => {
     const profileClassName = tsProfileClassName(snapshot);
