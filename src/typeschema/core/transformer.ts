@@ -147,9 +147,7 @@ export function transformFhirSchema(register: Register, fhirSchema: RichFHIRSche
         const baseUrl = register.ensureSpecializationCanonicalUrl(fhirSchema.base);
         const baseFs = register.resolveFs(fhirSchema.package_meta, baseUrl);
         const isVirtualLogicalBase =
-            fhirSchema.kind === "logical" &&
-            fhirSchema.derivation === "specialization" &&
-            isFhirBaseCanonical(baseUrl);
+            fhirSchema.kind === "logical" && fhirSchema.derivation === "specialization" && isFhirBaseCanonical(baseUrl);
         if (!baseFs && !isVirtualLogicalBase)
             throw new Error(
                 `Base resource not found '${fhirSchema.base}' for <${fhirSchema.url}> from ${packageMetaToFhir(fhirSchema.package_meta)}`,
