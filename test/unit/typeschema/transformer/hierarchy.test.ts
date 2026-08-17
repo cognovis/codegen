@@ -118,6 +118,53 @@ describe("TypeSchema: Nested types", async () => {
     });
 });
 
+describe("TypeSchema: FHIR logical model roots", async () => {
+    const r4 = await mkR4Register();
+    const logger = mkTestLogger();
+
+    for (const base of [
+        "http://hl7.org/fhir/StructureDefinition/Base|4.0.1",
+        "http://hl7.org/fhir/StructureDefinition/Base",
+    ]) {
+        it(`accepts virtual logical-model root ${base}`, async () => {
+            const logicalModel: PFS = {
+                base,
+                url: `http://example.org/StructureDefinition/Document-${base.includes("|") ? "versioned" : "plain"}`,
+                name: "Document",
+                kind: "logical",
+                derivation: "specialization",
+                elements: {
+                    title: { type: "string" },
+                },
+            };
+
+            expect(await registerFsAndMkTs(r4, logicalModel, logger)).toMatchObject([
+                {
+                    identifier: { kind: "logical", name: "Document" },
+                    base: undefined,
+                    fields: {
+                        title: { type: { name: "string" } },
+                    },
+                },
+            ]);
+        });
+    }
+
+    it("still rejects a logical model with an unknown missing parent", async () => {
+        const logicalModel: PFS = {
+            base: "http://example.org/StructureDefinition/MissingParent",
+            url: "http://example.org/StructureDefinition/BrokenDocument",
+            name: "BrokenDocument",
+            kind: "logical",
+            derivation: "specialization",
+        };
+
+        await expect(registerFsAndMkTs(r4, logicalModel, logger)).rejects.toThrow(
+            "Base resource not found 'http://example.org/StructureDefinition/MissingParent'",
+        );
+    });
+});
+
 const viewDefinitionSD = {
     name: "ViewDefinition",
     url: "https://sql-on-fhir.org/ig/StructureDefinition/ViewDefinition",
