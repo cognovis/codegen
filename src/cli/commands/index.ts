@@ -11,6 +11,7 @@ import type { LogLevel } from "@root/utils/log";
 import { mkLogger } from "@root/utils/log";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import packageJson from "../../../package.json" with { type: "json" };
 import { generateCommand } from "./generate";
 import { typeschemaCommand } from "./typeschema";
 
@@ -70,7 +71,7 @@ export function createCLI() {
             }
         })
         .help()
-        .version("0.1.0")
+        .version(packageJson.version)
         .example(
             "$0 typeschema generate hl7.fhir.r4.core@4.0.1 -o schemas.ndjson",
             "Generate TypeSchemas from FHIR package",
