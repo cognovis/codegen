@@ -30,7 +30,7 @@
   ],
   "scripts": {
     "build": "tsup",
-    "prepare": "tsup",
+    "prepare": "npx --no-install tsup",
     "typecheck": "bunx tsc --noEmit",
     "lint": "biome check",
     "prune": "knip",
