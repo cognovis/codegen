@@ -1,5 +1,3 @@
-import * as Path from "node:path";
-import { fileURLToPath } from "node:url";
 import { Writer, type WriterOptions } from "@root/api/writer-generator/writer";
 import {
     type CanonicalUrl,
@@ -19,6 +17,7 @@ import {
     type TypeSchema,
 } from "@root/typeschema/types";
 import { groupByPackages, type TypeSchemaIndex } from "@root/typeschema/utils";
+import { resolveGeneratorAsset } from "../assets";
 import {
     tsFieldName,
     tsModuleFileName,
@@ -32,14 +31,7 @@ import {
 import { generateProfileClass, generateProfileImports, generateProfileIndexFile, mkIsFamilyType } from "./profile";
 import { resolveFieldTsType } from "./utils";
 
-export const resolveTsAssets = (fn: string) => {
-    const __dirname = Path.dirname(fileURLToPath(import.meta.url));
-    const __filename = fileURLToPath(import.meta.url);
-    if (__filename.endsWith("dist/index.js")) {
-        return Path.resolve(__dirname, "..", "assets", "api", "writer-generator", "typescript", fn);
-    }
-    return Path.resolve(__dirname, "../../../..", "assets", "api", "writer-generator", "typescript", fn);
-};
+export const resolveTsAssets = (fn: string) => resolveGeneratorAsset(import.meta.url, "typescript", fn);
 
 const leafOf = (path: string[]): string => path[path.length - 1] ?? "";
 
