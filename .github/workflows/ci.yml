@@ -114,7 +114,7 @@ jobs:
         working-directory: /tmp/test-install
         run: |
           cat > generate.ts <<'SCRIPT'
-          import { APIBuilder } from "@atomic-ehr/codegen";
+          import { APIBuilder } from "@cognovis/codegen";
 
           const generate = async () => {
               const builder = new APIBuilder()
