@@ -37,6 +37,9 @@
     "prune:fix": "knip --fix",
     "release": "bash ./scripts/release.sh"
   },
+  "allowScripts": [
+    "@atomic-ehr/codegen"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/atomic-ehr/codegen.git"
