@@ -43,3 +43,4 @@ test-output
 .typeschema-cache
 *.cpuprofile
 /examples/tmp/
+.intake/
