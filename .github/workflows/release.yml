@@ -56,13 +56,16 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
-          registry-url: "https://registry.npmjs.org"
+          registry-url: "https://npm.cognovis.de"
+          scope: "@cognovis"
 
       - name: Update npm
         run: npm install -g npm@latest
 
       - name: Publish canary release
-        run: npm publish --tag canary --access public
+        run: npm publish --tag canary
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.COGNOVIS_NPM_TOKEN }}
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -89,13 +92,16 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
-          registry-url: "https://registry.npmjs.org"
+          registry-url: "https://npm.cognovis.de"
+          scope: "@cognovis"
 
       - name: Update npm
         run: npm install -g npm@latest
 
       - name: Publish release
-        run: npm publish --tag latest --access public
+        run: npm publish --tag latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.COGNOVIS_NPM_TOKEN }}
 
       - name: Create Github Release
         uses: softprops/action-gh-release@v3

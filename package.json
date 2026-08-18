@@ -1,5 +1,5 @@
 {
-  "name": "@atomic-ehr/codegen",
+  "name": "@cognovis/codegen",
   "version": "0.0.18",
   "description": "Code generation tools for FHIR resources and TypeSchema definitions",
   "keywords": [
