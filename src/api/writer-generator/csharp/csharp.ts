@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import Path from "node:path";
-import { fileURLToPath } from "node:url";
 import { pascalCase, uppercaseFirstLetter, uppercaseFirstLetterOfEach } from "@root/api/writer-generator/utils.ts";
 import { Writer, type WriterOptions } from "@root/api/writer-generator/writer.ts";
 import type { PartialBy } from "@root/utils/types.ts";
@@ -12,16 +11,10 @@ import {
     type SpecializationTypeSchema,
 } from "@typeschema/types.ts";
 import type { TypeSchemaIndex } from "@typeschema/utils.ts";
+import { resolveGeneratorAsset } from "../assets";
 import { formatEnumEntry, formatName } from "./formatHelper.ts";
 
-const resolveCSharpAssets = (fn: string) => {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = Path.dirname(__filename);
-    if (__filename.endsWith("dist/index.js")) {
-        return Path.resolve(__dirname, "..", "assets", "api", "writer-generator", "csharp", fn);
-    }
-    return Path.resolve(__dirname, "../../../..", "assets", "api", "writer-generator", "csharp", fn);
-};
+const resolveCSharpAssets = (fn: string) => resolveGeneratorAsset(import.meta.url, "csharp", fn);
 
 const PRIMITIVE_TYPE_MAP: Record<string, string> = {
     boolean: "bool",
