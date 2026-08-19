@@ -35,6 +35,8 @@ export type Register = {
     allFs(): RichFHIRSchema[];
     /** Returns all ValueSets from all packages in the resolver */
     allVs(): RichValueSet[];
+    /** Returns raw terminology resources grouped by their originating package. */
+    allTerminology(): PackageTerminology[];
     resolveVs(_pkg: PackageMeta, canonicalUrl: CanonicalUrl): RichValueSet | undefined;
     resolveAny(canonicalUrl: CanonicalUrl): any | undefined;
     resolveElementSnapshot(fhirSchema: RichFHIRSchema, path: string[]): FHIRSchemaElement;
@@ -60,6 +62,45 @@ type PkgId = string;
 type PkgName = string;
 type FocusedResource = StructureDefinition | ValueSet | CodeSystem;
 
+export type TerminologyConcept = {
+    code: string;
+    display?: string;
+    concept?: TerminologyConcept[];
+};
+
+export type TerminologyResource = {
+    resourceType: "CodeSystem" | "ValueSet" | "NamingSystem";
+    id?: string;
+    name?: string;
+    url: string;
+    content?: string;
+    concept?: TerminologyConcept[];
+};
+
+export type PackageTerminology = {
+    packageMeta: PackageMeta;
+    resources: TerminologyResource[];
+};
+
+const asTerminologyResource = (resource: unknown): TerminologyResource | undefined => {
+    if (resource === null || typeof resource !== "object") return undefined;
+    const candidate = resource as {
+        resourceType?: unknown;
+        url?: unknown;
+        uniqueId?: { type?: unknown; value?: unknown; preferred?: unknown }[];
+    };
+    if (!["CodeSystem", "ValueSet", "NamingSystem"].includes(String(candidate.resourceType))) return undefined;
+    const namingSystemUri = candidate.uniqueId?.find(
+        ({ type, value, preferred }) => type === "uri" && typeof value === "string" && preferred === true,
+    )?.value;
+    const fallbackNamingSystemUri = candidate.uniqueId?.find(
+        ({ type, value }) => type === "uri" && typeof value === "string",
+    )?.value;
+    const url = typeof candidate.url === "string" ? candidate.url : (namingSystemUri ?? fallbackNamingSystemUri);
+    if (typeof url !== "string" || url.length === 0) return undefined;
+    return { ...(resource as TerminologyResource), url };
+};
+
 type CanonicalResolution<T> = {
     deep: number;
     pkg: PackageMeta;
@@ -72,6 +113,7 @@ type PackageIndex = {
     canonicalResolution: Record<CanonicalUrl, CanonicalResolution<FocusedResource>[]>;
     fhirSchemas: Record<CanonicalUrl, RichFHIRSchema>;
     valueSets: Record<CanonicalUrl, RichValueSet>;
+    terminology: TerminologyResource[];
 };
 
 type PackageAwareResolver = Record<PkgId, PackageIndex>;
@@ -83,6 +125,7 @@ const mkEmptyPkgIndex = (pkg: PackageMeta): PackageIndex => {
         canonicalResolution: {},
         fhirSchemas: {},
         valueSets: {},
+        terminology: [],
     };
 };
 
@@ -100,6 +143,8 @@ const mkPackageAwareResolver = async (
     const index = mkEmptyPkgIndex(pkg);
     acc[pkgId] = index;
     for (const resource of await manager.search({ package: pkg })) {
+        const terminologyResource = asTerminologyResource(resource);
+        if (terminologyResource) index.terminology.push(terminologyResource);
         const rawUrl = resource.url;
         if (!rawUrl) continue;
         if (!(isStructureDefinition(resource) || isValueSet(resource) || isCodeSystem(resource))) continue;
@@ -316,6 +361,12 @@ export const registerFromManager = async (
                 .sort((sd1, sd2) => sd1.url.localeCompare(sd2.url)),
         allFs: () => Object.values(resolver).flatMap((pkgIndex) => Object.values(pkgIndex.fhirSchemas)),
         allVs: () => Object.values(resolver).flatMap((pkgIndex) => Object.values(pkgIndex.valueSets)),
+        allTerminology: () =>
+            Object.values(resolver)
+                .map(({ pkg, terminology }) => ({ packageMeta: pkg, resources: terminology }))
+                .sort((left, right) =>
+                    packageMetaToNpm(left.packageMeta).localeCompare(packageMetaToNpm(right.packageMeta)),
+                ),
         resolveVs,
         resolveAny: (canonicalUrl: CanonicalUrl) => packageAgnosticResolveCanonical(resolver, canonicalUrl, logger),
         resolveElementSnapshot,

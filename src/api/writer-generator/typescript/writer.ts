@@ -1,4 +1,6 @@
+import { pascalCase, uppercaseFirstLetter } from "@root/api/writer-generator/utils";
 import { Writer, type WriterOptions } from "@root/api/writer-generator/writer";
+import type { PackageTerminology, TerminologyConcept, TerminologyResource } from "@root/typeschema/register";
 import {
     type CanonicalUrl,
     isChoiceDeclarationField,
@@ -12,6 +14,7 @@ import {
     type NestedTypeSchema,
     packageMeta,
     packageMetaToFhir,
+    packageMetaToNpm,
     type SpecializationTypeSchema,
     type TypeIdentifier,
     type TypeSchema,
@@ -19,6 +22,7 @@ import {
 import { groupByPackages, type TypeSchemaIndex } from "@root/typeschema/utils";
 import { resolveGeneratorAsset } from "../assets";
 import {
+    normalizeTsName,
     tsFieldName,
     tsModuleFileName,
     tsModuleName,
@@ -39,6 +43,7 @@ const leafOf = (path: string[]): string => path[path.length - 1] ?? "";
 // `generic.params` (if any, computed via structural propagation) must be ignored at reference sites
 // so we don't emit `<T>` args clashing with the hardcoded `T extends string` declaration.
 const TS_HARDCODED_GENERIC_NAMES = new Set(["Reference", "Coding", "CodeableConcept"]);
+const CODE_SYSTEM_SUFFIX_RE = /CodeSystem$/;
 
 export type TypeScriptOptions = {
     lineWidth?: number;
@@ -51,7 +56,42 @@ export type TypeScriptOptions = {
     primitiveTypeExtension: boolean;
     extensionGetterDefault?: "flat" | "profile" | "raw";
     sliceGetterDefault?: "flat" | "raw";
+    terminology?: {
+        /** Verification values copied from `cognovis-fhir-types.manifest.json` closure entries. */
+        packageVerification?: Record<string, string>;
+    };
 } & WriterOptions;
+
+const terminologySymbolName = (resource: TerminologyResource): string => {
+    const sourceName = resource.name ?? resource.id ?? tsNameFromCanonical(resource.url) ?? "Terminology";
+    return `${uppercaseFirstLetter(normalizeTsName(sourceName))}${resource.resourceType}`;
+};
+
+const allocateTerminologySymbols = (
+    resources: TerminologyResource[],
+): { resource: TerminologyResource; symbol: string }[] => {
+    const baseNames = resources.map(terminologySymbolName);
+    const counts: Record<string, number> = {};
+    for (const name of baseNames) counts[name] = (counts[name] ?? 0) + 1;
+    const used = new Set<string>();
+
+    return resources.map((resource, index) => {
+        const baseName = baseNames[index] ?? "Terminology";
+        const localIdentity = resource.id ?? tsNameFromCanonical(resource.url) ?? "Resource";
+        const desired = counts[baseName] === 1 ? baseName : `${baseName}_${pascalCase(localIdentity)}`;
+        let symbol = desired;
+        let suffix = 2;
+        while (used.has(symbol)) {
+            symbol = `${desired}_${suffix}`;
+            suffix += 1;
+        }
+        used.add(symbol);
+        return { resource, symbol };
+    });
+};
+
+const flattenConcepts = (concepts: TerminologyConcept[] | undefined): TerminologyConcept[] =>
+    (concepts ?? []).flatMap((concept) => [concept, ...flattenConcepts(concept.concept)]);
 
 export class TypeScript extends Writer<TypeScriptOptions> {
     constructor(options: TypeScriptOptions) {
@@ -94,8 +134,9 @@ export class TypeScript extends Writer<TypeScriptOptions> {
         }
     }
 
-    generateFhirPackageIndexFile(schemas: TypeSchema[]) {
+    generateFhirPackageIndexFile(schemas: TypeSchema[], hasTerminology = false) {
         this.cat("index.ts", () => {
+            if (hasTerminology) this.lineSM(`export * from "./terminology"`);
             const profiles = schemas.filter(isSnapshotProfileTypeSchema);
             if (profiles.length > 0) {
                 this.lineSM(`export * from "./profiles"`);
@@ -365,6 +406,52 @@ export class TypeScript extends Writer<TypeScriptOptions> {
         }
     }
 
+    generateTerminologyModule(packageTerminology: PackageTerminology) {
+        const { packageMeta: pkg, resources } = packageTerminology;
+        const verification = this.opts.terminology?.packageVerification?.[packageMetaToNpm(pkg)] ?? "not-recorded";
+        const sortedResources = resources.slice().sort((left, right) => {
+            if (left.resourceType !== right.resourceType) return left.resourceType.localeCompare(right.resourceType);
+            return terminologySymbolName(left).localeCompare(terminologySymbolName(right));
+        });
+        const allocatedResources = allocateTerminologySymbols(sortedResources);
+
+        this.cat("terminology.ts", () => {
+            this.generateDisclaimer();
+            allocatedResources.forEach(({ resource, symbol }, index) => {
+                const concepts = flattenConcepts(resource.concept);
+                const emitsConcepts =
+                    resource.resourceType === "CodeSystem" &&
+                    resource.content === "complete" &&
+                    verification !== "unverifiable";
+
+                this.curlyBlock(["export", "const", symbol, "="], () => {
+                    this.line(`canonicalUrl: ${JSON.stringify(resource.url)},`);
+                    this.line(`packageId: ${JSON.stringify(pkg.name)},`);
+                    this.line(`packageVersion: ${JSON.stringify(pkg.version)},`);
+                    this.line(`verification: ${JSON.stringify(verification)},`);
+                    this.line(`resourceType: ${JSON.stringify(resource.resourceType)},`);
+                    this.line(
+                        `contentMode: ${resource.content === undefined ? "null" : JSON.stringify(resource.content)},`,
+                    );
+                    if (emitsConcepts) {
+                        this.line(`codes: [${concepts.map(({ code }) => JSON.stringify(code)).join(", ")}],`);
+                        this.curlyBlock(["displays:"], () => {
+                            for (const concept of concepts) {
+                                if (concept.display !== undefined)
+                                    this.line(`${JSON.stringify(concept.code)}: ${JSON.stringify(concept.display)},`);
+                            }
+                        }, [","]);
+                    }
+                }, [" as const;"]);
+                if (emitsConcepts)
+                    this.lineSM(
+                        `export type ${symbol.replace(CODE_SYSTEM_SUFFIX_RE, "Code")} = (typeof ${symbol}.codes)[number]`,
+                    );
+                if (index < allocatedResources.length - 1) this.line();
+            });
+        });
+    }
+
     override async generate(tsIndex: TypeSchemaIndex) {
         // Only generate code for schemas from focused packages
         const typesToGenerate = [
@@ -374,6 +461,12 @@ export class TypeScript extends Writer<TypeScriptOptions> {
             ...(this.opts.generateProfile ? tsIndex.collectSnapshotProfiles() : []),
         ];
         const grouped = groupByPackages(typesToGenerate);
+        const terminologyByPackage = Object.fromEntries(
+            (tsIndex.register?.allTerminology() ?? [])
+                .filter(({ resources }) => resources.length > 0)
+                .map((entry) => [entry.packageMeta.name, entry]),
+        );
+        const packageNames = [...new Set([...Object.keys(grouped), ...Object.keys(terminologyByPackage)])].sort();
 
         const hasProfiles = this.opts.generateProfile && typesToGenerate.some(isSnapshotProfileTypeSchema);
 
@@ -382,14 +475,17 @@ export class TypeScript extends Writer<TypeScriptOptions> {
                 this.cp("profile-helpers.ts", "profile-helpers.ts");
             }
 
-            for (const [packageName, packageSchemas] of Object.entries(grouped)) {
+            for (const packageName of packageNames) {
+                const packageSchemas = grouped[packageName] ?? [];
+                const terminology = terminologyByPackage[packageName];
                 const packageDir = tsPackageDir(packageName);
                 this.cd(packageDir, () => {
                     for (const schema of packageSchemas) {
                         this.generateResourceModule(tsIndex, schema);
                     }
                     generateProfileIndexFile(this, tsIndex, packageSchemas.filter(isSnapshotProfileTypeSchema));
-                    this.generateFhirPackageIndexFile(packageSchemas);
+                    if (terminology) this.generateTerminologyModule(terminology);
+                    this.generateFhirPackageIndexFile(packageSchemas, terminology !== undefined);
                 });
             }
         });

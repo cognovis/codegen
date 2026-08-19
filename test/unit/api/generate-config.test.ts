@@ -108,6 +108,22 @@ describe("parseGenerateConfig", () => {
         expect(config.builders[0]!.name).toBe("core");
     });
 
+    it("accepts package verification provenance for TypeScript terminology", () => {
+        const raw = validConfig();
+        raw.builders[0]!.typescript = {
+            terminology: {
+                packageVerification: {
+                    "hl7.fhir.r4.core@4.0.1": "registry-integrity",
+                    "bfarm.terminologien.icd10gm@2026.0.0": "unverifiable",
+                },
+            },
+        };
+
+        const config = parseGenerateConfig(raw, CONFIG_PATH);
+
+        expect(config.builders[0]!.typescript).toEqual(raw.builders[0]!.typescript);
+    });
+
     it("rejects an unknown key in a builder and names it", () => {
         const raw = validConfig();
         (raw.builders[0] as Record<string, unknown>).typscript = {};

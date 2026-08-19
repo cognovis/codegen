@@ -174,7 +174,10 @@ const TYPESCRIPT_KEYS = [
     "primitiveTypeExtension",
     "extensionGetterDefault",
     "sliceGetterDefault",
+    "terminology",
 ] as const satisfies readonly (keyof TypeScriptOptions)[];
+
+const TERMINOLOGY_KEYS = ["packageVerification"] as const;
 
 const PYTHON_KEYS = [
     ...WRITER_KEYS,
@@ -350,6 +353,23 @@ const readGeneratorOptions = <T>(ctx: Ctx, value: unknown, path: string, allowed
     return record as T;
 };
 
+const readTypeScriptOptions = (ctx: Ctx, value: unknown, path: string): Partial<TypeScriptOptions> | undefined => {
+    const record = readRecord(ctx, value, path);
+    if (!record) return undefined;
+    checkKnownKeys(ctx, record, TYPESCRIPT_KEYS, path);
+    if (record.terminology === undefined) return record as Partial<TypeScriptOptions>;
+
+    const terminologyPath = childPath(path, "terminology");
+    const terminology = readRecord(ctx, record.terminology, terminologyPath);
+    if (!terminology) return record as Partial<TypeScriptOptions>;
+    checkKnownKeys(ctx, terminology, TERMINOLOGY_KEYS, terminologyPath);
+    const packageVerification =
+        terminology.packageVerification === undefined
+            ? undefined
+            : readStringMap(ctx, terminology.packageVerification, childPath(terminologyPath, "packageVerification"));
+    return { ...record, terminology: { packageVerification } } as Partial<TypeScriptOptions>;
+};
+
 const readBuilder = (ctx: Ctx, value: unknown, path: string): GenerateConfigBuilder | undefined => {
     const record = readRecord(ctx, value, path);
     if (!record) return undefined;
@@ -386,12 +406,7 @@ const readBuilder = (ctx: Ctx, value: unknown, path: string): GenerateConfigBuil
             INTROSPECTION_KEYS,
         );
     if (record.typescript !== undefined)
-        builder.typescript = readGeneratorOptions(
-            ctx,
-            record.typescript,
-            childPath(path, "typescript"),
-            TYPESCRIPT_KEYS,
-        );
+        builder.typescript = readTypeScriptOptions(ctx, record.typescript, childPath(path, "typescript"));
     if (record.python !== undefined)
         builder.python = readGeneratorOptions(ctx, record.python, childPath(path, "python"), PYTHON_KEYS);
     if (record.csharp !== undefined)

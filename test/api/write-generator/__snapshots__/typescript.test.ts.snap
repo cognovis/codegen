@@ -288,7 +288,8 @@ export interface CV extends CE {
 `;
 
 exports[`TypeScript CDA with Logical Model Promotion to Resource without resourceType 2`] = `
-"export * from "./profiles";
+"export * from "./terminology";
+export * from "./profiles";
 export type { Act } from "./Act";
 export type { AD, ADItem } from "./AD";
 export type { ADXP } from "./ADXP";
