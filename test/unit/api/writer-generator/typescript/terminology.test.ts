@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import type { FHIRSchema } from "@atomic-ehr/fhirschema";
 import { APIBuilder } from "@root/api/builder";
 import { registerFromManager } from "@root/typeschema/register";
+import { enrichFHIRSchema } from "@root/typeschema/types";
 import { mkErrorLogger } from "@typeschema-test/utils";
 
 const packageMeta = { name: "fixture.ig", version: "1.2.3" };
@@ -325,6 +330,31 @@ describe("TypeScript terminology surface", () => {
         );
     });
 
+    it("fails deterministically when one package repeats a resource type and canonical URL", async () => {
+        const generation = generateTerminology("registry-integrity", [
+            {
+                resourceType: "CodeSystem",
+                id: "first-duplicate",
+                name: "FirstDuplicate",
+                url: "http://example.test/CodeSystem/duplicate-canonical",
+                content: "complete",
+                concept: [{ code: "first", display: "First display" }],
+            },
+            {
+                resourceType: "CodeSystem",
+                id: "second-duplicate",
+                name: "SecondDuplicate",
+                url: "http://example.test/CodeSystem/duplicate-canonical",
+                content: "complete",
+                concept: [{ code: "second", display: "Second display" }],
+            },
+        ]);
+
+        await expect(generation).rejects.toThrow(
+            'Package fixture.ig@1.2.3 contains duplicate CodeSystem canonical URL "http://example.test/CodeSystem/duplicate-canonical" for resources first-duplicate, second-duplicate',
+        );
+    });
+
     it("emits no concept content for an unverifiable package", async () => {
         const output = await generateTerminology("unverifiable");
 
@@ -384,6 +414,40 @@ describe("TypeScript terminology surface", () => {
         expect(symbols).toHaveLength(2);
         expect(new Set(symbols).size).toBe(2);
         expect(() => new Bun.Transpiler({ loader: "ts" }).transformSync(output)).not.toThrow();
+    });
+
+    it("emits byte-identical terminology and stable symbols when discovery order reverses", async () => {
+        const discovered = [
+            {
+                resourceType: "ValueSet",
+                id: "zeta",
+                name: "SharedName",
+                url: "http://example.test/ValueSet/zeta",
+            },
+            {
+                resourceType: "ValueSet",
+                id: "alpha",
+                name: "SharedName",
+                url: "http://example.test/ValueSet/alpha",
+            },
+            {
+                resourceType: "ValueSet",
+                id: "unique",
+                name: "UniqueName",
+                url: "http://example.test/ValueSet/unique",
+            },
+        ];
+
+        const forward = await generateTerminology("registry-integrity", discovered);
+        const reversed = await generateTerminology("registry-integrity", discovered.toReversed());
+
+        expect(reversed).toBe(forward);
+        expect(forward).toContain("export const UniqueNameValueSet =");
+        expect(forward).toContain("export const SharedNameValueSet_Alpha =");
+        expect(forward).toContain("export const SharedNameValueSet_Zeta =");
+        expect(forward.indexOf('canonicalUrl: "http://example.test/ValueSet/alpha"')).toBeLessThan(
+            forward.indexOf('canonicalUrl: "http://example.test/ValueSet/zeta"'),
+        );
     });
 
     it("emits valid identifiers and adjacent code-union names for punctuation and leading digits", async () => {
@@ -482,6 +546,119 @@ describe("TypeScript terminology surface", () => {
             expect(path).toMatch(/^generated\/types\/[a-z0-9][a-z0-9-]*\/terminology\.ts$/);
             expect(path).not.toContain("..");
             expect(path).not.toContain("\\");
+        }
+    });
+
+    it("uses one physical package directory mapping for schemas, terminology, and cross-package imports", async () => {
+        const packageMetas = [
+            { name: "fixture.ig", version: "1.0.0" },
+            { name: "fixture-ig", version: "1.0.0" },
+            { name: "versioned.ig", version: "1.0.0" },
+            { name: "versioned.ig", version: "2.0.0" },
+        ];
+        const manager = {
+            packageJson: async () => ({ dependencies: {} }),
+            search: async ({ package: pkg }: { package: { name: string; version: string } }) => [
+                {
+                    resourceType: "ValueSet",
+                    id: `terminology-${pkg.version}`,
+                    name: `Terminology${pkg.version}`,
+                    url: `http://example.test/${encodeURIComponent(pkg.name)}/${pkg.version}/ValueSet/terminology`,
+                },
+            ],
+        } as unknown as Parameters<typeof registerFromManager>[0];
+        const register = await registerFromManager(manager, { focusedPackages: packageMetas });
+        const appendSchema = (
+            pkg: { name: string; version: string },
+            name: string,
+            url: string,
+            elements: Record<string, object>,
+        ) => {
+            register.testAppendFs(
+                enrichFHIRSchema(
+                    {
+                        name,
+                        type: name,
+                        kind: "complex-type",
+                        url,
+                        elements,
+                        class: "complex-type",
+                    } as unknown as FHIRSchema,
+                    pkg,
+                ),
+            );
+        };
+        appendSchema(packageMetas[0]!, "Shared", "http://example.test/fixture.ig/Shared", {});
+        appendSchema(packageMetas[1]!, "Consumer", "http://example.test/fixture-ig/Consumer", {
+            shared: { type: "http://example.test/fixture.ig/Shared" },
+        });
+        appendSchema(packageMetas[2]!, "Versioned", "http://example.test/versioned.ig/1/Versioned", {});
+        appendSchema(packageMetas[3]!, "Versioned", "http://example.test/versioned.ig/2/Versioned", {});
+        const packageVerification = Object.fromEntries(
+            packageMetas.map(({ name, version }) => [`${name}@${version}`, "registry-integrity"]),
+        );
+
+        const result = await new APIBuilder({ register, logger: mkErrorLogger() })
+            .typescript({ inMemoryOnly: true, terminology: { enabled: true, packageVerification } })
+            .generate();
+        if (!result.success) throw new Error(result.errors.join(", "));
+        const files = result.filesGenerated.typescript ?? {};
+        const terminologyDirectories = Object.keys(files)
+            .filter((path) => path.endsWith("/terminology.ts"))
+            .map((path) => path.slice(0, -"/terminology.ts".length));
+
+        const versionedDirectories = terminologyDirectories.filter((directory) =>
+            files[`${directory}/terminology.ts`]?.includes('packageId: "versioned.ig"'),
+        );
+        expect(versionedDirectories).toHaveLength(2);
+        expect(
+            versionedDirectories.map((directory) =>
+                files[`${directory}/Versioned.ts`]?.includes("http://example.test/versioned.ig/1/Versioned"),
+            ),
+        ).toEqual([true, false]);
+        expect(
+            versionedDirectories.map((directory) =>
+                files[`${directory}/Versioned.ts`]?.includes("http://example.test/versioned.ig/2/Versioned"),
+            ),
+        ).toEqual([false, true]);
+
+        const consumerEntry = Object.entries(files).find(([path]) => path.endsWith("/Consumer.ts"));
+        expect(consumerEntry).toBeDefined();
+        const sharedImport = consumerEntry?.[1].match(/from "(\.\.\/[^"]+\/Shared)"/)?.[1];
+        expect(sharedImport).toBeDefined();
+        const consumerDirectory = consumerEntry?.[0].slice(0, -"/Consumer.ts".length);
+        const importedSharedPath = join(consumerDirectory ?? "", `${sharedImport}.ts`);
+        expect(files[importedSharedPath]).toBeDefined();
+
+        const compileRoot = await mkdtemp(join(tmpdir(), "codegen-x68-package-dirs-"));
+        try {
+            for (const [path, content] of Object.entries(files)) {
+                const target = join(compileRoot, path);
+                await mkdir(dirname(target), { recursive: true });
+                await Bun.write(target, content);
+            }
+            const compile = Bun.spawn(
+                [
+                    "bunx",
+                    "tsc",
+                    "--noEmit",
+                    "--target",
+                    "ESNext",
+                    "--module",
+                    "ESNext",
+                    "--moduleResolution",
+                    "Bundler",
+                    "--skipLibCheck",
+                    ...Object.keys(files)
+                        .filter((path) => path.endsWith(".ts"))
+                        .map((path) => join(compileRoot, path)),
+                ],
+                { stdout: "pipe", stderr: "pipe" },
+            );
+            const compileOutput = `${await new Response(compile.stdout).text()}${await new Response(compile.stderr).text()}`;
+            expect({ exitCode: await compile.exited, output: compileOutput }).toEqual({ exitCode: 0, output: "" });
+        } finally {
+            await rm(compileRoot, { recursive: true, force: true });
         }
     });
 });

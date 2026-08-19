@@ -12,6 +12,7 @@ import {
     isSnapshotProfileTypeSchema,
     isSpecializationTypeSchema,
     type NestedTypeSchema,
+    type PackageMeta,
     packageMeta,
     packageMetaToFhir,
     packageMetaToNpm,
@@ -19,13 +20,12 @@ import {
     type TypeIdentifier,
     type TypeSchema,
 } from "@root/typeschema/types";
-import { groupByPackages, type TypeSchemaIndex } from "@root/typeschema/utils";
+import type { TypeSchemaIndex } from "@root/typeschema/utils";
 import { resolveGeneratorAsset } from "../assets";
 import {
     tsFieldName,
     tsModuleFileName,
     tsModuleName,
-    tsModulePath,
     tsNameFromCanonical,
     tsPackageDir,
     tsProfileModuleFileName,
@@ -79,6 +79,9 @@ const terminologySymbolName = (resource: TerminologyResource): string => {
     return validTsIdentifier(`${uppercaseFirstLetter(sourceName)}${resource.resourceType}`);
 };
 
+const terminologyResourceIdentity = (resource: TerminologyResource): string =>
+    `${resource.id ?? ""}\u0000${resource.name ?? ""}`;
+
 const safeTsPackageDir = (source: string): string => {
     const normalized = tsPackageDir(source.replace(PACKAGE_PATH_SEPARATOR_RE, "_"));
     return normalized.replace(INVALID_PACKAGE_DIR_RUN_RE, "-").replace(PACKAGE_DIR_EDGE_RE, "") || "package";
@@ -126,8 +129,19 @@ const flattenConcepts = (concepts: TerminologyConcept[] | undefined): Terminolog
 };
 
 export class TypeScript extends Writer<TypeScriptOptions> {
+    private packageDirectories = new Map<string, string>();
+
     constructor(options: TypeScriptOptions) {
         super({ lineWidth: 120, ...options, resolveAssets: options.resolveAssets ?? resolveTsAssets });
+    }
+
+    packageDirectory(physical: PackageMeta | TypeIdentifier): string {
+        const pkg = "package" in physical ? { name: physical.package, version: physical.version } : physical;
+        return this.packageDirectories.get(packageMetaToNpm(pkg)) ?? safeTsPackageDir(pkg.name);
+    }
+
+    modulePath(identifier: TypeIdentifier): string {
+        return `${this.packageDirectory(identifier)}/${tsModuleName(identifier)}`;
     }
 
     ifElseChain(branches: { cond: string; body: () => void }[], elseBody?: () => void) {
@@ -224,7 +238,7 @@ export class TypeScript extends Writer<TypeScriptOptions> {
             for (const dep of schema.dependencies) {
                 if (["complex-type", "resource", "logical"].includes(dep.kind)) {
                     imports.push({
-                        tsPackage: `${importPrefix}${tsModulePath(dep)}`,
+                        tsPackage: `${importPrefix}${this.modulePath(dep)}`,
                         name: tsResourceName(dep),
                         dep: dep,
                     });
@@ -250,7 +264,7 @@ export class TypeScript extends Writer<TypeScriptOptions> {
                 const element = tsIndex.resolveByUrl(schema.identifier.package, elementUrl);
                 if (!element) throw new Error(`'${elementUrl}' not found for ${schema.identifier.package}.`);
 
-                this.tsImport(`${importPrefix}${tsModulePath(element.identifier)}`, "Element", { typeOnly: true });
+                this.tsImport(`${importPrefix}${this.modulePath(element.identifier)}`, "Element", { typeOnly: true });
             }
         }
     }
@@ -260,7 +274,7 @@ export class TypeScript extends Writer<TypeScriptOptions> {
         if (complexTypeDeps && complexTypeDeps.length > 0) {
             for (const dep of complexTypeDeps) {
                 this.debugComment(dep);
-                this.lineSM(`export type { ${tsResourceName(dep)} } from "${`../${tsModulePath(dep)}`}"`);
+                this.lineSM(`export type { ${tsResourceName(dep)} } from "${`../${this.modulePath(dep)}`}"`);
             }
             this.line();
         }
@@ -441,9 +455,33 @@ export class TypeScript extends Writer<TypeScriptOptions> {
     generateTerminologyModule(packageTerminology: PackageTerminology) {
         const { packageMeta: pkg, resources } = packageTerminology;
         const verification = this.opts.terminology?.packageVerification?.[packageMetaToNpm(pkg)] ?? "not-recorded";
+        const resourcesByCanonical = new Map<string, TerminologyResource[]>();
+        for (const resource of resources) {
+            const key = `${resource.resourceType}\u0000${resource.url}`;
+            const matching = resourcesByCanonical.get(key) ?? [];
+            matching.push(resource);
+            resourcesByCanonical.set(key, matching);
+        }
+        const duplicate = [...resourcesByCanonical]
+            .filter(([, matching]) => matching.length > 1)
+            .sort(([left], [right]) => left.localeCompare(right))[0];
+        if (duplicate) {
+            const resource = duplicate[1][0];
+            if (!resource) throw new Error(`Duplicate terminology resource has no representative`);
+            const identities = duplicate[1]
+                .map((candidate) => candidate.id ?? candidate.name ?? candidate.url)
+                .sort((left, right) => left.localeCompare(right));
+            throw new Error(
+                `Package ${packageMetaToNpm(pkg)} contains duplicate ${resource.resourceType} canonical URL ${JSON.stringify(resource.url)} for resources ${identities.join(", ")}`,
+            );
+        }
         const sortedResources = resources.slice().sort((left, right) => {
             if (left.resourceType !== right.resourceType) return left.resourceType.localeCompare(right.resourceType);
-            return terminologySymbolName(left).localeCompare(terminologySymbolName(right));
+            const symbolOrder = terminologySymbolName(left).localeCompare(terminologySymbolName(right));
+            if (symbolOrder !== 0) return symbolOrder;
+            const canonicalOrder = left.url.localeCompare(right.url);
+            if (canonicalOrder !== 0) return canonicalOrder;
+            return terminologyResourceIdentity(left).localeCompare(terminologyResourceIdentity(right));
         });
         const allocatedResources = allocateTerminologySymbols(sortedResources);
 
@@ -500,44 +538,53 @@ export class TypeScript extends Writer<TypeScriptOptions> {
             ...tsIndex.collectLogicalModels(),
             ...(this.opts.generateProfile ? tsIndex.collectSnapshotProfiles() : []),
         ];
-        const grouped = groupByPackages(typesToGenerate);
         const terminology = this.opts.terminology?.enabled
             ? (tsIndex.register?.allTerminology() ?? []).filter(({ resources }) => resources.length > 0)
             : [];
-        const terminologyVersionsByName = new Map<string, PackageTerminology[]>();
-        for (const entry of terminology) {
-            const sameNameVersions = terminologyVersionsByName.get(entry.packageMeta.name) ?? [];
-            sameNameVersions.push(entry);
-            terminologyVersionsByName.set(entry.packageMeta.name, sameNameVersions);
-        }
         const logicalUnits = new Map<
             string,
-            { directorySource: string; packageSchemas: TypeSchema[]; terminology?: PackageTerminology }
+            { packageMeta: PackageMeta; packageSchemas: TypeSchema[]; terminology?: PackageTerminology }
         >();
-        for (const [packageName, packageSchemas] of Object.entries(grouped)) {
-            logicalUnits.set(`package:${packageName}`, { directorySource: packageName, packageSchemas });
+        for (const schema of typesToGenerate) {
+            const pkg = packageMeta(schema);
+            const identity = packageMetaToNpm(pkg);
+            const unit = logicalUnits.get(identity) ?? { packageMeta: pkg, packageSchemas: [] };
+            unit.packageSchemas.push(schema);
+            logicalUnits.set(identity, unit);
         }
         for (const packageTerminology of terminology) {
-            const { name, version } = packageTerminology.packageMeta;
-            const sameNameVersions = terminologyVersionsByName.get(name) ?? [];
-            const hasMultipleVersions = sameNameVersions.length > 1;
-            const identity = hasMultipleVersions ? `terminology:${name}@${version}` : `package:${name}`;
+            const identity = packageMetaToNpm(packageTerminology.packageMeta);
             const unit = logicalUnits.get(identity) ?? {
-                directorySource: hasMultipleVersions ? `${name}@${version}` : name,
+                packageMeta: packageTerminology.packageMeta,
                 packageSchemas: [],
             };
             unit.terminology = packageTerminology;
             logicalUnits.set(identity, unit);
         }
 
+        const identitiesByPackageName = new Map<string, string[]>();
+        for (const [identity, { packageMeta: pkg }] of logicalUnits) {
+            const identities = identitiesByPackageName.get(pkg.name) ?? [];
+            identities.push(identity);
+            identitiesByPackageName.set(pkg.name, identities);
+        }
+
         const unitsByBaseDir = new Map<
             string,
             { identity: string; packageSchemas: TypeSchema[]; terminology?: PackageTerminology }[]
         >();
-        for (const [identity, { directorySource, packageSchemas, terminology: packageTerminology }] of logicalUnits) {
+        for (const [identity, { packageMeta: pkg, packageSchemas, terminology: packageTerminology }] of logicalUnits) {
+            const directorySource =
+                (identitiesByPackageName.get(pkg.name)?.length ?? 0) > 1 ? packageMetaToNpm(pkg) : pkg.name;
             const baseDir = safeTsPackageDir(directorySource);
             const units = unitsByBaseDir.get(baseDir) ?? [];
-            units.push({ identity, packageSchemas, terminology: packageTerminology });
+            const schemasByIdentity = new Map(
+                packageSchemas.map((schema) => [JSON.stringify(schema.identifier), schema]),
+            );
+            const sortedSchemas = [...schemasByIdentity.values()].sort((left, right) =>
+                left.identifier.name.localeCompare(right.identifier.name),
+            );
+            units.push({ identity, packageSchemas: sortedSchemas, terminology: packageTerminology });
             unitsByBaseDir.set(baseDir, units);
         }
 
@@ -564,6 +611,15 @@ export class TypeScript extends Writer<TypeScriptOptions> {
                 suffix += 1;
             }
         }
+        this.packageDirectories = new Map(
+            [...generationUnits].flatMap(([packageDir, unit]) => {
+                if (unit.terminology) {
+                    return [[packageMetaToNpm(unit.terminology.packageMeta), packageDir] as const];
+                }
+                const schema = unit.packageSchemas[0];
+                return schema ? [[packageMetaToNpm(packageMeta(schema)), packageDir] as const] : [];
+            }),
+        );
 
         const hasProfiles = this.opts.generateProfile && typesToGenerate.some(isSnapshotProfileTypeSchema);
 
