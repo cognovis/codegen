@@ -10,7 +10,7 @@ No upstream pull request or issue exists for this correction package as of 2026-
 
 ## Terminology surface maintenance
 
-The generated per-package terminology surface remains upstream-contributable against the atomic-ehr baseline; it is not maintained as a second fork-only package. Its CodeSystem completeness rules, ValueSet expansion exclusion, NamingSystem canonical handling, and package provenance model are general FHIR code-generation behavior. Cognovis supplies the optional closure verification values from `cognovis-fhir-types.manifest.json`; generators without that manifest record `not-recorded` provenance and retain the same FHIR content rules.
+The opt-in generated per-package terminology surface remains upstream-contributable against the atomic-ehr baseline; it is not maintained as a second fork-only package. Its CodeSystem completeness rules, ValueSet expansion exclusion, NamingSystem canonical handling, and package provenance model are general FHIR code-generation behavior. Cognovis supplies the optional closure verification values from `cognovis-fhir-types.manifest.json`; enabled generators without that manifest record `not-recorded` provenance and retain the same FHIR content rules.
 
 ## Branch topology
 

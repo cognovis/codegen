@@ -112,6 +112,7 @@ describe("parseGenerateConfig", () => {
         const raw = validConfig();
         raw.builders[0]!.typescript = {
             terminology: {
+                enabled: true,
                 packageVerification: {
                     "hl7.fhir.r4.core@4.0.1": "registry-integrity",
                     "bfarm.terminologien.icd10gm@2026.0.0": "unverifiable",

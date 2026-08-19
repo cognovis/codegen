@@ -177,7 +177,7 @@ const TYPESCRIPT_KEYS = [
     "terminology",
 ] as const satisfies readonly (keyof TypeScriptOptions)[];
 
-const TERMINOLOGY_KEYS = ["packageVerification"] as const;
+const TERMINOLOGY_KEYS = ["enabled", "packageVerification"] as const;
 
 const PYTHON_KEYS = [
     ...WRITER_KEYS,
@@ -363,11 +363,15 @@ const readTypeScriptOptions = (ctx: Ctx, value: unknown, path: string): Partial<
     const terminology = readRecord(ctx, record.terminology, terminologyPath);
     if (!terminology) return record as Partial<TypeScriptOptions>;
     checkKnownKeys(ctx, terminology, TERMINOLOGY_KEYS, terminologyPath);
+    const enabled =
+        terminology.enabled === undefined
+            ? undefined
+            : readBoolean(ctx, terminology.enabled, childPath(terminologyPath, "enabled"));
     const packageVerification =
         terminology.packageVerification === undefined
             ? undefined
             : readStringMap(ctx, terminology.packageVerification, childPath(terminologyPath, "packageVerification"));
-    return { ...record, terminology: { packageVerification } } as Partial<TypeScriptOptions>;
+    return { ...record, terminology: { enabled, packageVerification } } as Partial<TypeScriptOptions>;
 };
 
 const readBuilder = (ctx: Ctx, value: unknown, path: string): GenerateConfigBuilder | undefined => {

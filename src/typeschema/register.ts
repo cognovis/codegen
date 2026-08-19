@@ -82,23 +82,77 @@ export type PackageTerminology = {
     resources: TerminologyResource[];
 };
 
-const asTerminologyResource = (resource: unknown): TerminologyResource | undefined => {
+const projectTerminologyConcepts = (concepts: unknown): TerminologyConcept[] | undefined => {
+    if (!Array.isArray(concepts)) return undefined;
+    return concepts.flatMap((concept): TerminologyConcept[] => {
+        if (concept === null || typeof concept !== "object") return [];
+        const candidate = concept as { code?: unknown; display?: unknown; concept?: unknown };
+        if (typeof candidate.code !== "string") return [];
+        const nested = projectTerminologyConcepts(candidate.concept);
+        return [
+            {
+                code: candidate.code,
+                ...(typeof candidate.display === "string" ? { display: candidate.display } : {}),
+                ...(nested && nested.length > 0 ? { concept: nested } : {}),
+            },
+        ];
+    });
+};
+
+const namingSystemIdentity = (
+    candidate: { id?: unknown; name?: unknown; uniqueId?: unknown },
+    logger?: CodegenLog,
+): string | undefined => {
+    const uniqueIds = Array.isArray(candidate.uniqueId)
+        ? candidate.uniqueId.filter(
+              (identifier): identifier is { type: string; value: string; preferred?: boolean } =>
+                  identifier !== null &&
+                  typeof identifier === "object" &&
+                  typeof (identifier as { type?: unknown }).type === "string" &&
+                  typeof (identifier as { value?: unknown }).value === "string" &&
+                  (identifier as { value: string }).value.length > 0,
+          )
+        : [];
+    const preferred = uniqueIds.filter(({ preferred }) => preferred === true);
+    const candidates = preferred.length > 0 ? preferred : uniqueIds;
+    const identifier = candidates.find(({ type }) => type === "uri") ?? candidates[0];
+    if (identifier) {
+        if (identifier.type === "oid" && !identifier.value.startsWith("urn:oid:")) return `urn:oid:${identifier.value}`;
+        if (identifier.type === "uuid" && !identifier.value.startsWith("urn:uuid:"))
+            return `urn:uuid:${identifier.value}`;
+        return identifier.value;
+    }
+    if (typeof candidate.id === "string" && candidate.id.length > 0) return `NamingSystem/${candidate.id}`;
+    if (typeof candidate.name === "string" && candidate.name.length > 0) return `NamingSystem/${candidate.name}`;
+    logger?.dryWarn("NamingSystem has no uniqueId, id, or name and cannot be emitted.");
+    return undefined;
+};
+
+const asTerminologyResource = (resource: unknown, logger?: CodegenLog): TerminologyResource | undefined => {
     if (resource === null || typeof resource !== "object") return undefined;
     const candidate = resource as {
         resourceType?: unknown;
+        id?: unknown;
+        name?: unknown;
         url?: unknown;
-        uniqueId?: { type?: unknown; value?: unknown; preferred?: unknown }[];
+        content?: unknown;
+        concept?: unknown;
+        uniqueId?: unknown;
     };
     if (!["CodeSystem", "ValueSet", "NamingSystem"].includes(String(candidate.resourceType))) return undefined;
-    const namingSystemUri = candidate.uniqueId?.find(
-        ({ type, value, preferred }) => type === "uri" && typeof value === "string" && preferred === true,
-    )?.value;
-    const fallbackNamingSystemUri = candidate.uniqueId?.find(
-        ({ type, value }) => type === "uri" && typeof value === "string",
-    )?.value;
-    const url = typeof candidate.url === "string" ? candidate.url : (namingSystemUri ?? fallbackNamingSystemUri);
+    const resourceType = candidate.resourceType as TerminologyResource["resourceType"];
+    let url = typeof candidate.url === "string" && candidate.url.length > 0 ? candidate.url : undefined;
+    if (url === undefined && resourceType === "NamingSystem") url = namingSystemIdentity(candidate, logger);
     if (typeof url !== "string" || url.length === 0) return undefined;
-    return { ...(resource as TerminologyResource), url };
+    const concepts = projectTerminologyConcepts(candidate.concept);
+    return {
+        resourceType,
+        ...(typeof candidate.id === "string" ? { id: candidate.id } : {}),
+        ...(typeof candidate.name === "string" ? { name: candidate.name } : {}),
+        url,
+        ...(typeof candidate.content === "string" ? { content: candidate.content } : {}),
+        ...(concepts && concepts.length > 0 ? { concept: concepts } : {}),
+    };
 };
 
 type CanonicalResolution<T> = {
@@ -143,7 +197,7 @@ const mkPackageAwareResolver = async (
     const index = mkEmptyPkgIndex(pkg);
     acc[pkgId] = index;
     for (const resource of await manager.search({ package: pkg })) {
-        const terminologyResource = asTerminologyResource(resource);
+        const terminologyResource = asTerminologyResource(resource, logger);
         if (terminologyResource) index.terminology.push(terminologyResource);
         const rawUrl = resource.url;
         if (!rawUrl) continue;

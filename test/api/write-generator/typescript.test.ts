@@ -27,9 +27,9 @@ describe("TypeScript Writer Generator", async () => {
         .generate();
     const files = result.filesGenerated.typescript!;
 
-    it("generates 609 files successfully", () => {
+    it("generates 608 files successfully", () => {
         expect(result.success).toBeTrue();
-        expect(Object.keys(files).length).toEqual(609);
+        expect(Object.keys(files).length).toEqual(608);
     });
 
     it("generates Patient resource in inMemoryOnly mode with snapshot", async () => {

@@ -22,7 +22,6 @@ import {
 import { groupByPackages, type TypeSchemaIndex } from "@root/typeschema/utils";
 import { resolveGeneratorAsset } from "../assets";
 import {
-    normalizeTsName,
     tsFieldName,
     tsModuleFileName,
     tsModuleName,
@@ -44,6 +43,9 @@ const leafOf = (path: string[]): string => path[path.length - 1] ?? "";
 // so we don't emit `<T>` args clashing with the hardcoded `T extends string` declaration.
 const TS_HARDCODED_GENERIC_NAMES = new Set(["Reference", "Coding", "CodeableConcept"]);
 const CODE_SYSTEM_SUFFIX_RE = /CodeSystem$/;
+const CHOICE_SUFFIX_RE = /\[x\]/g;
+const INVALID_TS_IDENTIFIER_RUN_RE = /[^A-Za-z0-9_$]+/g;
+const TS_IDENTIFIER_START_RE = /^[A-Za-z_$]/;
 
 export type TypeScriptOptions = {
     lineWidth?: number;
@@ -57,14 +59,21 @@ export type TypeScriptOptions = {
     extensionGetterDefault?: "flat" | "profile" | "raw";
     sliceGetterDefault?: "flat" | "raw";
     terminology?: {
+        /** Emit one terminology module for every resolved package. Defaults to false. */
+        enabled?: boolean;
         /** Verification values copied from `cognovis-fhir-types.manifest.json` closure entries. */
         packageVerification?: Record<string, string>;
     };
 } & WriterOptions;
 
+const validTsIdentifier = (source: string): string => {
+    const normalized = source.replace(CHOICE_SUFFIX_RE, "_x_").replace(INVALID_TS_IDENTIFIER_RUN_RE, "_");
+    return TS_IDENTIFIER_START_RE.test(normalized) ? normalized : `_${normalized}`;
+};
+
 const terminologySymbolName = (resource: TerminologyResource): string => {
     const sourceName = resource.name ?? resource.id ?? tsNameFromCanonical(resource.url) ?? "Terminology";
-    return `${uppercaseFirstLetter(normalizeTsName(sourceName))}${resource.resourceType}`;
+    return validTsIdentifier(`${uppercaseFirstLetter(sourceName)}${resource.resourceType}`);
 };
 
 const allocateTerminologySymbols = (
@@ -78,7 +87,8 @@ const allocateTerminologySymbols = (
     return resources.map((resource, index) => {
         const baseName = baseNames[index] ?? "Terminology";
         const localIdentity = resource.id ?? tsNameFromCanonical(resource.url) ?? "Resource";
-        const desired = counts[baseName] === 1 ? baseName : `${baseName}_${pascalCase(localIdentity)}`;
+        const desired =
+            counts[baseName] === 1 ? baseName : validTsIdentifier(`${baseName}_${pascalCase(localIdentity)}`);
         let symbol = desired;
         let suffix = 2;
         while (used.has(symbol)) {
@@ -423,6 +433,14 @@ export class TypeScript extends Writer<TypeScriptOptions> {
                     resource.resourceType === "CodeSystem" &&
                     resource.content === "complete" &&
                     verification !== "unverifiable";
+                if (emitsConcepts) {
+                    const seenCodes = new Set<string>();
+                    for (const concept of concepts) {
+                        if (seenCodes.has(concept.code))
+                            throw new Error(`CodeSystem ${resource.url} repeats code ${JSON.stringify(concept.code)}`);
+                        seenCodes.add(concept.code);
+                    }
+                }
 
                 this.curlyBlock(["export", "const", symbol, "="], () => {
                     this.line(`canonicalUrl: ${JSON.stringify(resource.url)},`);
@@ -461,12 +479,27 @@ export class TypeScript extends Writer<TypeScriptOptions> {
             ...(this.opts.generateProfile ? tsIndex.collectSnapshotProfiles() : []),
         ];
         const grouped = groupByPackages(typesToGenerate);
-        const terminologyByPackage = Object.fromEntries(
-            (tsIndex.register?.allTerminology() ?? [])
-                .filter(({ resources }) => resources.length > 0)
-                .map((entry) => [entry.packageMeta.name, entry]),
-        );
-        const packageNames = [...new Set([...Object.keys(grouped), ...Object.keys(terminologyByPackage)])].sort();
+        const terminology = this.opts.terminology?.enabled
+            ? (tsIndex.register?.allTerminology() ?? []).filter(({ resources }) => resources.length > 0)
+            : [];
+        const terminologyVersionsByName = new Map<string, PackageTerminology[]>();
+        for (const entry of terminology) {
+            const sameNameVersions = terminologyVersionsByName.get(entry.packageMeta.name) ?? [];
+            sameNameVersions.push(entry);
+            terminologyVersionsByName.set(entry.packageMeta.name, sameNameVersions);
+        }
+        const generationUnits = new Map<string, { packageSchemas: TypeSchema[]; terminology?: PackageTerminology }>();
+        for (const [packageName, packageSchemas] of Object.entries(grouped)) {
+            generationUnits.set(tsPackageDir(packageName), { packageSchemas });
+        }
+        for (const packageTerminology of terminology) {
+            const { name, version } = packageTerminology.packageMeta;
+            const sameNameVersions = terminologyVersionsByName.get(name) ?? [];
+            const packageDir = tsPackageDir(sameNameVersions.length === 1 ? name : `${name}@${version}`);
+            const unit = generationUnits.get(packageDir) ?? { packageSchemas: [] };
+            unit.terminology = packageTerminology;
+            generationUnits.set(packageDir, unit);
+        }
 
         const hasProfiles = this.opts.generateProfile && typesToGenerate.some(isSnapshotProfileTypeSchema);
 
@@ -475,10 +508,9 @@ export class TypeScript extends Writer<TypeScriptOptions> {
                 this.cp("profile-helpers.ts", "profile-helpers.ts");
             }
 
-            for (const packageName of packageNames) {
-                const packageSchemas = grouped[packageName] ?? [];
-                const terminology = terminologyByPackage[packageName];
-                const packageDir = tsPackageDir(packageName);
+            for (const [packageDir, { packageSchemas, terminology }] of [...generationUnits].sort(([left], [right]) =>
+                left.localeCompare(right),
+            )) {
                 this.cd(packageDir, () => {
                     for (const schema of packageSchemas) {
                         this.generateResourceModule(tsIndex, schema);
