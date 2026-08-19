@@ -107,8 +107,8 @@ describe("TypeScript terminology surface", () => {
               contentMode: "complete",
               codes: ["second", "first"],
               displays: {
-                  "second": "Second display",
-                  "first": "First display",
+                  ["second"]: "Second display",
+                  ["first"]: "First display",
               },
           } as const;
           export type CompleteExampleCode = (typeof CompleteExampleCodeSystem.codes)[number];
@@ -226,8 +226,27 @@ describe("TypeScript terminology surface", () => {
             output.indexOf(JSON.stringify(sourceConcepts[1].code)),
         );
         for (const concept of sourceConcepts) {
-            expect(output).toContain(`${JSON.stringify(concept.code)}: ${JSON.stringify(concept.display)}`);
+            expect(output).toContain(`[${JSON.stringify(concept.code)}]: ${JSON.stringify(concept.display)}`);
         }
+    });
+
+    it("preserves __proto__ as an own display-map property at runtime", async () => {
+        const output = await generateTerminology("registry-integrity", [
+            {
+                resourceType: "CodeSystem",
+                id: "proto-display",
+                name: "ProtoDisplay",
+                url: "http://example.test/CodeSystem/proto-display",
+                content: "complete",
+                concept: [{ code: "__proto__", display: "Prototype display" }],
+            },
+        ]);
+        const javascript = new Bun.Transpiler({ loader: "ts" }).transformSync(output);
+        const generated = await import(`data:text/javascript;base64,${Buffer.from(javascript).toString("base64")}`);
+        const displays = generated.ProtoDisplayCodeSystem.displays;
+
+        expect(Object.hasOwn(displays, "__proto__")).toBeTrue();
+        expect(Reflect.get(displays, "__proto__")).toBe("Prototype display");
     });
 
     it("flattens hierarchical concepts in source order with exact displays", async () => {
@@ -250,8 +269,41 @@ describe("TypeScript terminology surface", () => {
         ]);
 
         expect(output).toContain('codes: ["parent", "child", "sibling"]');
-        expect(output.indexOf('"parent": "Parent display"')).toBeLessThan(output.indexOf('"child": "Child display"'));
-        expect(output.indexOf('"child": "Child display"')).toBeLessThan(output.indexOf('"sibling": "Sibling display"'));
+        expect(output.indexOf('["parent"]: "Parent display"')).toBeLessThan(
+            output.indexOf('["child"]: "Child display"'),
+        );
+        expect(output.indexOf('["child"]: "Child display"')).toBeLessThan(
+            output.indexOf('["sibling"]: "Sibling display"'),
+        );
+    });
+
+    it("handles deeply nested concepts without exhausting the stack", async () => {
+        const depth = 12_000;
+        let concept: { code: string; display: string; concept?: object[] } = {
+            code: `code-${depth}`,
+            display: `Display ${depth}`,
+        };
+        for (let index = depth - 1; index >= 0; index -= 1) {
+            concept = {
+                code: `code-${index}`,
+                display: `Display ${index}`,
+                concept: [concept],
+            };
+        }
+
+        const output = await generateTerminology("registry-integrity", [
+            {
+                resourceType: "CodeSystem",
+                id: "deep-hierarchy",
+                name: "DeepHierarchy",
+                url: "http://example.test/CodeSystem/deep-hierarchy",
+                content: "complete",
+                concept: [concept],
+            },
+        ]);
+
+        expect(output).toContain('codes: ["code-0", "code-1"');
+        expect(output).toContain(`["code-${depth}"]: "Display ${depth}"`);
     });
 
     it("fails deterministically when hierarchical concepts repeat a code", async () => {
@@ -388,5 +440,48 @@ describe("TypeScript terminology surface", () => {
         expect(second).toContain('packageVersion: "2.0.0"');
         expect(first).toContain('canonicalUrl: "http://example.test/ValueSet/1.0.0"');
         expect(second).toContain('canonicalUrl: "http://example.test/ValueSet/2.0.0"');
+    });
+
+    it("preserves packages whose normalized directories collide and contains unsafe path characters", async () => {
+        const packageMetas = [
+            { name: "fixture.ig", version: "1.0.0" },
+            { name: "fixture-ig", version: "1.0.0" },
+            { name: "..\\outside/fixture.ig", version: "1.0.0" },
+        ];
+        const manager = {
+            packageJson: async () => ({ dependencies: {} }),
+            search: async ({ package: pkg }: { package: { name: string } }) => [
+                {
+                    resourceType: "ValueSet",
+                    id: "package-identity",
+                    name: "PackageIdentity",
+                    url: `http://example.test/ValueSet/${encodeURIComponent(pkg.name)}`,
+                },
+            ],
+        } as unknown as Parameters<typeof registerFromManager>[0];
+        const register = await registerFromManager(manager, { focusedPackages: packageMetas });
+        const packageVerification = Object.fromEntries(
+            packageMetas.map(({ name, version }) => [`${name}@${version}`, "registry-integrity"]),
+        );
+
+        const result = await new APIBuilder({ register, logger: mkErrorLogger() })
+            .typescript({ inMemoryOnly: true, terminology: { enabled: true, packageVerification } })
+            .generate();
+        const terminologyFiles = Object.entries(result.filesGenerated.typescript ?? {}).filter(([path]) =>
+            path.endsWith("/terminology.ts"),
+        );
+
+        expect(terminologyFiles).toHaveLength(3);
+        expect(
+            terminologyFiles
+                .map(([, content]) => content.match(/packageId: ("(?:\\.|[^"])+")/)?.[1])
+                .map((packageId) => (packageId === undefined ? undefined : JSON.parse(packageId)))
+                .sort(),
+        ).toEqual(packageMetas.map(({ name }) => name).sort());
+        for (const [path] of terminologyFiles) {
+            expect(path).toMatch(/^generated\/types\/[a-z0-9][a-z0-9-]*\/terminology\.ts$/);
+            expect(path).not.toContain("..");
+            expect(path).not.toContain("\\");
+        }
     });
 });

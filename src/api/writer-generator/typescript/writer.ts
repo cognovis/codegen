@@ -45,6 +45,9 @@ const TS_HARDCODED_GENERIC_NAMES = new Set(["Reference", "Coding", "CodeableConc
 const CODE_SYSTEM_SUFFIX_RE = /CodeSystem$/;
 const CHOICE_SUFFIX_RE = /\[x\]/g;
 const INVALID_TS_IDENTIFIER_RUN_RE = /[^A-Za-z0-9_$]+/g;
+const PACKAGE_PATH_SEPARATOR_RE = /\\/g;
+const INVALID_PACKAGE_DIR_RUN_RE = /[^a-z0-9-]+/g;
+const PACKAGE_DIR_EDGE_RE = /^-+|-+$/g;
 const TS_IDENTIFIER_START_RE = /^[A-Za-z_$]/;
 
 export type TypeScriptOptions = {
@@ -76,6 +79,11 @@ const terminologySymbolName = (resource: TerminologyResource): string => {
     return validTsIdentifier(`${uppercaseFirstLetter(sourceName)}${resource.resourceType}`);
 };
 
+const safeTsPackageDir = (source: string): string => {
+    const normalized = tsPackageDir(source.replace(PACKAGE_PATH_SEPARATOR_RE, "_"));
+    return normalized.replace(INVALID_PACKAGE_DIR_RUN_RE, "-").replace(PACKAGE_DIR_EDGE_RE, "") || "package";
+};
+
 const allocateTerminologySymbols = (
     resources: TerminologyResource[],
 ): { resource: TerminologyResource; symbol: string }[] => {
@@ -100,8 +108,22 @@ const allocateTerminologySymbols = (
     });
 };
 
-const flattenConcepts = (concepts: TerminologyConcept[] | undefined): TerminologyConcept[] =>
-    (concepts ?? []).flatMap((concept) => [concept, ...flattenConcepts(concept.concept)]);
+const flattenConcepts = (concepts: TerminologyConcept[] | undefined): TerminologyConcept[] => {
+    const flattened: TerminologyConcept[] = [];
+    const stack = [...(concepts ?? [])].reverse();
+    while (stack.length > 0) {
+        const concept = stack.pop();
+        if (!concept) continue;
+        flattened.push(concept);
+        if (concept.concept) {
+            for (let index = concept.concept.length - 1; index >= 0; index -= 1) {
+                const nested = concept.concept[index];
+                if (nested) stack.push(nested);
+            }
+        }
+    }
+    return flattened;
+};
 
 export class TypeScript extends Writer<TypeScriptOptions> {
     constructor(options: TypeScriptOptions) {
@@ -456,7 +478,7 @@ export class TypeScript extends Writer<TypeScriptOptions> {
                         this.curlyBlock(["displays:"], () => {
                             for (const concept of concepts) {
                                 if (concept.display !== undefined)
-                                    this.line(`${JSON.stringify(concept.code)}: ${JSON.stringify(concept.display)},`);
+                                    this.line(`[${JSON.stringify(concept.code)}]: ${JSON.stringify(concept.display)},`);
                             }
                         }, [","]);
                     }
@@ -488,17 +510,59 @@ export class TypeScript extends Writer<TypeScriptOptions> {
             sameNameVersions.push(entry);
             terminologyVersionsByName.set(entry.packageMeta.name, sameNameVersions);
         }
-        const generationUnits = new Map<string, { packageSchemas: TypeSchema[]; terminology?: PackageTerminology }>();
+        const logicalUnits = new Map<
+            string,
+            { directorySource: string; packageSchemas: TypeSchema[]; terminology?: PackageTerminology }
+        >();
         for (const [packageName, packageSchemas] of Object.entries(grouped)) {
-            generationUnits.set(tsPackageDir(packageName), { packageSchemas });
+            logicalUnits.set(`package:${packageName}`, { directorySource: packageName, packageSchemas });
         }
         for (const packageTerminology of terminology) {
             const { name, version } = packageTerminology.packageMeta;
             const sameNameVersions = terminologyVersionsByName.get(name) ?? [];
-            const packageDir = tsPackageDir(sameNameVersions.length === 1 ? name : `${name}@${version}`);
-            const unit = generationUnits.get(packageDir) ?? { packageSchemas: [] };
+            const hasMultipleVersions = sameNameVersions.length > 1;
+            const identity = hasMultipleVersions ? `terminology:${name}@${version}` : `package:${name}`;
+            const unit = logicalUnits.get(identity) ?? {
+                directorySource: hasMultipleVersions ? `${name}@${version}` : name,
+                packageSchemas: [],
+            };
             unit.terminology = packageTerminology;
-            generationUnits.set(packageDir, unit);
+            logicalUnits.set(identity, unit);
+        }
+
+        const unitsByBaseDir = new Map<
+            string,
+            { identity: string; packageSchemas: TypeSchema[]; terminology?: PackageTerminology }[]
+        >();
+        for (const [identity, { directorySource, packageSchemas, terminology: packageTerminology }] of logicalUnits) {
+            const baseDir = safeTsPackageDir(directorySource);
+            const units = unitsByBaseDir.get(baseDir) ?? [];
+            units.push({ identity, packageSchemas, terminology: packageTerminology });
+            unitsByBaseDir.set(baseDir, units);
+        }
+
+        const generationUnits = new Map<string, { packageSchemas: TypeSchema[]; terminology?: PackageTerminology }>();
+        const usedPackageDirs = new Set<string>();
+        for (const [baseDir, units] of unitsByBaseDir) {
+            if (units.length !== 1) continue;
+            const unit = units[0];
+            if (!unit) continue;
+            generationUnits.set(baseDir, unit);
+            usedPackageDirs.add(baseDir);
+        }
+        for (const [baseDir, units] of [...unitsByBaseDir].sort(([left], [right]) => left.localeCompare(right))) {
+            if (units.length < 2) continue;
+            let suffix = 1;
+            for (const unit of units.sort((left, right) => left.identity.localeCompare(right.identity))) {
+                let packageDir = `${baseDir}--${suffix}`;
+                while (usedPackageDirs.has(packageDir)) {
+                    suffix += 1;
+                    packageDir = `${baseDir}--${suffix}`;
+                }
+                generationUnits.set(packageDir, unit);
+                usedPackageDirs.add(packageDir);
+                suffix += 1;
+            }
         }
 
         const hasProfiles = this.opts.generateProfile && typesToGenerate.some(isSnapshotProfileTypeSchema);

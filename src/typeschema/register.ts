@@ -84,19 +84,40 @@ export type PackageTerminology = {
 
 const projectTerminologyConcepts = (concepts: unknown): TerminologyConcept[] | undefined => {
     if (!Array.isArray(concepts)) return undefined;
-    return concepts.flatMap((concept): TerminologyConcept[] => {
-        if (concept === null || typeof concept !== "object") return [];
+    const projected: TerminologyConcept[] = [];
+    const stack: {
+        source: unknown[];
+        target: TerminologyConcept[];
+        index: number;
+        parent?: TerminologyConcept;
+    }[] = [{ source: concepts, target: projected, index: 0 }];
+
+    while (stack.length > 0) {
+        const frame = stack[stack.length - 1];
+        if (!frame) break;
+        if (frame.index >= frame.source.length) {
+            if (frame.parent && frame.target.length === 0) delete frame.parent.concept;
+            stack.pop();
+            continue;
+        }
+        const concept = frame.source[frame.index];
+        frame.index += 1;
+        if (concept === null || typeof concept !== "object") continue;
         const candidate = concept as { code?: unknown; display?: unknown; concept?: unknown };
-        if (typeof candidate.code !== "string") return [];
-        const nested = projectTerminologyConcepts(candidate.concept);
-        return [
-            {
-                code: candidate.code,
-                ...(typeof candidate.display === "string" ? { display: candidate.display } : {}),
-                ...(nested && nested.length > 0 ? { concept: nested } : {}),
-            },
-        ];
-    });
+        if (typeof candidate.code !== "string") continue;
+        const copy: TerminologyConcept = {
+            code: candidate.code,
+            ...(typeof candidate.display === "string" ? { display: candidate.display } : {}),
+        };
+        frame.target.push(copy);
+        if (Array.isArray(candidate.concept)) {
+            const nested: TerminologyConcept[] = [];
+            copy.concept = nested;
+            stack.push({ source: candidate.concept, target: nested, index: 0, parent: copy });
+        }
+    }
+
+    return projected;
 };
 
 const namingSystemIdentity = (
