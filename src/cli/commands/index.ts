@@ -11,6 +11,8 @@ import type { LogLevel } from "@root/utils/log";
 import { mkLogger } from "@root/utils/log";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import packageJson from "../../../package.json" with { type: "json" };
+import { generateCommand } from "./generate";
 import { typeschemaCommand } from "./typeschema";
 
 let cliLogger = mkLogger({ prefix: "cli" });
@@ -29,6 +31,7 @@ export function createCLI() {
         .usage("$0 <command> [options]")
         .middleware(setupLoggingMiddleware)
         .command(typeschemaCommand)
+        .command(generateCommand)
         .option("verbose", {
             alias: "v",
             type: "boolean",
@@ -58,19 +61,22 @@ export function createCLI() {
                 header("Welcome to Atomic Codegen!");
                 console.log("Available commands:");
                 console.log("  typeschema   Generate, validate and merge TypeSchema files");
+                console.log("  generate     Generate code from a JSON configuration file");
                 console.log("\nUse 'atomic-codegen <command> --help' for more information about a command.");
                 console.log("\nQuick examples:");
                 console.log("  atomic-codegen typeschema generate hl7.fhir.r4.core@4.0.1 -o schemas.ndjson");
+                console.log("  atomic-codegen generate --config ./codegen.json");
                 console.log("\nUse 'atomic-codegen --help' to see all options.");
                 process.exit(0);
             }
         })
         .help()
-        .version("0.1.0")
+        .version(packageJson.version)
         .example(
             "$0 typeschema generate hl7.fhir.r4.core@4.0.1 -o schemas.ndjson",
             "Generate TypeSchemas from FHIR package",
         )
+        .example("$0 generate --config ./codegen.json", "Run the generation pipelines described by a config file")
         .fail((msg, err, _yargs) => {
             cliLogger.error(err ? err.message : msg);
             cliLogger.error("Use --help for usage information");
