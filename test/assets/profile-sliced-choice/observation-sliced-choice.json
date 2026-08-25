@@ -1,0 +1,63 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "sliced-choice-observation",
+  "url": "http://example.test/StructureDefinition/sliced-choice-observation",
+  "version": "0.1.0",
+  "name": "SlicedChoiceObservation",
+  "title": "Sliced Choice Observation",
+  "status": "active",
+  "description": "Generic regression fixture: an Observation profile whose component slice constrains the choice element value[x] to a single type and makes it required.",
+  "fhirVersion": "4.0.1",
+  "kind": "resource",
+  "abstract": false,
+  "type": "Observation",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Observation",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "Observation.component",
+        "path": "Observation.component",
+        "slicing": {
+          "discriminator": [
+            {
+              "type": "pattern",
+              "path": "code"
+            }
+          ],
+          "rules": "open"
+        }
+      },
+      {
+        "id": "Observation.component:codedFinding",
+        "path": "Observation.component",
+        "sliceName": "codedFinding",
+        "min": 1,
+        "max": "1"
+      },
+      {
+        "id": "Observation.component:codedFinding.code",
+        "path": "Observation.component.code",
+        "min": 1,
+        "patternCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://example.test/CodeSystem/component-kind",
+              "code": "coded-finding"
+            }
+          ]
+        }
+      },
+      {
+        "id": "Observation.component:codedFinding.value[x]",
+        "path": "Observation.component.value[x]",
+        "min": 1,
+        "type": [
+          {
+            "code": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  }
+}
