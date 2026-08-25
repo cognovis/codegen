@@ -5,15 +5,15 @@ exports[`Local Package Folder - Multi-Package Generation TypeScript Generation s
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Coding } from "../hl7-fhir-r4-core/Coding";
-import type { DomainResource } from "../hl7-fhir-r4-core/DomainResource";
-import type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-import type { Reference } from "../hl7-fhir-r4-core/Reference";
+import type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+import type { DomainResource } from "../hl7-fhir-r4-core/DomainResource.js";
+import type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+import type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
-import type { Element } from "../hl7-fhir-r4-core/Element";
-export type { Coding } from "../hl7-fhir-r4-core/Coding";
-export type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-export type { Reference } from "../hl7-fhir-r4-core/Reference";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+export type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+export type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
 // CanonicalURL: http://example.org/fhir/StructureDefinition/ExampleNotebook (pkg: example.folder.structures#0.0.1)
 export interface ExampleNotebook extends DomainResource {
@@ -33,9 +33,9 @@ exports[`Local Package Folder - Multi-Package Generation TypeScript Generation w
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Bundle, BundleEntry } from "../../hl7-fhir-r4-core/Bundle";
-import type { Organization } from "../../hl7-fhir-r4-core/Organization";
-import type { Patient } from "../../hl7-fhir-r4-core/Patient";
+import type { Bundle, BundleEntry } from "../../hl7-fhir-r4-core/Bundle.js";
+import type { Organization } from "../../hl7-fhir-r4-core/Organization.js";
+import type { Patient } from "../../hl7-fhir-r4-core/Patient.js";
 
 export type ExampleTypedBundle_Entry_PatientEntrySliceFlat = BundleEntry<Patient>;
 export type ExampleTypedBundle_Entry_PatientEntrySliceFlatAll = ExampleTypedBundle_Entry_PatientEntrySliceFlat;
@@ -62,7 +62,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type ExampleTypedBundleProfileRaw = {
     type: ("document" | "message" | "transaction" | "transaction-response" | "batch" | "batch-response" | "history" | "searchset" | "collection");

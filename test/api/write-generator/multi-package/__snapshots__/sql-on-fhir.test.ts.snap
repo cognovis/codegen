@@ -5,11 +5,11 @@ exports[`SQL-on-FHIR TypeScript Generation should generate ViewDefinition type 1
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { BackboneElement } from "../hl7-fhir-r5-core/BackboneElement";
-import type { CanonicalResource } from "../hl7-fhir-r5-core/CanonicalResource";
+import type { BackboneElement } from "../hl7-fhir-r5-core/BackboneElement.js";
+import type { CanonicalResource } from "../hl7-fhir-r5-core/CanonicalResource.js";
 
-import type { Element } from "../hl7-fhir-r5-core/Element";
-export type { BackboneElement } from "../hl7-fhir-r5-core/BackboneElement";
+import type { Element } from "../hl7-fhir-r5-core/Element.js";
+export type { BackboneElement } from "../hl7-fhir-r5-core/BackboneElement.js";
 
 export interface ViewDefinitionConstant extends BackboneElement {
     name: string;

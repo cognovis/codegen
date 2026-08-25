@@ -5,27 +5,27 @@ exports[`TypeScript Writer Generator generates Patient resource in inMemoryOnly 
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Address } from "../hl7-fhir-r4-core/Address";
-import type { Attachment } from "../hl7-fhir-r4-core/Attachment";
-import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
-import type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept";
-import type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint";
-import type { DomainResource } from "../hl7-fhir-r4-core/DomainResource";
-import type { HumanName } from "../hl7-fhir-r4-core/HumanName";
-import type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-import type { Period } from "../hl7-fhir-r4-core/Period";
-import type { Reference } from "../hl7-fhir-r4-core/Reference";
+import type { Address } from "../hl7-fhir-r4-core/Address.js";
+import type { Attachment } from "../hl7-fhir-r4-core/Attachment.js";
+import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement.js";
+import type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept.js";
+import type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint.js";
+import type { DomainResource } from "../hl7-fhir-r4-core/DomainResource.js";
+import type { HumanName } from "../hl7-fhir-r4-core/HumanName.js";
+import type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+import type { Period } from "../hl7-fhir-r4-core/Period.js";
+import type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
-import type { Element } from "../hl7-fhir-r4-core/Element";
-export type { Address } from "../hl7-fhir-r4-core/Address";
-export type { Attachment } from "../hl7-fhir-r4-core/Attachment";
-export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
-export type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept";
-export type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint";
-export type { HumanName } from "../hl7-fhir-r4-core/HumanName";
-export type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-export type { Period } from "../hl7-fhir-r4-core/Period";
-export type { Reference } from "../hl7-fhir-r4-core/Reference";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { Address } from "../hl7-fhir-r4-core/Address.js";
+export type { Attachment } from "../hl7-fhir-r4-core/Attachment.js";
+export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement.js";
+export type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept.js";
+export type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint.js";
+export type { HumanName } from "../hl7-fhir-r4-core/HumanName.js";
+export type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+export type { Period } from "../hl7-fhir-r4-core/Period.js";
+export type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
 export interface PatientCommunication extends BackboneElement {
     language: CodeableConcept<("ar" | "bn" | "cs" | "da" | "de" | "de-AT" | "de-CH" | "de-DE" | "el" | "en" | "en-AU" | "en-CA" | "en-GB" | "en-IN" | "en-NZ" | "en-SG" | "en-US" | "es" | "es-AR" | "es-ES" | "es-UY" | "fi" | "fr" | "fr-BE" | "fr-CH" | "fr-FR" | "fy" | "fy-NL" | "hi" | "hr" | "it" | "it-CH" | "it-IT" | "ja" | "ko" | "nl" | "nl-BE" | "nl-NL" | "no" | "no-NO" | "pa" | "pl" | "pt" | "pt-BR" | "ru" | "ru-RU" | "sr" | "sr-RS" | "sv" | "sv-SE" | "te" | "zh" | "zh-CN" | "zh-HK" | "zh-SG" | "zh-TW" | string)>;
@@ -88,9 +88,9 @@ exports[`TypeScript Writer Generator generates Coding with generic parameter 1`]
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Element } from "../hl7-fhir-r4-core/Element";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
 
-export type { Element } from "../hl7-fhir-r4-core/Element";
+export type { Element } from "../hl7-fhir-r4-core/Element.js";
 
 // CanonicalURL: http://hl7.org/fhir/StructureDefinition/Coding (pkg: hl7.fhir.r4.core#4.0.1)
 export interface Coding<T extends string = string> extends Element {
@@ -113,11 +113,11 @@ exports[`TypeScript Writer Generator generates CodeableConcept with generic para
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Coding } from "../hl7-fhir-r4-core/Coding";
-import type { Element } from "../hl7-fhir-r4-core/Element";
+import type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
 
-export type { Coding } from "../hl7-fhir-r4-core/Coding";
-export type { Element } from "../hl7-fhir-r4-core/Element";
+export type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+export type { Element } from "../hl7-fhir-r4-core/Element.js";
 
 // CanonicalURL: http://hl7.org/fhir/StructureDefinition/CodeableConcept (pkg: hl7.fhir.r4.core#4.0.1)
 export interface CodeableConcept<T extends string = string> extends Element {
@@ -133,15 +133,15 @@ exports[`TypeScript Writer Generator generates BundleEntry with generic type-fam
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
-import type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-import type { Resource } from "../hl7-fhir-r4-core/Resource";
-import type { Signature } from "../hl7-fhir-r4-core/Signature";
+import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement.js";
+import type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+import type { Resource } from "../hl7-fhir-r4-core/Resource.js";
+import type { Signature } from "../hl7-fhir-r4-core/Signature.js";
 
-import type { Element } from "../hl7-fhir-r4-core/Element";
-export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
-export type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-export type { Signature } from "../hl7-fhir-r4-core/Signature";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement.js";
+export type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+export type { Signature } from "../hl7-fhir-r4-core/Signature.js";
 
 export interface BundleEntry<T1 extends Resource = Resource, T2 extends Resource = Resource> extends BackboneElement {
     fullUrl?: string;
@@ -205,15 +205,15 @@ exports[`TypeScript Writer Generator generates Bundle with inherited generic par
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
-import type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-import type { Resource } from "../hl7-fhir-r4-core/Resource";
-import type { Signature } from "../hl7-fhir-r4-core/Signature";
+import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement.js";
+import type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+import type { Resource } from "../hl7-fhir-r4-core/Resource.js";
+import type { Signature } from "../hl7-fhir-r4-core/Signature.js";
 
-import type { Element } from "../hl7-fhir-r4-core/Element";
-export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
-export type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-export type { Signature } from "../hl7-fhir-r4-core/Signature";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement.js";
+export type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+export type { Signature } from "../hl7-fhir-r4-core/Signature.js";
 
 export interface BundleEntry<T1 extends Resource = Resource, T2 extends Resource = Resource> extends BackboneElement {
     fullUrl?: string;
@@ -277,8 +277,8 @@ exports[`TypeScript CDA with Logical Model Promotion to Resource without resourc
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CD } from "../hl7-cda-uv-core/CD";
-import type { CE } from "../hl7-cda-uv-core/CE";
+import type { CD } from "../hl7-cda-uv-core/CD.js";
+import type { CE } from "../hl7-cda-uv-core/CE.js";
 
 // CanonicalURL: http://hl7.org/cda/stds/core/StructureDefinition/CV (pkg: hl7.cda.uv.core#2.0.1-sd)
 export interface CV extends CE {
@@ -288,151 +288,151 @@ export interface CV extends CE {
 `;
 
 exports[`TypeScript CDA with Logical Model Promotion to Resource without resourceType 2`] = `
-"export * from "./profiles";
-export type { Act } from "./Act";
-export type { AD, ADItem } from "./AD";
-export type { ADXP } from "./ADXP";
-export type { AlternateIdentification } from "./AlternateIdentification";
-export type { ANY } from "./ANY";
-export type { AssignedAuthor } from "./AssignedAuthor";
-export type { AssignedCustodian } from "./AssignedCustodian";
-export type { AssignedEntity, AssignedEntitySdtcPatient } from "./AssignedEntity";
-export type { AssociatedEntity } from "./AssociatedEntity";
-export type { Authenticator } from "./Authenticator";
-export type { Author } from "./Author";
-export type { AuthoringDevice } from "./AuthoringDevice";
-export type { Authorization } from "./Authorization";
-export type { Birthplace } from "./Birthplace";
-export type { BL } from "./BL";
-export type { CD } from "./CD";
-export type { CE } from "./CE";
-export type { ClinicalDocument } from "./ClinicalDocument";
-export type { CO } from "./CO";
-export type { Component } from "./Component";
-export type { ComponentOf } from "./ComponentOf";
-export type { Consent } from "./Consent";
-export type { CR } from "./CR";
-export type { Criterion } from "./Criterion";
-export type { CS } from "./CS";
-export type { Custodian } from "./Custodian";
-export type { CustodianOrganization } from "./CustodianOrganization";
-export type { CV } from "./CV";
-export type { DataEnterer } from "./DataEnterer";
-export type { Device } from "./Device";
-export type { DocumentationOf } from "./DocumentationOf";
-export type { ED } from "./ED";
-export type { EIVL_TS } from "./EIVL_TS";
-export type { EN, ENItem } from "./EN";
-export type { EncompassingEncounter, EncompassingEncounterLocation, EncompassingEncounterResponsibleParty } from "./EncompassingEncounter";
-export type { Encounter } from "./Encounter";
-export type { EncounterParticipant } from "./EncounterParticipant";
-export type { Entity } from "./Entity";
-export type { Entry } from "./Entry";
-export type { EntryRelationship } from "./EntryRelationship";
-export type { ENXP } from "./ENXP";
-export type { ExternalAct } from "./ExternalAct";
-export type { ExternalDocument } from "./ExternalDocument";
-export type { ExternalObservation } from "./ExternalObservation";
-export type { ExternalProcedure } from "./ExternalProcedure";
-export type { Guardian } from "./Guardian";
-export type { HealthCareFacility } from "./HealthCareFacility";
-export type { IdentifiedBy } from "./IdentifiedBy";
-export type { II } from "./II";
-export type { Informant } from "./Informant";
-export type { InformationRecipient } from "./InformationRecipient";
-export type { InfrastructureRoot } from "./InfrastructureRoot";
-export type { InFulfillmentOf } from "./InFulfillmentOf";
-export type { InFulfillmentOf1, InFulfillmentOf1ActReference } from "./InFulfillmentOf1";
-export type { INT } from "./INT";
-export type { INT_POS } from "./INT_POS";
-export type { IntendedRecipient } from "./IntendedRecipient";
-export type { IVL_INT } from "./IVL_INT";
-export type { IVL_PQ } from "./IVL_PQ";
-export type { IVL_TS } from "./IVL_TS";
-export type { IVXB_INT } from "./IVXB_INT";
-export type { IVXB_PQ } from "./IVXB_PQ";
-export type { IVXB_TS } from "./IVXB_TS";
-export type { LabeledDrug } from "./LabeledDrug";
-export type { LanguageCommunication } from "./LanguageCommunication";
-export type { LegalAuthenticator } from "./LegalAuthenticator";
-export type { MaintainedEntity } from "./MaintainedEntity";
-export type { ManufacturedProduct } from "./ManufacturedProduct";
-export type { Material } from "./Material";
-export { isMaterial } from "./Material";
-export type { MO } from "./MO";
-export type { NonXMLBody } from "./NonXMLBody";
-export type { Observation, ObservationReferenceRange } from "./Observation";
-export type { ObservationMedia } from "./ObservationMedia";
-export type { ObservationRange, ObservationRangeSdtcPrecondition1 } from "./ObservationRange";
-export type { ON, ONItem } from "./ON";
-export type { Order } from "./Order";
-export type { Organization } from "./Organization";
-export type { OrganizationPartOf } from "./OrganizationPartOf";
-export type { Organizer } from "./Organizer";
-export type { OrganizerComponent } from "./OrganizerComponent";
-export type { ParentDocument } from "./ParentDocument";
-export type { Participant1 } from "./Participant1";
-export type { Participant2 } from "./Participant2";
-export type { ParticipantRole } from "./ParticipantRole";
-export type { Patient } from "./Patient";
-export type { PatientRole } from "./PatientRole";
-export type { Performer1 } from "./Performer1";
-export type { Performer2 } from "./Performer2";
-export type { Person, PersonSdtcAsPatientRelationship } from "./Person";
-export type { PIVL_TS } from "./PIVL_TS";
-export type { Place } from "./Place";
-export type { PlayingEntity } from "./PlayingEntity";
-export type { PN } from "./PN";
-export type { PQ } from "./PQ";
-export type { PQR } from "./PQR";
-export type { Precondition } from "./Precondition";
-export type { Precondition2 } from "./Precondition2";
-export type { PreconditionBase } from "./PreconditionBase";
-export type { Procedure } from "./Procedure";
-export type { QTY } from "./QTY";
-export type { REAL } from "./REAL";
-export type { RecordTarget } from "./RecordTarget";
-export type { Reference } from "./Reference";
-export type { RegionOfInterest } from "./RegionOfInterest";
-export type { RelatedDocument } from "./RelatedDocument";
-export type { RelatedEntity } from "./RelatedEntity";
-export type { RelatedSubject } from "./RelatedSubject";
-export type { RTO_PQ_PQ } from "./RTO_PQ_PQ";
-export type { SC } from "./SC";
-export type { Section, SectionComponent } from "./Section";
-export type { ServiceEvent } from "./ServiceEvent";
-export type { Specimen } from "./Specimen";
-export type { SpecimenRole } from "./SpecimenRole";
-export type { ST } from "./ST";
-export type { StructuredBody, StructuredBodyComponent } from "./StructuredBody";
-export type { Subject } from "./Subject";
-export type { SubjectPerson } from "./SubjectPerson";
-export type { SubstanceAdministration, SubstanceAdministrationConsumable } from "./SubstanceAdministration";
-export type { Supply, SupplyProduct } from "./Supply";
-export type { SXCM_TS } from "./SXCM_TS";
-export type { SXPR_TS } from "./SXPR_TS";
-export type { TEL } from "./TEL";
-export type { TS } from "./TS";
+"export * from "./profiles/index.js";
+export type { Act } from "./Act.js";
+export type { AD, ADItem } from "./AD.js";
+export type { ADXP } from "./ADXP.js";
+export type { AlternateIdentification } from "./AlternateIdentification.js";
+export type { ANY } from "./ANY.js";
+export type { AssignedAuthor } from "./AssignedAuthor.js";
+export type { AssignedCustodian } from "./AssignedCustodian.js";
+export type { AssignedEntity, AssignedEntitySdtcPatient } from "./AssignedEntity.js";
+export type { AssociatedEntity } from "./AssociatedEntity.js";
+export type { Authenticator } from "./Authenticator.js";
+export type { Author } from "./Author.js";
+export type { AuthoringDevice } from "./AuthoringDevice.js";
+export type { Authorization } from "./Authorization.js";
+export type { Birthplace } from "./Birthplace.js";
+export type { BL } from "./BL.js";
+export type { CD } from "./CD.js";
+export type { CE } from "./CE.js";
+export type { ClinicalDocument } from "./ClinicalDocument.js";
+export type { CO } from "./CO.js";
+export type { Component } from "./Component.js";
+export type { ComponentOf } from "./ComponentOf.js";
+export type { Consent } from "./Consent.js";
+export type { CR } from "./CR.js";
+export type { Criterion } from "./Criterion.js";
+export type { CS } from "./CS.js";
+export type { Custodian } from "./Custodian.js";
+export type { CustodianOrganization } from "./CustodianOrganization.js";
+export type { CV } from "./CV.js";
+export type { DataEnterer } from "./DataEnterer.js";
+export type { Device } from "./Device.js";
+export type { DocumentationOf } from "./DocumentationOf.js";
+export type { ED } from "./ED.js";
+export type { EIVL_TS } from "./EIVL_TS.js";
+export type { EN, ENItem } from "./EN.js";
+export type { EncompassingEncounter, EncompassingEncounterLocation, EncompassingEncounterResponsibleParty } from "./EncompassingEncounter.js";
+export type { Encounter } from "./Encounter.js";
+export type { EncounterParticipant } from "./EncounterParticipant.js";
+export type { Entity } from "./Entity.js";
+export type { Entry } from "./Entry.js";
+export type { EntryRelationship } from "./EntryRelationship.js";
+export type { ENXP } from "./ENXP.js";
+export type { ExternalAct } from "./ExternalAct.js";
+export type { ExternalDocument } from "./ExternalDocument.js";
+export type { ExternalObservation } from "./ExternalObservation.js";
+export type { ExternalProcedure } from "./ExternalProcedure.js";
+export type { Guardian } from "./Guardian.js";
+export type { HealthCareFacility } from "./HealthCareFacility.js";
+export type { IdentifiedBy } from "./IdentifiedBy.js";
+export type { II } from "./II.js";
+export type { Informant } from "./Informant.js";
+export type { InformationRecipient } from "./InformationRecipient.js";
+export type { InfrastructureRoot } from "./InfrastructureRoot.js";
+export type { InFulfillmentOf } from "./InFulfillmentOf.js";
+export type { InFulfillmentOf1, InFulfillmentOf1ActReference } from "./InFulfillmentOf1.js";
+export type { INT } from "./INT.js";
+export type { INT_POS } from "./INT_POS.js";
+export type { IntendedRecipient } from "./IntendedRecipient.js";
+export type { IVL_INT } from "./IVL_INT.js";
+export type { IVL_PQ } from "./IVL_PQ.js";
+export type { IVL_TS } from "./IVL_TS.js";
+export type { IVXB_INT } from "./IVXB_INT.js";
+export type { IVXB_PQ } from "./IVXB_PQ.js";
+export type { IVXB_TS } from "./IVXB_TS.js";
+export type { LabeledDrug } from "./LabeledDrug.js";
+export type { LanguageCommunication } from "./LanguageCommunication.js";
+export type { LegalAuthenticator } from "./LegalAuthenticator.js";
+export type { MaintainedEntity } from "./MaintainedEntity.js";
+export type { ManufacturedProduct } from "./ManufacturedProduct.js";
+export type { Material } from "./Material.js";
+export { isMaterial } from "./Material.js";
+export type { MO } from "./MO.js";
+export type { NonXMLBody } from "./NonXMLBody.js";
+export type { Observation, ObservationReferenceRange } from "./Observation.js";
+export type { ObservationMedia } from "./ObservationMedia.js";
+export type { ObservationRange, ObservationRangeSdtcPrecondition1 } from "./ObservationRange.js";
+export type { ON, ONItem } from "./ON.js";
+export type { Order } from "./Order.js";
+export type { Organization } from "./Organization.js";
+export type { OrganizationPartOf } from "./OrganizationPartOf.js";
+export type { Organizer } from "./Organizer.js";
+export type { OrganizerComponent } from "./OrganizerComponent.js";
+export type { ParentDocument } from "./ParentDocument.js";
+export type { Participant1 } from "./Participant1.js";
+export type { Participant2 } from "./Participant2.js";
+export type { ParticipantRole } from "./ParticipantRole.js";
+export type { Patient } from "./Patient.js";
+export type { PatientRole } from "./PatientRole.js";
+export type { Performer1 } from "./Performer1.js";
+export type { Performer2 } from "./Performer2.js";
+export type { Person, PersonSdtcAsPatientRelationship } from "./Person.js";
+export type { PIVL_TS } from "./PIVL_TS.js";
+export type { Place } from "./Place.js";
+export type { PlayingEntity } from "./PlayingEntity.js";
+export type { PN } from "./PN.js";
+export type { PQ } from "./PQ.js";
+export type { PQR } from "./PQR.js";
+export type { Precondition } from "./Precondition.js";
+export type { Precondition2 } from "./Precondition2.js";
+export type { PreconditionBase } from "./PreconditionBase.js";
+export type { Procedure } from "./Procedure.js";
+export type { QTY } from "./QTY.js";
+export type { REAL } from "./REAL.js";
+export type { RecordTarget } from "./RecordTarget.js";
+export type { Reference } from "./Reference.js";
+export type { RegionOfInterest } from "./RegionOfInterest.js";
+export type { RelatedDocument } from "./RelatedDocument.js";
+export type { RelatedEntity } from "./RelatedEntity.js";
+export type { RelatedSubject } from "./RelatedSubject.js";
+export type { RTO_PQ_PQ } from "./RTO_PQ_PQ.js";
+export type { SC } from "./SC.js";
+export type { Section, SectionComponent } from "./Section.js";
+export type { ServiceEvent } from "./ServiceEvent.js";
+export type { Specimen } from "./Specimen.js";
+export type { SpecimenRole } from "./SpecimenRole.js";
+export type { ST } from "./ST.js";
+export type { StructuredBody, StructuredBodyComponent } from "./StructuredBody.js";
+export type { Subject } from "./Subject.js";
+export type { SubjectPerson } from "./SubjectPerson.js";
+export type { SubstanceAdministration, SubstanceAdministrationConsumable } from "./SubstanceAdministration.js";
+export type { Supply, SupplyProduct } from "./Supply.js";
+export type { SXCM_TS } from "./SXCM_TS.js";
+export type { SXPR_TS } from "./SXPR_TS.js";
+export type { TEL } from "./TEL.js";
+export type { TS } from "./TS.js";
 "
 `;
 
 exports[`TypeScript CDA with Logical Model Promotion to Resource without resourceType 3`] = `
-"export { TNProfile } from "./EN_TN";
-export { binProfile } from "./Base64Binary_bin";
-export { blProfile } from "./Boolean_bl";
-export { bnProfile } from "./Boolean_bn";
-export { csProfile } from "./Code_cs";
-export { intProfile } from "./Integer_int";
-export { oidProfile } from "./String_oid";
-export { probabilityProfile } from "./Decimal_probability";
-export { realProfile } from "./Decimal_real";
-export { ruidProfile } from "./String_ruid";
-export { stProfile } from "./String_st";
-export { tsProfile } from "./DateTime_ts";
-export { uidProfile } from "./String_uid";
-export { urlProfile } from "./Url_url";
-export { uuidProfile } from "./String_uuid";
-export { xs_IDProfile } from "./Id_xs_ID";
+"export { TNProfile } from "./EN_TN.js";
+export { binProfile } from "./Base64Binary_bin.js";
+export { blProfile } from "./Boolean_bl.js";
+export { bnProfile } from "./Boolean_bn.js";
+export { csProfile } from "./Code_cs.js";
+export { intProfile } from "./Integer_int.js";
+export { oidProfile } from "./String_oid.js";
+export { probabilityProfile } from "./Decimal_probability.js";
+export { realProfile } from "./Decimal_real.js";
+export { ruidProfile } from "./String_ruid.js";
+export { stProfile } from "./String_st.js";
+export { tsProfile } from "./DateTime_ts.js";
+export { uidProfile } from "./String_uid.js";
+export { urlProfile } from "./Url_url.js";
+export { uuidProfile } from "./String_uuid.js";
+export { xs_IDProfile } from "./Id_xs_ID.js";
 "
 `;
 
@@ -441,12 +441,12 @@ exports[`TypeScript CDA with Logical Model Promotion to Resource with resourceTy
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CE } from "../hl7-cda-uv-core/CE";
-import type { EN } from "../hl7-cda-uv-core/EN";
-import type { InfrastructureRoot } from "../hl7-cda-uv-core/InfrastructureRoot";
-import type { ST } from "../hl7-cda-uv-core/ST";
+import type { CE } from "../hl7-cda-uv-core/CE.js";
+import type { EN } from "../hl7-cda-uv-core/EN.js";
+import type { InfrastructureRoot } from "../hl7-cda-uv-core/InfrastructureRoot.js";
+import type { ST } from "../hl7-cda-uv-core/ST.js";
 
-import type { Element } from "../hl7-fhir-r5-core/Element";
+import type { Element } from "../hl7-fhir-r5-core/Element.js";
 // CanonicalURL: http://hl7.org/cda/stds/core/StructureDefinition/Material (pkg: hl7.cda.uv.core#2.0.1-sd)
 export interface Material extends InfrastructureRoot {
     resourceType: "Material";
@@ -505,11 +505,11 @@ exports[`TypeScript R4 Example (with generateProfile) generates bodyweight profi
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Observation } from "../../hl7-fhir-r4-core/Observation";
-import type { Period } from "../../hl7-fhir-r4-core/Period";
-import type { Quantity } from "../../hl7-fhir-r4-core/Quantity";
-import type { Reference } from "../../hl7-fhir-r4-core/Reference";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Observation } from "../../hl7-fhir-r4-core/Observation.js";
+import type { Period } from "../../hl7-fhir-r4-core/Period.js";
+import type { Quantity } from "../../hl7-fhir-r4-core/Quantity.js";
+import type { Reference } from "../../hl7-fhir-r4-core/Reference.js";
 
 export type Observation_bodyweight_Category_VSCatSliceFlat = Omit<CodeableConcept, "coding">;
 export type Observation_bodyweight_Category_VSCatSliceFlatAll = Observation_bodyweight_Category_VSCatSliceFlat & {
@@ -534,7 +534,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type observation_bodyweightProfileRaw = {
     status: ("registered" | "preliminary" | "final" | "amended" | "corrected" | "cancelled" | "entered-in-error" | "unknown");
@@ -738,11 +738,11 @@ exports[`TypeScript R4 Example (with generateProfile) generates bp profile with 
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Observation, ObservationComponent } from "../../hl7-fhir-r4-core/Observation";
-import type { Period } from "../../hl7-fhir-r4-core/Period";
-import type { Quantity } from "../../hl7-fhir-r4-core/Quantity";
-import type { Reference } from "../../hl7-fhir-r4-core/Reference";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Observation, ObservationComponent } from "../../hl7-fhir-r4-core/Observation.js";
+import type { Period } from "../../hl7-fhir-r4-core/Period.js";
+import type { Quantity } from "../../hl7-fhir-r4-core/Quantity.js";
+import type { Reference } from "../../hl7-fhir-r4-core/Reference.js";
 
 export type Observation_bp_Category_VSCatSliceFlat = Omit<CodeableConcept, "coding">;
 export type Observation_bp_Category_VSCatSliceFlatAll = Observation_bp_Category_VSCatSliceFlat & {
@@ -775,7 +775,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type observation_bpProfileRaw = {
     status: ("registered" | "preliminary" | "final" | "amended" | "corrected" | "cancelled" | "entered-in-error" | "unknown");
@@ -1056,24 +1056,24 @@ exports[`TypeScript US Core Example generates US Core Patient profile 1`] = `
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Coding } from "../../hl7-fhir-r4-core/Coding";
-import type { Extension } from "../../hl7-fhir-r4-core/Extension";
-import type { HumanName } from "../../hl7-fhir-r4-core/HumanName";
-import type { Identifier } from "../../hl7-fhir-r4-core/Identifier";
-import type { Patient } from "../../hl7-fhir-r4-core/Patient";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Coding } from "../../hl7-fhir-r4-core/Coding.js";
+import type { Extension } from "../../hl7-fhir-r4-core/Extension.js";
+import type { HumanName } from "../../hl7-fhir-r4-core/HumanName.js";
+import type { Identifier } from "../../hl7-fhir-r4-core/Identifier.js";
+import type { Patient } from "../../hl7-fhir-r4-core/Patient.js";
 
 import {
     USCoreEthnicityExtensionProfile,
     type USCoreEthnicityExtensionProfileFlat,
-} from "./Extension_USCoreEthnicityExtension";
-import { USCoreIndividualSexExtensionProfile } from "./Extension_USCoreIndividualSexExtension";
-import { USCoreInterpreterNeededExtensionProfile } from "./Extension_USCoreInterpreterNeededExtension";
-import { USCoreRaceExtensionProfile, type USCoreRaceExtensionProfileFlat } from "./Extension_USCoreRaceExtension";
+} from "./Extension_USCoreEthnicityExtension.js";
+import { USCoreIndividualSexExtensionProfile } from "./Extension_USCoreIndividualSexExtension.js";
+import { USCoreInterpreterNeededExtensionProfile } from "./Extension_USCoreInterpreterNeededExtension.js";
+import { USCoreRaceExtensionProfile, type USCoreRaceExtensionProfileFlat } from "./Extension_USCoreRaceExtension.js";
 import {
     USCoreTribalAffiliationExtensionProfile,
     type USCoreTribalAffiliationExtensionProfileFlat,
-} from "./Extension_USCoreTribalAffiliationExtension";
+} from "./Extension_USCoreTribalAffiliationExtension.js";
 
 import {
     ensureProfile,
@@ -1092,7 +1092,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type USCorePatientProfileRaw = {
     identifier: Identifier[];
@@ -1320,14 +1320,14 @@ exports[`TypeScript US Core Example generates US Core Blood Pressure profile 1`]
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Observation, ObservationComponent } from "../../hl7-fhir-r4-core/Observation";
-import type { Period } from "../../hl7-fhir-r4-core/Period";
-import type { Quantity } from "../../hl7-fhir-r4-core/Quantity";
-import type { Range } from "../../hl7-fhir-r4-core/Range";
-import type { Ratio } from "../../hl7-fhir-r4-core/Ratio";
-import type { Reference } from "../../hl7-fhir-r4-core/Reference";
-import type { SampledData } from "../../hl7-fhir-r4-core/SampledData";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Observation, ObservationComponent } from "../../hl7-fhir-r4-core/Observation.js";
+import type { Period } from "../../hl7-fhir-r4-core/Period.js";
+import type { Quantity } from "../../hl7-fhir-r4-core/Quantity.js";
+import type { Range } from "../../hl7-fhir-r4-core/Range.js";
+import type { Ratio } from "../../hl7-fhir-r4-core/Ratio.js";
+import type { Reference } from "../../hl7-fhir-r4-core/Reference.js";
+import type { SampledData } from "../../hl7-fhir-r4-core/SampledData.js";
 
 export type USCoreBloodPressureProfile_Category_VSCatSliceFlat = Omit<CodeableConcept, "coding">;
 export type USCoreBloodPressureProfile_Category_VSCatSliceFlatAll = USCoreBloodPressureProfile_Category_VSCatSliceFlat & {
@@ -1360,7 +1360,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type USCoreBloodPressureProfileRaw = {
     status: ("registered" | "preliminary" | "final" | "amended" | "corrected" | "cancelled" | "entered-in-error" | "unknown");
@@ -1757,14 +1757,14 @@ exports[`TypeScript US Core Example generates US Core Body Weight profile 1`] = 
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Observation } from "../../hl7-fhir-r4-core/Observation";
-import type { Period } from "../../hl7-fhir-r4-core/Period";
-import type { Quantity } from "../../hl7-fhir-r4-core/Quantity";
-import type { Range } from "../../hl7-fhir-r4-core/Range";
-import type { Ratio } from "../../hl7-fhir-r4-core/Ratio";
-import type { Reference } from "../../hl7-fhir-r4-core/Reference";
-import type { SampledData } from "../../hl7-fhir-r4-core/SampledData";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Observation } from "../../hl7-fhir-r4-core/Observation.js";
+import type { Period } from "../../hl7-fhir-r4-core/Period.js";
+import type { Quantity } from "../../hl7-fhir-r4-core/Quantity.js";
+import type { Range } from "../../hl7-fhir-r4-core/Range.js";
+import type { Ratio } from "../../hl7-fhir-r4-core/Ratio.js";
+import type { Reference } from "../../hl7-fhir-r4-core/Reference.js";
+import type { SampledData } from "../../hl7-fhir-r4-core/SampledData.js";
 
 export type USCoreBodyWeightProfile_Category_VSCatSliceFlat = Omit<CodeableConcept, "coding">;
 export type USCoreBodyWeightProfile_Category_VSCatSliceFlatAll = USCoreBodyWeightProfile_Category_VSCatSliceFlat & {
@@ -1789,7 +1789,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type USCoreBodyWeightProfileRaw = {
     status: ("registered" | "preliminary" | "final" | "amended" | "corrected" | "cancelled" | "entered-in-error" | "unknown");
@@ -2110,8 +2110,8 @@ exports[`TypeScript US Core Example generates US Core Race extension profile 1`]
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Coding } from "../../hl7-fhir-r4-core/Coding";
-import type { Extension } from "../../hl7-fhir-r4-core/Extension";
+import type { Coding } from "../../hl7-fhir-r4-core/Coding.js";
+import type { Extension } from "../../hl7-fhir-r4-core/Extension.js";
 
 export type USCoreRaceExtension_Extension_OmbCategorySliceFlat = Omit<Extension, "url" | "value" | "valueBase64Binary" | "valueBoolean" | "valueCanonical" | "valueCode" | "valueDate" | "valueDateTime" | "valueDecimal" | "valueId" | "valueInstant" | "valueInteger" | "valueMarkdown" | "valueOid" | "valuePositiveInt" | "valueString" | "valueTime" | "valueUnsignedInt" | "valueUri" | "valueUrl" | "valueUuid" | "valueAddress" | "valueAge" | "valueAnnotation" | "valueAttachment" | "valueCodeableConcept" | "valueCoding" | "valueContactPoint" | "valueCount" | "valueDistance" | "valueDuration" | "valueHumanName" | "valueIdentifier" | "valueMoney" | "valuePeriod" | "valueQuantity" | "valueRange" | "valueRatio" | "valueReference" | "valueSampledData" | "valueSignature" | "valueTiming" | "valueContactDetail" | "valueContributor" | "valueDataRequirement" | "valueExpression" | "valueParameterDefinition" | "valueRelatedArtifact" | "valueTriggerDefinition" | "valueUsageContext" | "valueDosage" | "valueMeta"> & Coding;
 export type USCoreRaceExtension_Extension_OmbCategorySliceFlatAll = USCoreRaceExtension_Extension_OmbCategorySliceFlat;
@@ -2150,7 +2150,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type USCoreRaceExtensionProfileRaw = {
     extension: Extension[];
@@ -2379,14 +2379,14 @@ export class USCoreRaceExtensionProfile {
 `;
 
 exports[`TypeScript US Core Example generates US Core profiles index 1`] = `
-"export { USCoreBloodPressureProfile } from "./Observation_USCoreBloodPressureProfile";
-export { USCoreBodyWeightProfile } from "./Observation_USCoreBodyWeightProfile";
-export { USCoreEthnicityExtensionProfile } from "./Extension_USCoreEthnicityExtension";
-export { USCoreIndividualSexExtensionProfile } from "./Extension_USCoreIndividualSexExtension";
-export { USCoreInterpreterNeededExtensionProfile } from "./Extension_USCoreInterpreterNeededExtension";
-export { USCorePatientProfile } from "./Patient_USCorePatientProfile";
-export { USCoreRaceExtensionProfile } from "./Extension_USCoreRaceExtension";
-export { USCoreTribalAffiliationExtensionProfile } from "./Extension_USCoreTribalAffiliationExtension";
-export { USCoreVitalSignsProfile } from "./Observation_USCoreVitalSignsProfile";
+"export { USCoreBloodPressureProfile } from "./Observation_USCoreBloodPressureProfile.js";
+export { USCoreBodyWeightProfile } from "./Observation_USCoreBodyWeightProfile.js";
+export { USCoreEthnicityExtensionProfile } from "./Extension_USCoreEthnicityExtension.js";
+export { USCoreIndividualSexExtensionProfile } from "./Extension_USCoreIndividualSexExtension.js";
+export { USCoreInterpreterNeededExtensionProfile } from "./Extension_USCoreInterpreterNeededExtension.js";
+export { USCorePatientProfile } from "./Patient_USCorePatientProfile.js";
+export { USCoreRaceExtensionProfile } from "./Extension_USCoreRaceExtension.js";
+export { USCoreTribalAffiliationExtensionProfile } from "./Extension_USCoreTribalAffiliationExtension.js";
+export { USCoreVitalSignsProfile } from "./Observation_USCoreVitalSignsProfile.js";
 "
 `;

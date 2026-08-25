@@ -17,6 +17,7 @@ import {
     tsCamelCase,
     tsExtensionFlatTypeName,
     tsFieldName,
+    tsModuleSpecifier,
     tsNameFromCanonical,
     tsProfileClassName,
     tsProfileModuleName,
@@ -242,7 +243,7 @@ export const generateProfileIndexFile = (
                 const className = tsProfileClassName(snapshot);
                 const moduleName = tsProfileModuleName(tsIndex, snapshot);
                 if (!exports.has(className)) {
-                    exports.set(className, `export { ${className} } from "./${moduleName}"`);
+                    exports.set(className, `export { ${className} } from "${tsModuleSpecifier(`./${moduleName}`)}"`);
                 }
             }
             for (const exp of [...exports.values()].sort()) {
