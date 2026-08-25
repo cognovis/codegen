@@ -2,15 +2,15 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
-import type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-import type { Resource } from "../hl7-fhir-r4-core/Resource";
-import type { Signature } from "../hl7-fhir-r4-core/Signature";
+import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement.js";
+import type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+import type { Resource } from "../hl7-fhir-r4-core/Resource.js";
+import type { Signature } from "../hl7-fhir-r4-core/Signature.js";
 
-import type { Element } from "../hl7-fhir-r4-core/Element";
-export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
-export type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-export type { Signature } from "../hl7-fhir-r4-core/Signature";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement.js";
+export type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+export type { Signature } from "../hl7-fhir-r4-core/Signature.js";
 
 export interface BundleEntry<T1 extends Resource = Resource, T2 extends Resource = Resource> extends BackboneElement {
     fullUrl?: string;

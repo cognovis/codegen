@@ -2,7 +2,7 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Extension } from "../../hl7-fhir-r4-core/Extension";
+import type { Extension } from "../../hl7-fhir-r4-core/Extension.js";
 
 import {
     applyFixedValue,
@@ -16,7 +16,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type own_prefixProfileRaw = {
     valueString: string;

@@ -2,13 +2,13 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Coding } from "../hl7-fhir-r4-core/Coding";
-import type { Element } from "../hl7-fhir-r4-core/Element";
-import type { Reference } from "../hl7-fhir-r4-core/Reference";
+import type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+import type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
-export type { Coding } from "../hl7-fhir-r4-core/Coding";
-export type { Element } from "../hl7-fhir-r4-core/Element";
-export type { Reference } from "../hl7-fhir-r4-core/Reference";
+export type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+export type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
 // CanonicalURL: http://hl7.org/fhir/StructureDefinition/Signature (pkg: hl7.fhir.r4.core#4.0.1)
 export interface Signature extends Element {
