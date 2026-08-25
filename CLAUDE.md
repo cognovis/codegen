@@ -290,10 +290,18 @@ Detection uses `mkIsFamilyType(tsIndex)` which checks `schema.typeFamily.resourc
 
 ### Slice Field Validation
 
-`validate()` checks required fields inside matched slice elements via `validateSliceFields`. For constrained choice slices (e.g. BP `component.value[x]` restricted to `valueQuantity`), the variant is validated as required:
+`validate()` checks required fields inside matched slice elements via `validateSliceFields(res, profileName, field, match, sliceName, requiredFields, choiceGroups?)`. Plain required fields are checked all-of. Required choice elements (e.g. a slice that requires `value[x]`) are never emitted as plain required fields — the choice base name (`value`) is not a FHIR element and can never be present on a conformant resource. Instead they are passed as `choiceGroups: string[][]`, where each group lists the typed variants permitted for that choice element and is satisfied by any one of them.
+
+For a constrained choice slice with a single permitted variant (e.g. BP `component.value[x]` restricted to `valueQuantity`), the group has one entry and the error reads like a plain required field:
 
 ```
 "observation-bp.component[SystolicBP].valueQuantity is required"
+```
+
+For a slice whose choice element is narrowed to more than one type, the group lists every permitted variant and the error uses at-least-one wording:
+
+```
+"Profile.component[slice]: at least one of valueQuantity, valueString is required"
 ```
 
 ## Common Development Patterns
