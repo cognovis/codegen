@@ -31,6 +31,7 @@ package.json
 .github/workflows/ci.yml
 .github/workflows/release.yml
 scripts/release.sh
+scripts/apply-cognovis-overlay.sh
 cliff.toml
 CHANGELOG.md
 COGNOVIS.md
@@ -42,11 +43,12 @@ tsup.config.ts
 
 | Path | Mode | What the overlay owns |
 |---|---|---|
-| `package.json` | patch | `name` (`@cognovis/codegen`), the `prepare` script, and `allowScripts`. Dependencies and version stay upstream's; the release script owns the version. |
-| `.gitignore` | patch | Appends `.intake/`. The `Library-managed project installs` block on `main` is machine-local tooling state and is not reapplied. |
+| `package.json` | patch | `name` (`@cognovis/codegen`), the `prepare` script, and `allowScripts` — and nothing else. Dependencies and version stay upstream's; the release script owns the version. Because the overlay deliberately does not own dependency ranges, the `brace-expansion` security bump listed under [pending upstream contributions](#not-yet-submitted) is **reset to upstream's range by a fresh apply** and must be reapplied from that commit until upstream carries it. |
+| `.gitignore` | patch | Appends `.intake/`. The `Library-managed project installs` block is not reapplied: although it is committed on `main` — the agent tooling writes it in place — it enumerates per-machine install paths, so a fresh apply deliberately drops it and `library` regenerates it on whatever machine next installs those files. |
 | `.github/workflows/ci.yml` | patch | The consumer smoke-test import, `@atomic-ehr/codegen` to `@cognovis/codegen`. Upstream keeps ownership of the job matrix. |
 | `.github/workflows/release.yml` | copy | The whole publish pipeline: `npm.cognovis.de`, the `@cognovis` scope, `COGNOVIS_NPM_TOKEN`, and the GitHub release step. Upstream edits to this file are intentionally discarded. |
 | `scripts/release.sh` | copy | Version derivation and `git-cliff` changelog generation. Supersedes the upstream script. |
+| `scripts/apply-cognovis-overlay.sh` | copy | The overlay applicator itself. It is an overlay path for the same reason as every other entry here: it differs from upstream, it will never be sent upstream, and contract decision 1 leaves no third category. Copying it means a fresh upstream checkout plus the overlay can reapply and re-verify itself without this repository. |
 | `cliff.toml` | copy | Changelog configuration. Does not exist upstream. |
 | `CHANGELOG.md` | generated | Allowlisted so it is never mistaken for an upstream file, but **not written by the apply script** — `git-cliff` regenerates it during a release. |
 | `COGNOVIS.md` | copy | This contract. Does not exist upstream. |
@@ -66,6 +68,7 @@ These paths differ between `upstream/main` and `main`, and each one is excluded 
 | `.library.lock` | Machine-local agent tooling state. Never part of a distribution. |
 | `.intake/` | Machine-local scratch directory; ignored, never committed. |
 | `src/typeschema/**`, `src/api/writer-generator/**` | Forbidden by contract decision 3. |
+| `src/api/generate-config.ts` | The generate-command and terminology configuration surface (commits `d0a133fa`, `7f84b9ea`, `895cd636`) — pending upstream contributions #210 and #211. Its terminology keys are explicitly not being sent upstream as configuration, but the file is still generator surface, not distribution identity. |
 | `src/cli/commands/**`, `test/**`, `assets/**`, `examples/**` | Generator and CLI behavior plus its evidence — all pending upstream contributions. |
 
 ## Pending upstream contributions
@@ -92,6 +95,9 @@ Delivered on `main` with no upstream pull request. This is a deliberate decision
 | codegen-g5s | Validate sliced choice components with at-least-one semantics (TypeScript), including multi-variant choice groups. | `a0cdafbd`, `49e2ffb4`, `17080759` |
 | codegen-wgn | Emit `.js` extensions on relative imports so generated output loads under Node ESM. | `acd2583c`, `cc1610a2` |
 | codegen-nud | The same at-least-one sliced-choice validation for the Python generator. | `62ba36ba`, `d99accc8`, `ba38ce4a` |
+| dependency security | Raise `brace-expansion` to `^5.0.9` in both `dependencies` and `overrides`. | `ebd6fb36` |
+
+The `brace-expansion` bump is listed here because it is a change to upstream's own dependency set, not to Cognovis identity, so it belongs upstream rather than in the overlay. It has a consequence the other rows do not: the overlay does not own dependency ranges, so applying the overlay to a fresh upstream checkout returns `brace-expansion` to upstream's `^5.0.8`. Until upstream carries the bump, reapply `ebd6fb36` after a resync and rerun `bun install`.
 
 ## Applying the overlay
 
