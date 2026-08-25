@@ -57,6 +57,38 @@
             "code": "CodeableConcept"
           }
         ]
+      },
+      {
+        "id": "Observation.component:measuredFinding",
+        "path": "Observation.component",
+        "sliceName": "measuredFinding",
+        "max": "1"
+      },
+      {
+        "id": "Observation.component:measuredFinding.code",
+        "path": "Observation.component.code",
+        "min": 1,
+        "patternCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://example.test/CodeSystem/component-kind",
+              "code": "measured-finding"
+            }
+          ]
+        }
+      },
+      {
+        "id": "Observation.component:measuredFinding.value[x]",
+        "path": "Observation.component.value[x]",
+        "min": 1,
+        "type": [
+          {
+            "code": "Quantity"
+          },
+          {
+            "code": "string"
+          }
+        ]
       }
     ]
   }

@@ -10,13 +10,18 @@ const HELPERS_PATH = Path.join(__dirname, "../../../assets/api/writer-generator/
 
 const CODED_FINDING_MATCH =
     '{"code":{"coding":[{"system":"http://example.test/CodeSystem/component-kind","code":"coded-finding"}]}}';
+const MEASURED_FINDING_MATCH =
+    '{"code":{"coding":[{"system":"http://example.test/CodeSystem/component-kind","code":"measured-finding"}]}}';
+
+type ProfileInstance = {
+    setCodedFinding: (input?: Record<string, unknown>) => unknown;
+    setMeasuredFinding: (input?: Record<string, unknown>) => unknown;
+    toResource: () => Record<string, unknown>;
+};
 
 type ProfileClass = {
     createResource: (args: Record<string, unknown>) => Record<string, unknown>;
-    apply: (resource: Record<string, unknown>) => {
-        setCodedFinding: (input?: Record<string, unknown>) => unknown;
-        toResource: () => Record<string, unknown>;
-    };
+    apply: (resource: Record<string, unknown>) => ProfileInstance;
     from: (resource: Record<string, unknown>) => unknown;
 };
 
@@ -100,5 +105,42 @@ describe("Sliced choice component validation (codegen-g5s)", async () => {
         const resource = profile.toResource();
 
         expect(() => profileClass.from(resource)).toThrow(/valueCodeableConcept is required/);
+    });
+
+    // The `measuredFinding` slice narrows value[x] to two types, so the choice
+    // group holds more than one variant: any one of them satisfies it.
+    const withCodedFinding = (): ProfileInstance => {
+        const profile = profileClass.apply(profileClass.createResource(baseArgs));
+        profile.setCodedFinding({ coding: [{ system: "http://example.test/CodeSystem/finding", code: "present" }] });
+        return profile;
+    };
+
+    it("emits every permitted variant in the choice group of a two-type slice", () => {
+        expect(profileFile).toContain(
+            `validateSliceFields(res, profileName, "component", ${MEASURED_FINDING_MATCH}, "measuredFinding", [], [["valueQuantity","valueString"]])`,
+        );
+    });
+
+    it("accepts the first permitted variant of a multi-variant choice slice", () => {
+        const profile = withCodedFinding();
+        profile.setMeasuredFinding({ valueQuantity: { value: 3, unit: "mm" } });
+
+        expect(() => profileClass.from(profile.toResource())).not.toThrow();
+    });
+
+    it("accepts the second permitted variant of a multi-variant choice slice", () => {
+        const profile = withCodedFinding();
+        profile.setMeasuredFinding({ valueString: "three millimetres" });
+
+        expect(() => profileClass.from(profile.toResource())).not.toThrow();
+    });
+
+    it("rejects a multi-variant choice slice carrying none of the permitted variants", () => {
+        const profile = withCodedFinding();
+        profile.setMeasuredFinding({});
+
+        expect(() => profileClass.from(profile.toResource())).toThrow(
+            "SlicedChoiceObservation.component[measuredFinding]: at least one of valueQuantity, valueString is required",
+        );
     });
 });
