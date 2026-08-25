@@ -43,7 +43,7 @@ tsup.config.ts
 
 | Path | Mode | What the overlay owns |
 |---|---|---|
-| `package.json` | patch | `name` (`@cognovis/codegen`), the `prepare` script, and `allowScripts` — and nothing else. Dependencies and version stay upstream's; the release script owns the version. Because the overlay deliberately does not own dependency ranges, the `brace-expansion` security bump listed under [pending upstream contributions](#not-yet-submitted) is **reset to upstream's range by a fresh apply** and must be reapplied from that commit until upstream carries it. |
+| `package.json` | patch | `name` (`@cognovis/codegen`), the `prepare` script, and `allowScripts` — and nothing else. Dependencies and version stay upstream's; the release script owns the version. Because the overlay deliberately does not own dependency ranges, the [`brace-expansion` security bump](#dependency-security-bump) is **reset to upstream's range by a fresh apply** until an upstream pull request carries it. `allowScripts` is written verbatim as `["@atomic-ehr/codegen"]`, which is what `main` publishes: npm 12 reads the field to permit the build of this package during a `git+https` install, and the entry was added before the rename and never updated. The overlay reproduces the published distribution rather than diverging from it; if that entry is wrong it is a defect in `main` to fix on `main`, not a value for the overlay to invent. |
 | `.gitignore` | patch | Appends `.intake/`. The `Library-managed project installs` block is not reapplied: although it is committed on `main` — the agent tooling writes it in place — it enumerates per-machine install paths, so a fresh apply deliberately drops it and `library` regenerates it on whatever machine next installs those files. |
 | `.github/workflows/ci.yml` | patch | The consumer smoke-test import, `@atomic-ehr/codegen` to `@cognovis/codegen`. Upstream keeps ownership of the job matrix. |
 | `.github/workflows/release.yml` | copy | The whole publish pipeline: `npm.cognovis.de`, the `@cognovis` scope, `COGNOVIS_NPM_TOKEN`, and the GitHub release step. Upstream edits to this file are intentionally discarded. |
@@ -71,6 +71,23 @@ These paths differ between `upstream/main` and `main`, and each one is excluded 
 | `src/api/generate-config.ts` | The generate-command and terminology configuration surface (commits `d0a133fa`, `7f84b9ea`, `895cd636`) — pending upstream contributions #210 and #211. Its terminology keys are explicitly not being sent upstream as configuration, but the file is still generator surface, not distribution identity. |
 | `src/cli/commands/**`, `test/**`, `assets/**`, `examples/**` | Generator and CLI behavior plus its evidence — all pending upstream contributions. |
 
+The table above is prose for humans. The block below is its machine-readable form: glob patterns for every path that may legitimately differ from upstream without being overlay. `--audit` classifies the real fork diff against the allowlist and these patterns together, and fails on any path matching neither — that is what makes "no third category" an executable rule rather than an assertion.
+
+```non-overlay-patterns
+CLAUDE.md
+README.md
+tsconfig.json
+bun.lock
+.library.lock
+src/typeschema/*
+src/api/writer-generator/*
+src/api/generate-config.ts
+src/cli/commands/*
+test/*
+assets/*
+examples/*
+```
+
 ## Pending upstream contributions
 
 Fork commits on `main` that carry generator or CLI behavior. They are temporary: each one leaves `main` when upstream merges it. None of them may be added to the overlay allowlist.
@@ -95,9 +112,19 @@ Delivered on `main` with no upstream pull request. This is a deliberate decision
 | codegen-g5s | Validate sliced choice components with at-least-one semantics (TypeScript), including multi-variant choice groups. | `a0cdafbd`, `49e2ffb4`, `17080759` |
 | codegen-wgn | Emit `.js` extensions on relative imports so generated output loads under Node ESM. | `acd2583c`, `cc1610a2` |
 | codegen-nud | The same at-least-one sliced-choice validation for the Python generator. | `62ba36ba`, `d99accc8`, `ba38ce4a` |
-| dependency security | Raise `brace-expansion` to `^5.0.9` in both `dependencies` and `overrides`. | `ebd6fb36` |
 
-The `brace-expansion` bump is listed here because it is a change to upstream's own dependency set, not to Cognovis identity, so it belongs upstream rather than in the overlay. It has a consequence the other rows do not: the overlay does not own dependency ranges, so applying the overlay to a fresh upstream checkout returns `brace-expansion` to upstream's `^5.0.8`. Until upstream carries the bump, reapply `ebd6fb36` after a resync and rerun `bun install`.
+### Dependency security bump
+
+The `brace-expansion` bump to `^5.0.9` in both `dependencies` and `overrides` (`ebd6fb36` on `main`) is **already submitted**: every one of the four open pull requests carries it, so whichever lands first takes it upstream.
+
+| PR | Commit carrying the bump |
+|---|---|
+| #208 | `028cc3a3` chore: update brace-expansion security fix |
+| #209 | `ebd6fb36` — the same commit that is on `main` |
+| #210 | `a2ed7ab2` chore: bump brace-expansion to 5.0.9 for bun audit |
+| #211 | `7ca104c0` chore: bump brace-expansion to 5.0.9 for bun audit |
+
+It is called out separately because it has a consequence the other contributions do not: the overlay deliberately does not own dependency ranges, so applying the overlay to a fresh `upstream/main` checkout returns `brace-expansion` to upstream's `^5.0.8`. Until one of those pull requests merges, reapply the bump after a resync and rerun `bun install`.
 
 ## Applying the overlay
 
@@ -112,7 +139,11 @@ To prove the overlay still holds — the script builds a pristine `upstream/main
 
 ```bash
 scripts/apply-cognovis-overlay.sh --verify
+scripts/apply-cognovis-overlay.sh --audit   # classify this repository's real diff
 scripts/apply-cognovis-overlay.sh --list    # print the parsed allowlist
 ```
 
-`--verify` fails closed: an unparseable allowlist block, a written path that is not allowlisted, or any change under `src/typeschema/` or `src/api/writer-generator/` exits non-zero. When a future sync makes the overlay grow, that shows up as a verify failure, not as a stale sentence in this file.
+The two checks prove different things and both fail closed:
+
+- `--verify` proves the **applicator**. An unparseable allowlist block, a written path that is not allowlisted, a patch whose pattern no longer matches upstream, or any change under `src/typeschema/` or `src/api/writer-generator/` exits non-zero.
+- `--audit` proves **this repository**. It classifies every path of `git diff --name-only upstream/main HEAD` against the allowlist and the non-overlay patterns, and exits non-zero on any path that matches neither or both. This is the enforcement behind contract decision 1: when a future sync adds a file that nobody has classified, `--audit` fails, rather than this document quietly going out of date.

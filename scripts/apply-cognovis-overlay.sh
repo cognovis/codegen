@@ -12,7 +12,13 @@
 # Usage:
 #   scripts/apply-cognovis-overlay.sh <target-dir>
 #   scripts/apply-cognovis-overlay.sh --verify [--base-ref REF] [--tmp-root DIR]
+#   scripts/apply-cognovis-overlay.sh --audit [--base-ref REF]
 #   scripts/apply-cognovis-overlay.sh --list
+#
+# --verify applies the overlay to a scratch copy of the base ref and proves the
+# changed paths are a subset of the allowlist. --audit classifies every path of
+# this repository's real diff against the base ref, failing on any path that is
+# neither overlay nor a recorded non-overlay path.
 #
 set -euo pipefail
 
@@ -34,16 +40,18 @@ info() {
 
 # --- allowlist -------------------------------------------------------------
 
-# Extract the fenced `overlay-allowlist` block from COGNOVIS.md. Comment lines
-# (#) and blank lines are ignored so the block can stay readable.
-parse_allowlist() {
+# Extract a fenced block from COGNOVIS.md by its info string. Comment lines (#)
+# and blank lines are ignored so the blocks can stay readable.
+parse_fenced_block() {
+    local tag="$1"
     local doc="${REPO_ROOT}/${ALLOWLIST_DOC}"
     test -f "${doc}" || die "missing ${ALLOWLIST_DOC} at ${doc}"
-    awk '
-        /^```overlay-allowlist[[:space:]]*$/ { inblock = 1; next }
-        inblock && /^```/                    { exit }
-        inblock && /^[[:space:]]*#/          { next }
-        inblock && NF                        { print $1 }
+    awk -v tag="${tag}" '
+        BEGIN                       { open = "^```" tag "[[:space:]]*$" }
+        $0 ~ open                   { inblock = 1; next }
+        inblock && /^```/           { exit }
+        inblock && /^[[:space:]]*#/ { next }
+        inblock && NF               { print $1 }
     ' "${doc}"
 }
 
@@ -52,10 +60,34 @@ load_allowlist() {
     local line
     while IFS= read -r line; do
         ALLOWLIST+=("${line}")
-    done < <(parse_allowlist)
+    done < <(parse_fenced_block "overlay-allowlist")
 
     test "${#ALLOWLIST[@]}" -gt 0 ||
         die "no overlay-allowlist block found in ${ALLOWLIST_DOC}; the allowlist is the contract and must be parseable"
+}
+
+# Glob patterns for paths that legitimately differ from upstream without being
+# overlay: pending upstream contributions and machine-local state.
+NONOVERLAY=()
+load_nonoverlay() {
+    local line
+    while IFS= read -r line; do
+        NONOVERLAY+=("${line}")
+    done < <(parse_fenced_block "non-overlay-patterns")
+
+    test "${#NONOVERLAY[@]}" -gt 0 ||
+        die "no non-overlay-patterns block found in ${ALLOWLIST_DOC}; --audit cannot classify without it"
+}
+
+matches_nonoverlay() {
+    local candidate="$1" pattern
+    for pattern in "${NONOVERLAY[@]}"; do
+        # shellcheck disable=SC2254  # the entry is deliberately a glob pattern
+        case "${candidate}" in
+            ${pattern}) return 0 ;;
+        esac
+    done
+    return 1
 }
 
 is_allowlisted() {
@@ -101,13 +133,32 @@ copy_owned() {
 }
 
 # Rewrite a single file through a sed program, leaving every other line alone.
+# `expect` is the literal string the patched file must contain afterwards. It
+# makes the patch fail closed: if upstream drifts so the program matches nothing,
+# the overlay would silently ship an unpatched file, so that is a hard error.
 patch_sed() {
-    local path="$1" target="$2" program="$3"
+    local path="$1" target="$2" program="$3" expect="$4"
     guard_write "${path}"
     local file="${target}/${path}"
     test -f "${file}" || die "expected upstream file to patch: ${path}"
+
+    if grep -qF "${expect}" "${file}"; then
+        info "skipped  ${path} (already patched)"
+        return 0
+    fi
+
     local tmp="${file}.overlay-tmp"
     sed "${program}" "${file}" >"${tmp}"
+
+    if cmp -s "${file}" "${tmp}"; then
+        rm -f "${tmp}"
+        die "patch for '${path}' changed nothing: upstream drifted away from the pattern this overlay expects"
+    fi
+    if ! grep -qF "${expect}" "${tmp}"; then
+        rm -f "${tmp}"
+        die "patch for '${path}' did not produce the expected content '${expect}'"
+    fi
+
     # Preserve the executable bit that git checked out (the CLI entry point).
     if test -x "${file}"; then
         chmod +x "${tmp}"
@@ -129,6 +180,10 @@ patch_package_json() {
         pkg.name = "@cognovis/codegen";
         pkg.scripts = pkg.scripts || {};
         pkg.scripts.prepare = "npx --no-install tsup";
+        // Verbatim from main. npm 12 reads allowScripts to permit the build of
+        // this package during a git install; the entry there still carries the
+        // pre-rename name, and the overlay reproduces the distribution as it is
+        // published rather than silently diverging from it. See COGNOVIS.md.
         pkg.allowScripts = ["@atomic-ehr/codegen"];
         fs.writeFileSync(file, `${JSON.stringify(pkg, null, 2)}\n`);
     ' "${file}"
@@ -167,11 +222,14 @@ apply_overlay() {
     patch_package_json "${target}"
     patch_gitignore "${target}"
     patch_sed ".github/workflows/ci.yml" "${target}" \
-        's|@atomic-ehr/codegen|@cognovis/codegen|g'
+        's|@atomic-ehr/codegen|@cognovis/codegen|g' \
+        '@cognovis/codegen'
     patch_sed "src/cli/index.ts" "${target}" \
-        '1s|^#!/usr/bin/env node$|#!/usr/bin/env bun|'
+        '1s|^#!/usr/bin/env node$|#!/usr/bin/env bun|' \
+        '#!/usr/bin/env bun'
     patch_sed "tsup.config.ts" "${target}" \
-        's|#!/usr/bin/env node|#!/usr/bin/env bun|g'
+        's|#!/usr/bin/env node|#!/usr/bin/env bun|g' \
+        '#!/usr/bin/env bun'
 
     # CHANGELOG.md is allowlisted but deliberately not written here: git-cliff
     # regenerates it during scripts/release.sh, and inventing release text is
@@ -265,10 +323,65 @@ EOF
     return 0
 }
 
+# --- audit -----------------------------------------------------------------
+
+# Classify every path of the real fork diff. Contract decision 1 allows exactly
+# two categories, so a path that is neither allowlisted nor matched by a
+# non-overlay pattern is a contract violation, and a path that is both is an
+# ambiguous classification. --verify proves the scratch tree; --audit proves
+# this repository.
+audit_fork() {
+    local base_ref="$1"
+    load_nonoverlay
+
+    local changed
+    changed="$(git -C "${REPO_ROOT}" diff --name-only "${base_ref}" HEAD)"
+
+    printf 'Base ref : %s (%s)\n' "${base_ref}" "$(git -C "${REPO_ROOT}" rev-parse --short "${base_ref}")"
+    printf 'Head     : %s\n' "$(git -C "${REPO_ROOT}" rev-parse --short HEAD)"
+    printf 'Patterns : %d overlay paths, %d non-overlay patterns\n\n' \
+        "${#ALLOWLIST[@]}" "${#NONOVERLAY[@]}"
+
+    local total=0 overlay=0 pending=0 failures=0 path
+    while IFS= read -r path; do
+        test -n "${path}" || continue
+        total=$((total + 1))
+        local in_overlay=0 in_pending=0
+        is_allowlisted "${path}" && in_overlay=1
+        matches_nonoverlay "${path}" && in_pending=1
+
+        if test "${in_overlay}" -eq 1 && test "${in_pending}" -eq 1; then
+            printf 'FAIL: %s is both allowlisted and matched by a non-overlay pattern\n' "${path}" >&2
+            failures=$((failures + 1))
+        elif test "${in_overlay}" -eq 1; then
+            overlay=$((overlay + 1))
+        elif test "${in_pending}" -eq 1; then
+            pending=$((pending + 1))
+        else
+            printf 'FAIL: %s is unclassified: neither overlay nor a recorded non-overlay path\n' "${path}" >&2
+            failures=$((failures + 1))
+        fi
+    done <<EOF
+${changed}
+EOF
+
+    printf 'Classified %d path(s): %d overlay, %d pending-upstream or machine-local\n' \
+        "${total}" "${overlay}" "${pending}"
+
+    if test "${failures}" -gt 0; then
+        printf '\nAUDIT FAILED (%d unclassified or ambiguous path(s))\n' "${failures}" >&2
+        return 1
+    fi
+
+    printf 'OK: every path of the fork diff falls into exactly one category\n'
+    printf 'AUDIT PASSED\n'
+    return 0
+}
+
 # --- entry point -----------------------------------------------------------
 
 usage() {
-    sed -n '3,16p' "${BASH_SOURCE[0]}" | sed 's|^# \{0,1\}||'
+    sed -n '3,21p' "${BASH_SOURCE[0]}" | sed 's|^# \{0,1\}||'
 }
 
 main() {
@@ -278,6 +391,7 @@ main() {
     while test $# -gt 0; do
         case "$1" in
             --verify) mode="verify"; shift ;;
+            --audit) mode="audit"; shift ;;
             --list) mode="list"; shift ;;
             --base-ref) base_ref="${2:-}"; shift 2 ;;
             --tmp-root) tmp_root="${2:-}"; shift 2 ;;
@@ -295,6 +409,9 @@ main() {
             ;;
         verify)
             verify_overlay "${base_ref}" "${tmp_root%/}"
+            ;;
+        audit)
+            audit_fork "${base_ref}"
             ;;
         apply)
             test -n "${target}" || die "missing target directory (see --help)"
