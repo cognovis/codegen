@@ -522,3 +522,32 @@ def test_profile_from_empty_resource_reports_missing_required_fields() -> None:
 
     assert "UscorePatientProfile: required field 'identifier' is missing" in errors
     assert "UscorePatientProfile: required field 'name' is missing" in errors
+
+
+# ---------------------------------------------------------------------------
+# Sliced choice validation (codegen-nud)
+#
+# The race extension slices `extension` and requires the choice element
+# `value[x]` inside each slice, narrowed to a single type. The choice base name
+# `value` is not a FHIR element, so requiring it made every conformant race
+# extension invalid. Each required choice element is satisfied by any one of its
+# permitted typed variants.
+# ---------------------------------------------------------------------------
+
+
+def test_race_extension_written_by_its_own_setters_is_valid() -> None:
+    race = UscoreRaceExtension.create()
+    race.set_extension_omb_category({"code": "2106-3", "display": "White"})
+    race.set_extension_text({"valueString": "White"})
+
+    assert race.validate()["errors"] == []
+
+
+def test_race_extension_slice_element_without_a_choice_variant_is_invalid() -> None:
+    race = UscoreRaceExtension.create()
+    race.set_extension_omb_category({})
+    race.set_extension_text({"valueString": "White"})
+
+    errors = race.validate()["errors"]
+
+    assert errors == ["UscoreRaceExtension.extension[ombCategory].valueCoding is required"]

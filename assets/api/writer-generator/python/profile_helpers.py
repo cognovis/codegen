@@ -451,9 +451,15 @@ def validate_slice_fields(
     match: Mapping[str, Any],
     slice_name: str,
     required_fields: Sequence[str],
+    choice_groups: Sequence[Sequence[str]] = (),
 ) -> list[str]:
     """Validates required fields within matched slice elements. For each array
-    item matching the discriminator, checks that the listed fields are present."""
+    item matching the discriminator, checks that the listed fields are present.
+
+    ``choice_groups`` carries the required choice elements of the slice: each
+    group lists the typed variants a single ``value[x]``-style element may take,
+    and is satisfied by any one of them. E.g. ``[["valueCoding"]]`` for a slice
+    whose ``value[x]`` is required and narrowed to Coding."""
     items = _get_field(res, field) or []
     if not isinstance(items, Iterable):
         items = []
@@ -464,6 +470,14 @@ def validate_slice_fields(
         for rf in required_fields:
             if _get_field(item, rf) is None:
                 errors.append(f"{profile_name}.{field}[{slice_name}].{rf} is required")
+        for group in choice_groups:
+            if any(_get_field(item, variant) is not None for variant in group):
+                continue
+            errors.append(
+                f"{profile_name}.{field}[{slice_name}].{group[0]} is required"
+                if len(group) == 1
+                else f"{profile_name}.{field}[{slice_name}]: at least one of {', '.join(group)} is required"
+            )
     return errors
 
 
