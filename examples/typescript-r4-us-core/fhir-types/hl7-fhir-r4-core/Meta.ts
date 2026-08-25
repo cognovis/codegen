@@ -2,11 +2,11 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Coding } from "../hl7-fhir-r4-core/Coding";
-import type { Element } from "../hl7-fhir-r4-core/Element";
+import type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
 
-export type { Coding } from "../hl7-fhir-r4-core/Coding";
-export type { Element } from "../hl7-fhir-r4-core/Element";
+export type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+export type { Element } from "../hl7-fhir-r4-core/Element.js";
 
 // CanonicalURL: http://hl7.org/fhir/StructureDefinition/Meta (pkg: hl7.fhir.r4.core#4.0.1)
 export interface Meta extends Element {

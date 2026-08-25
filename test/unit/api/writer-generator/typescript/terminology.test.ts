@@ -624,7 +624,8 @@ describe("TypeScript terminology surface", () => {
 
         const consumerEntry = Object.entries(files).find(([path]) => path.endsWith("/Consumer.ts"));
         expect(consumerEntry).toBeDefined();
-        const sharedImport = consumerEntry?.[1].match(/from "(\.\.\/[^"]+\/Shared)"/)?.[1];
+        // Relative specifiers carry the published `.js` extension (codegen-wgn).
+        const sharedImport = consumerEntry?.[1].match(/from "(\.\.\/[^"]+\/Shared)\.js"/)?.[1];
         expect(sharedImport).toBeDefined();
         const consumerDirectory = consumerEntry?.[0].slice(0, -"/Consumer.ts".length);
         const importedSharedPath = join(consumerDirectory ?? "", `${sharedImport}.ts`);

@@ -5,33 +5,33 @@ exports[`CDA TypeScript Generation should generate ClinicalDocument type 1`] = `
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { ANY } from "../hl7-cda-uv-core/ANY";
-import type { Authenticator } from "../hl7-cda-uv-core/Authenticator";
-import type { Author } from "../hl7-cda-uv-core/Author";
-import type { Authorization } from "../hl7-cda-uv-core/Authorization";
-import type { Base } from "../hl7-fhir-r5-core/Base";
-import type { CD } from "../hl7-cda-uv-core/CD";
-import type { CE } from "../hl7-cda-uv-core/CE";
-import type { Component } from "../hl7-cda-uv-core/Component";
-import type { ComponentOf } from "../hl7-cda-uv-core/ComponentOf";
-import type { CS } from "../hl7-cda-uv-core/CS";
-import type { Custodian } from "../hl7-cda-uv-core/Custodian";
-import type { DataEnterer } from "../hl7-cda-uv-core/DataEnterer";
-import type { DocumentationOf } from "../hl7-cda-uv-core/DocumentationOf";
-import type { II } from "../hl7-cda-uv-core/II";
-import type { Informant } from "../hl7-cda-uv-core/Informant";
-import type { InformationRecipient } from "../hl7-cda-uv-core/InformationRecipient";
-import type { InFulfillmentOf } from "../hl7-cda-uv-core/InFulfillmentOf";
-import type { INT } from "../hl7-cda-uv-core/INT";
-import type { LegalAuthenticator } from "../hl7-cda-uv-core/LegalAuthenticator";
-import type { Participant1 } from "../hl7-cda-uv-core/Participant1";
-import type { RecordTarget } from "../hl7-cda-uv-core/RecordTarget";
-import type { RelatedDocument } from "../hl7-cda-uv-core/RelatedDocument";
-import type { ST } from "../hl7-cda-uv-core/ST";
-import type { TS } from "../hl7-cda-uv-core/TS";
+import type { ANY } from "../hl7-cda-uv-core/ANY.js";
+import type { Authenticator } from "../hl7-cda-uv-core/Authenticator.js";
+import type { Author } from "../hl7-cda-uv-core/Author.js";
+import type { Authorization } from "../hl7-cda-uv-core/Authorization.js";
+import type { Base } from "../hl7-fhir-r5-core/Base.js";
+import type { CD } from "../hl7-cda-uv-core/CD.js";
+import type { CE } from "../hl7-cda-uv-core/CE.js";
+import type { Component } from "../hl7-cda-uv-core/Component.js";
+import type { ComponentOf } from "../hl7-cda-uv-core/ComponentOf.js";
+import type { CS } from "../hl7-cda-uv-core/CS.js";
+import type { Custodian } from "../hl7-cda-uv-core/Custodian.js";
+import type { DataEnterer } from "../hl7-cda-uv-core/DataEnterer.js";
+import type { DocumentationOf } from "../hl7-cda-uv-core/DocumentationOf.js";
+import type { II } from "../hl7-cda-uv-core/II.js";
+import type { Informant } from "../hl7-cda-uv-core/Informant.js";
+import type { InformationRecipient } from "../hl7-cda-uv-core/InformationRecipient.js";
+import type { InFulfillmentOf } from "../hl7-cda-uv-core/InFulfillmentOf.js";
+import type { INT } from "../hl7-cda-uv-core/INT.js";
+import type { LegalAuthenticator } from "../hl7-cda-uv-core/LegalAuthenticator.js";
+import type { Participant1 } from "../hl7-cda-uv-core/Participant1.js";
+import type { RecordTarget } from "../hl7-cda-uv-core/RecordTarget.js";
+import type { RelatedDocument } from "../hl7-cda-uv-core/RelatedDocument.js";
+import type { ST } from "../hl7-cda-uv-core/ST.js";
+import type { TS } from "../hl7-cda-uv-core/TS.js";
 
-import type { Element } from "../hl7-fhir-r5-core/Element";
-export type { Base } from "../hl7-fhir-r5-core/Base";
+import type { Element } from "../hl7-fhir-r5-core/Element.js";
+export type { Base } from "../hl7-fhir-r5-core/Base.js";
 
 // CanonicalURL: http://hl7.org/cda/stds/core/StructureDefinition/ClinicalDocument (pkg: hl7.cda.uv.core#2.0.1-sd)
 export interface ClinicalDocument<T extends Base = Base> extends ANY {

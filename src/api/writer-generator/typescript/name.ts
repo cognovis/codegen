@@ -107,3 +107,13 @@ export const tsExtensionFlatTypeName = (profileName: string, extensionName: stri
 export const tsSliceStaticName = (name: string): string => name.replace(/\[x\]/g, "").replace(/[^a-zA-Z0-9_$]/g, "_");
 
 export const tsValueFieldName = (id: TypeIdentifier): string => `value${uppercaseFirstLetter(id.name)}`;
+
+/** Node's ESM resolver takes relative specifiers literally: it appends no
+ *  extension and reads no directory index. Generated modules are published as
+ *  ESM `.js`, so every relative specifier must carry its `.js` suffix — for a
+ *  directory, that is its index module. Bare package specifiers stay untouched. */
+export const tsModuleSpecifier = (specifier: string, target: "module" | "directory" = "module"): string => {
+    if (!specifier.startsWith(".")) return specifier;
+    if (target === "directory") return `${specifier}/index.js`;
+    return specifier.endsWith(".js") ? specifier : `${specifier}.js`;
+};

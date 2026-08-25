@@ -404,6 +404,11 @@ export const validateSliceCardinality = (
 /**
  * Validate required fields within matched slice elements.
  * For each array item matching the discriminator, checks that the listed fields are present.
+ *
+ * `choiceGroups` carries the required choice elements of the slice: each group
+ * lists the typed variants a single `value[x]`-style element may take, and is
+ * satisfied by any one of them. E.g. `[["valueCodeableConcept"]]` for a slice
+ * whose `value[x]` is required and narrowed to CodeableConcept.
  */
 export const validateSliceFields = (
     res: object,
@@ -412,15 +417,26 @@ export const validateSliceFields = (
     match: Record<string, unknown>,
     sliceName: string,
     requiredFields: string[],
+    choiceGroups: string[][] = [],
 ): string[] => {
     const items = (res as Record<string, unknown>)[field] as unknown[] | undefined;
     const errors: string[] = [];
+    const isPresent = (obj: Record<string, unknown>, key: string): boolean =>
+        obj[key] !== undefined && obj[key] !== null;
     for (const item of (items ?? []).filter((item) => matchesValue(item, match))) {
         const obj = item as Record<string, unknown>;
         for (const rf of requiredFields) {
-            if (obj[rf] === undefined || obj[rf] === null) {
+            if (!isPresent(obj, rf)) {
                 errors.push(`${profileName}.${field}[${sliceName}].${rf} is required`);
             }
+        }
+        for (const group of choiceGroups) {
+            if (group.some((variant) => isPresent(obj, variant))) continue;
+            errors.push(
+                group.length === 1
+                    ? `${profileName}.${field}[${sliceName}].${group[0]} is required`
+                    : `${profileName}.${field}[${sliceName}]: at least one of ${group.join(", ")} is required`,
+            );
         }
     }
     return errors;

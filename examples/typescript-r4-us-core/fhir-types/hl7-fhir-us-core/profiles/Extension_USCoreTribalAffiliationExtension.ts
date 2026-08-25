@@ -2,8 +2,8 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Extension } from "../../hl7-fhir-r4-core/Extension";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Extension } from "../../hl7-fhir-r4-core/Extension.js";
 
 export type USCoreTribalAffiliationExtension_Extension_TribalAffiliationSliceFlat = Omit<Extension, "url" | "value" | "valueBase64Binary" | "valueBoolean" | "valueCanonical" | "valueCode" | "valueDate" | "valueDateTime" | "valueDecimal" | "valueId" | "valueInstant" | "valueInteger" | "valueMarkdown" | "valueOid" | "valuePositiveInt" | "valueString" | "valueTime" | "valueUnsignedInt" | "valueUri" | "valueUrl" | "valueUuid" | "valueAddress" | "valueAge" | "valueAnnotation" | "valueAttachment" | "valueCodeableConcept" | "valueCoding" | "valueContactPoint" | "valueCount" | "valueDistance" | "valueDuration" | "valueHumanName" | "valueIdentifier" | "valueMoney" | "valuePeriod" | "valueQuantity" | "valueRange" | "valueRatio" | "valueReference" | "valueSampledData" | "valueSignature" | "valueTiming" | "valueContactDetail" | "valueContributor" | "valueDataRequirement" | "valueExpression" | "valueParameterDefinition" | "valueRelatedArtifact" | "valueTriggerDefinition" | "valueUsageContext" | "valueDosage" | "valueMeta"> & CodeableConcept;
 export type USCoreTribalAffiliationExtension_Extension_TribalAffiliationSliceFlatAll = USCoreTribalAffiliationExtension_Extension_TribalAffiliationSliceFlat;
@@ -37,7 +37,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type USCoreTribalAffiliationExtensionProfileRaw = {
     extension: Extension[];
@@ -209,9 +209,9 @@ export class USCoreTribalAffiliationExtensionProfile {
             errors: [
                 ...validateRequired(res, profileName, "extension"),
                 ...validateSliceCardinality(res, profileName, "extension", {"url":"tribalAffiliation"}, "tribalAffiliation", 1, 1),
-                ...validateSliceFields(res, profileName, "extension", {"url":"tribalAffiliation"}, "tribalAffiliation", ["value","valueCodeableConcept"]),
+                ...validateSliceFields(res, profileName, "extension", {"url":"tribalAffiliation"}, "tribalAffiliation", [], [["valueCodeableConcept"]]),
                 ...validateSliceCardinality(res, profileName, "extension", {"url":"isEnrolled"}, "isEnrolled", 0, 1),
-                ...validateSliceFields(res, profileName, "extension", {"url":"isEnrolled"}, "isEnrolled", ["value","valueBoolean"]),
+                ...validateSliceFields(res, profileName, "extension", {"url":"isEnrolled"}, "isEnrolled", [], [["valueBoolean"]]),
                 ...validateRequired(res, profileName, "url"),
                 ...validateFixedValue(res, profileName, "url", USCoreTribalAffiliationExtensionProfile.canonicalUrl),
             ],

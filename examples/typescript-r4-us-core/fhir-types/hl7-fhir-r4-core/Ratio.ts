@@ -2,11 +2,11 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Element } from "../hl7-fhir-r4-core/Element";
-import type { Quantity } from "../hl7-fhir-r4-core/Quantity";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+import type { Quantity } from "../hl7-fhir-r4-core/Quantity.js";
 
-export type { Element } from "../hl7-fhir-r4-core/Element";
-export type { Quantity } from "../hl7-fhir-r4-core/Quantity";
+export type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { Quantity } from "../hl7-fhir-r4-core/Quantity.js";
 
 // CanonicalURL: http://hl7.org/fhir/StructureDefinition/Ratio (pkg: hl7.fhir.r4.core#4.0.1)
 export interface Ratio extends Element {

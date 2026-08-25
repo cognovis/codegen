@@ -2,11 +2,11 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Element } from "../hl7-fhir-r4-core/Element";
-import type { Period } from "../hl7-fhir-r4-core/Period";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+import type { Period } from "../hl7-fhir-r4-core/Period.js";
 
-export type { Element } from "../hl7-fhir-r4-core/Element";
-export type { Period } from "../hl7-fhir-r4-core/Period";
+export type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { Period } from "../hl7-fhir-r4-core/Period.js";
 
 // CanonicalURL: http://hl7.org/fhir/StructureDefinition/Address (pkg: hl7.fhir.r4.core#4.0.1)
 export interface Address extends Element {
