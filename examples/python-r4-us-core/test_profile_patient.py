@@ -9,6 +9,7 @@ import warnings
 import pytest
 from fhir_types.hl7_fhir_r4_core.base import Coding, Extension, HumanName, Identifier
 from fhir_types.hl7_fhir_r4_core.patient import Patient
+from fhir_types.profile_helpers import validate_slice_fields
 from fhir_types.hl7_fhir_us_core.profiles.extension_uscore_ethnicity_extension import (
     UscoreEthnicityExtension,
 )
@@ -522,3 +523,58 @@ def test_profile_from_empty_resource_reports_missing_required_fields() -> None:
 
     assert "UscorePatientProfile: required field 'identifier' is missing" in errors
     assert "UscorePatientProfile: required field 'name' is missing" in errors
+
+
+# ---------------------------------------------------------------------------
+# Sliced choice validation (codegen-nud)
+#
+# The race extension slices `extension` and requires the choice element
+# `value[x]` inside each slice, narrowed to a single type. The choice base name
+# `value` is not a FHIR element, so requiring it made every conformant race
+# extension invalid. Each required choice element is satisfied by any one of its
+# permitted typed variants.
+# ---------------------------------------------------------------------------
+
+
+def test_race_extension_written_by_its_own_setters_is_valid() -> None:
+    race = UscoreRaceExtension.create()
+    race.set_extension_omb_category({"code": "2106-3", "display": "White"})
+    race.set_extension_text({"valueString": "White"})
+
+    assert race.validate()["errors"] == []
+
+
+def test_race_extension_slice_element_without_a_choice_variant_is_invalid() -> None:
+    race = UscoreRaceExtension.create()
+    race.set_extension_omb_category({})
+    race.set_extension_text({"valueString": "White"})
+
+    errors = race.validate()["errors"]
+
+    assert errors == ["UscoreRaceExtension.extension[ombCategory].valueCoding is required"]
+
+
+# A slice narrowing `value[x]` to more than one type has no US Core instance, so
+# the multi-variant branch of the helper is exercised directly.
+MULTI_VARIANT_GROUP = [["valueQuantity", "valueString"]]
+MEASURED_MATCH = {"code": "measured-finding"}
+
+
+def test_multi_variant_choice_group_is_satisfied_by_any_permitted_variant() -> None:
+    res = {"component": [{"code": "measured-finding", "valueString": "three millimetres"}]}
+
+    errors = validate_slice_fields(
+        res, "Demo", "component", MEASURED_MATCH, "measuredFinding", [], MULTI_VARIANT_GROUP
+    )
+
+    assert errors == []
+
+
+def test_multi_variant_choice_group_without_a_variant_names_every_permitted_variant() -> None:
+    res = {"component": [{"code": "measured-finding"}]}
+
+    errors = validate_slice_fields(
+        res, "Demo", "component", MEASURED_MATCH, "measuredFinding", [], MULTI_VARIANT_GROUP
+    )
+
+    assert errors == ["Demo.component[measuredFinding]: at least one of valueQuantity, valueString is required"]
