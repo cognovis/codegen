@@ -518,35 +518,6 @@ receipts:
   owners_cache:
   - workspace:https://git.cognovis.de/cognovis/library-core#cognovis-daily
   definition_commit: d9941f4542b1efa61fd106e92d11df64ad6e8569
-- name: model-routing
-  type: standard
-  marketplace: local
-  source: https://git.cognovis.de/cognovis/library-core/raw/branch/main/standards/dispatch/model-routing.md
-  source_commit: cbb583378386f699756b3ed14f24e01cfd3da48a
-  cache_path: /Users/malte/.local/share/library/standards/local/model-routing@cbb583378386f6/
-  install_target: .agents/standards/model-routing/
-  install_timestamp: '2026-08-21T14:44:52Z'
-  checksum_sha256: 72f524633634fdebfef458c68c12d205f82a9bc6f35d7c714a13b5ea398bb995
-  checksum_type: directory
-  content_sha256: 72f524633634fdebfef458c68c12d205f82a9bc6f35d7c714a13b5ea398bb995
-  install_mode: vendor
-  license: unknown
-  bridge_symlinks: []
-  scope: project
-  catalog_identity: https://git.cognovis.de/cognovis/library-core
-  id: standard:model-routing
-  resolved_version: legacy
-  verified: true
-  adopted: false
-  prune_blocked_reason: null
-  targets:
-  - path: .agents/standards/model-routing
-    kind: directory
-  - path: .agents/standards/model-routing/model-routing.md
-    kind: file
-    content_sha256: a7980c40b573d62cb44919dde4f31b0920641dc689cbefac8686fe786ae21127
-  owners_cache: []
-  definition_commit: cbb583378386f699756b3ed14f24e01cfd3da48a
 - name: bead-change-reviewer
   type: agent
   marketplace: local
@@ -579,73 +550,6 @@ receipts:
   owners_cache:
   - workspace:https://git.cognovis.de/cognovis/library-core#cognovis-daily
   definition_commit: d9941f4542b1efa61fd106e92d11df64ad6e8569
-- name: mcp-client-timeout
-  type: standard
-  marketplace: local
-  source: https://git.cognovis.de/cognovis/library-core/src/branch/main/standards/mcp-client-timeout/
-  source_commit: 01f9b9ce8e9dedccc75a21f099013a60a2181bcb
-  cache_path: /Users/malte/.local/share/library/standards/local/mcp-client-timeout@01f9b9ce8e9ded/
-  install_target: .agents/standards/mcp-client-timeout/
-  install_timestamp: '2026-08-23T06:36:04Z'
-  checksum_sha256: e404e2d3e65db7319abb84639ee83f96042f5028aac7d16d44b2bd95fde852a6
-  checksum_type: directory
-  content_sha256: e404e2d3e65db7319abb84639ee83f96042f5028aac7d16d44b2bd95fde852a6
-  install_mode: vendor
-  license: unknown
-  bridge_symlinks: []
-  scope: project
-  catalog_identity: https://git.cognovis.de/cognovis/library-core
-  id: standard:mcp-client-timeout
-  resolved_version: legacy
-  verified: true
-  adopted: false
-  prune_blocked_reason: null
-  targets:
-  - path: .agents/standards/mcp-client-timeout
-    kind: directory
-  - path: .agents/standards/mcp-client-timeout/mcp-client-timeout.md
-    kind: file
-    content_sha256: e16703fd00bb8723009ec4a57bb18f196ba359698d275e82b96c1163e096d84c
-  owners_cache: []
-  definition_commit: 01f9b9ce8e9dedccc75a21f099013a60a2181bcb
-- name: acpx-dispatch
-  type: skill
-  marketplace: local
-  source: https://git.cognovis.de/cognovis/ccore/raw/branch/main/skills/acpx-dispatch/SKILL.md
-  source_commit: c377fb05b3cd2273f037b2f3c589e05bfd441c8d
-  cache_path: /Users/malte/.local/share/library/skills/local/acpx-dispatch@c377fb05b3cd22/
-  install_target: .agents/skills/acpx-dispatch/
-  install_timestamp: '2026-08-21T14:44:53Z'
-  checksum_sha256: bee765c186822696d7e9d40b202074d10f17a83d88dadeef8b23f4ff747e5d0d
-  checksum_type: directory
-  content_sha256: bee765c186822696d7e9d40b202074d10f17a83d88dadeef8b23f4ff747e5d0d
-  install_mode: vendor
-  license: unknown
-  bridge_symlinks:
-  - .claude/skills/acpx-dispatch -> ../../.agents/skills/acpx-dispatch
-  scope: project
-  catalog_identity: https://git.cognovis.de/cognovis/ccore
-  id: skill:acpx-dispatch
-  resolved_version: legacy
-  verified: true
-  adopted: false
-  prune_blocked_reason: null
-  targets:
-  - path: .agents/skills/acpx-dispatch
-    kind: directory
-  - path: .agents/skills/acpx-dispatch/SKILL.md
-    kind: file
-    content_sha256: 1e424106b4c3dfb67e704ce27e853dbdcc6c1715d58645af6f206c46f918c8a2
-  - path: .agents/skills/acpx-dispatch/tests
-    kind: directory
-  - path: .agents/skills/acpx-dispatch/tests/acpx-dispatch.test.md
-    kind: file
-    content_sha256: 1fcdbc9df66e8abfe4f8c75855c293b41a18e1f0c22e1c7b6fcc7e33abcf641f
-  - path: .claude/skills/acpx-dispatch
-    kind: symlink
-    link_target: ../../.agents/skills/acpx-dispatch
-  owners_cache: []
-  definition_commit: c377fb05b3cd2273f037b2f3c589e05bfd441c8d
 - name: bead-execution-loop
   type: skill
   marketplace: local
@@ -1108,35 +1012,6 @@ receipts:
   owners_cache:
   - workspace:https://git.cognovis.de/cognovis/library-core#cognovis-daily
   definition_commit: d9941f4542b1efa61fd106e92d11df64ad6e8569
-- name: tool-standards
-  type: standard
-  marketplace: local
-  source: https://git.cognovis.de/cognovis/library-core/raw/branch/main/standards/dev-tools/tool-standards.md
-  source_commit: cbb583378386f699756b3ed14f24e01cfd3da48a
-  cache_path: /Users/malte/.local/share/library/standards/local/tool-standards@cbb583378386f6/
-  install_target: .agents/standards/tool-standards/
-  install_timestamp: '2026-08-21T14:44:54Z'
-  checksum_sha256: 6d3ed3a9347e6a17f0d9dbf0ad3e4eae27eaad7b8c2fa6d437670a1aeddd1763
-  checksum_type: directory
-  content_sha256: 6d3ed3a9347e6a17f0d9dbf0ad3e4eae27eaad7b8c2fa6d437670a1aeddd1763
-  install_mode: vendor
-  license: unknown
-  bridge_symlinks: []
-  scope: project
-  catalog_identity: https://git.cognovis.de/cognovis/library-core
-  id: standard:tool-standards
-  resolved_version: legacy
-  verified: true
-  adopted: false
-  prune_blocked_reason: null
-  targets:
-  - path: .agents/standards/tool-standards
-    kind: directory
-  - path: .agents/standards/tool-standards/tool-standards.md
-    kind: file
-    content_sha256: 44266a8f719e99e63882b72370ee574d299e1d3ff9be1a25508ff126ec77548d
-  owners_cache: []
-  definition_commit: cbb583378386f699756b3ed14f24e01cfd3da48a
 - name: bug-triage
   type: skill
   marketplace: local
@@ -1622,94 +1497,6 @@ receipts:
   owners_cache:
   - workspace:https://git.cognovis.de/cognovis/library-core#cognovis-daily
   definition_commit: d9941f4542b1efa61fd106e92d11df64ad6e8569
-- name: bead-metrics
-  type: skill
-  marketplace: local
-  source: https://git.cognovis.de/cognovis/library-core/raw/branch/main/skills/bead-metrics/SKILL.md
-  source_commit: cbb583378386f699756b3ed14f24e01cfd3da48a
-  cache_path: /Users/malte/.local/share/library/skills/local/bead-metrics@cbb583378386f6/
-  install_target: .agents/skills/bead-metrics/
-  install_timestamp: '2026-08-21T14:44:54Z'
-  checksum_sha256: 3e00bbea07aa54d7bf2ac9d7a9a1435b85e8c95ccd88835aef490c9533a052ee
-  checksum_type: directory
-  content_sha256: 3e00bbea07aa54d7bf2ac9d7a9a1435b85e8c95ccd88835aef490c9533a052ee
-  install_mode: vendor
-  license: unknown
-  bridge_symlinks:
-  - .claude/skills/bead-metrics -> ../../.agents/skills/bead-metrics
-  scope: project
-  catalog_identity: https://git.cognovis.de/cognovis/library-core
-  id: skill:bead-metrics
-  resolved_version: legacy
-  verified: true
-  adopted: false
-  prune_blocked_reason: null
-  targets:
-  - path: .agents/skills/bead-metrics
-    kind: directory
-  - path: .agents/skills/bead-metrics/SKILL.md
-    kind: file
-    content_sha256: e4764fe69445cd688359461c8238565989e876204abaebe84892d76672d5a3e7
-  - path: .agents/skills/bead-metrics/scripts
-    kind: directory
-  - path: .agents/skills/bead-metrics/scripts/backfill_codex.py
-    kind: file
-    content_sha256: 0effc91493df2e0ecb8b61fb6cbe84e4b8162ccc48274edd03befb0e89d0d9b0
-  - path: .agents/skills/bead-metrics/scripts/canonical_metrics_path.py
-    kind: file
-    content_sha256: 238563c24e6bc7c82f980f1877071f4e38a66295baaf830b02c807abc04ccd98
-  - path: .agents/skills/bead-metrics/scripts/ingest_ccusage.py
-    kind: file
-    content_sha256: af232a97ba4dd5f5ae5e491809a00a8c1336f7398986d7b11d12ea6afa5e3b6e
-  - path: .agents/skills/bead-metrics/scripts/ingest_codex.py
-    kind: file
-    content_sha256: 12a6b5f3641cdf929d7247dc121571191fe33b282a5aa52316db0f15c60124dd
-  - path: .agents/skills/bead-metrics/scripts/metrics-rollup.py
-    kind: file
-    content_sha256: 101e7c226dedea55bb1e0caaed72529d6460c544f7e67ea1ea3b7c33171acc70
-  - path: .agents/skills/bead-metrics/scripts/metrics-start.py
-    kind: file
-    content_sha256: c562097a15fcf9830ad51aa6ea7d880bf259f353a32c0ed0a8ab711a25ddd961
-  - path: .agents/skills/bead-metrics/scripts/metrics.py
-    kind: file
-    content_sha256: 9b44b5dcd5028fcc756e11ab0c26fc7b081a673fe81bea478bfaaee4c13fe08b
-  - path: .agents/skills/bead-metrics/scripts/migrate_metrics_run_id.py
-    kind: file
-    content_sha256: 166436758b337eff08188adc2caa22301b20467ca6a0a9dbaecb389a854a631a
-  - path: .agents/skills/bead-metrics/scripts/run-query.sh
-    kind: file
-    content_sha256: 05668314cae8a733c61691c9450cce8f0618c8c8db5011fa5f3027dcfc5f6880
-  - path: .agents/skills/bead-metrics/scripts/workflow-leaf-logger.py
-    kind: file
-    content_sha256: 53b272e0c2a4fce2942040123244e40f2b3d78dcf4dc6e6db2fb6d9b48705ee2
-  - path: .agents/skills/bead-metrics/scripts/workflow_leaf_logger.py
-    kind: file
-    content_sha256: 2697b1f42292eba591ccdb1d96e63039d944bfb04af23813f57663cf1be7867e
-  - path: .agents/skills/bead-metrics/tests
-    kind: directory
-  - path: .agents/skills/bead-metrics/tests/test_adhoc_subagent_metrics.py
-    kind: file
-    content_sha256: 35c1fcfe6e0c50b33c496d497c40fd791ae5f6b5ef638566c61426a7310e3e25
-  - path: .agents/skills/bead-metrics/tests/test_canonical_metrics_path.py
-    kind: file
-    content_sha256: 0e4e95fbea29c8ea01cfdaca17144bfb8f83ccb4736ec670a6c401f1aa90828b
-  - path: .agents/skills/bead-metrics/tests/test_increment_auto_decisions.py
-    kind: file
-    content_sha256: cd7e49ec6998ef097886d9c74469502f20fbabb0c4a399e02d15c99d4ca7f598
-  - path: .agents/skills/bead-metrics/tests/test_metrics_run_api.py
-    kind: file
-    content_sha256: fe5ec202cb54eccd05f7058dd5b87fd4a4021108ddf2f67d0ae31fa36f3d98aa
-  - path: .agents/skills/bead-metrics/tests/test_metrics_scripts_py.py
-    kind: file
-    content_sha256: f5ba429c86a602aaafb6342d702051a56b51c058d5c93730033dad159c631da9
-  - path: .agents/skills/bead-metrics/tests/test_workflow_leaf_logger.py
-    kind: file
-    content_sha256: 21408e56521fa7dc9fc9ac6d4b5c8066b5eaf37c48fc1f845533968e53d62f86
-  - path: .claude/skills/bead-metrics
-    kind: symlink
-    link_target: ../../.agents/skills/bead-metrics
-  owners_cache: []
-  definition_commit: cbb583378386f699756b3ed14f24e01cfd3da48a
 - name: git
   type: standard
   marketplace: local
@@ -3161,22 +2948,6 @@ installed:
   - .codex/agents/bead-implementer.toml -> /Users/malte/.local/share/library/agents/local/bead-implementer-codex@d9941f4542b1ef/bead-implementer.toml
   scope: project
   catalog_identity: https://git.cognovis.de/cognovis/library-core
-- name: model-routing
-  type: standard
-  marketplace: local
-  source: https://git.cognovis.de/cognovis/library-core/raw/branch/main/standards/dispatch/model-routing.md
-  source_commit: cbb583378386f699756b3ed14f24e01cfd3da48a
-  cache_path: /Users/malte/.local/share/library/standards/local/model-routing@cbb583378386f6/
-  install_target: .agents/standards/model-routing/
-  install_timestamp: '2026-08-21T14:44:52Z'
-  checksum_sha256: 72f524633634fdebfef458c68c12d205f82a9bc6f35d7c714a13b5ea398bb995
-  checksum_type: directory
-  content_sha256: 72f524633634fdebfef458c68c12d205f82a9bc6f35d7c714a13b5ea398bb995
-  install_mode: vendor
-  license: unknown
-  bridge_symlinks: []
-  scope: project
-  catalog_identity: https://git.cognovis.de/cognovis/library-core
 - name: bead-change-reviewer
   type: agent
   marketplace: local
@@ -3194,39 +2965,6 @@ installed:
   - .codex/agents/bead-change-reviewer.toml -> /Users/malte/.local/share/library/agents/local/bead-change-reviewer-codex@d9941f4542b1ef/bead-change-reviewer.toml
   scope: project
   catalog_identity: https://git.cognovis.de/cognovis/library-core
-- name: mcp-client-timeout
-  type: standard
-  marketplace: local
-  source: https://git.cognovis.de/cognovis/library-core/src/branch/main/standards/mcp-client-timeout/
-  source_commit: 01f9b9ce8e9dedccc75a21f099013a60a2181bcb
-  cache_path: /Users/malte/.local/share/library/standards/local/mcp-client-timeout@01f9b9ce8e9ded/
-  install_target: .agents/standards/mcp-client-timeout/
-  install_timestamp: '2026-08-23T06:36:04Z'
-  checksum_sha256: e404e2d3e65db7319abb84639ee83f96042f5028aac7d16d44b2bd95fde852a6
-  checksum_type: directory
-  content_sha256: e404e2d3e65db7319abb84639ee83f96042f5028aac7d16d44b2bd95fde852a6
-  install_mode: vendor
-  license: unknown
-  bridge_symlinks: []
-  scope: project
-  catalog_identity: https://git.cognovis.de/cognovis/library-core
-- name: acpx-dispatch
-  type: skill
-  marketplace: local
-  source: https://git.cognovis.de/cognovis/ccore/raw/branch/main/skills/acpx-dispatch/SKILL.md
-  source_commit: c377fb05b3cd2273f037b2f3c589e05bfd441c8d
-  cache_path: /Users/malte/.local/share/library/skills/local/acpx-dispatch@c377fb05b3cd22/
-  install_target: .agents/skills/acpx-dispatch/
-  install_timestamp: '2026-08-21T14:44:53Z'
-  checksum_sha256: bee765c186822696d7e9d40b202074d10f17a83d88dadeef8b23f4ff747e5d0d
-  checksum_type: directory
-  content_sha256: bee765c186822696d7e9d40b202074d10f17a83d88dadeef8b23f4ff747e5d0d
-  install_mode: vendor
-  license: unknown
-  bridge_symlinks:
-  - .claude/skills/acpx-dispatch -> ../../.agents/skills/acpx-dispatch
-  scope: project
-  catalog_identity: https://git.cognovis.de/cognovis/ccore
 - name: bead-execution-loop
   type: skill
   marketplace: local
@@ -3363,22 +3101,6 @@ installed:
   - .claude/skills/context-discovery -> ../../.agents/skills/context-discovery
   scope: project
   catalog_identity: https://git.cognovis.de/cognovis/library-core
-- name: tool-standards
-  type: standard
-  marketplace: local
-  source: https://git.cognovis.de/cognovis/library-core/raw/branch/main/standards/dev-tools/tool-standards.md
-  source_commit: cbb583378386f699756b3ed14f24e01cfd3da48a
-  cache_path: /Users/malte/.local/share/library/standards/local/tool-standards@cbb583378386f6/
-  install_target: .agents/standards/tool-standards/
-  install_timestamp: '2026-08-21T14:44:54Z'
-  checksum_sha256: 6d3ed3a9347e6a17f0d9dbf0ad3e4eae27eaad7b8c2fa6d437670a1aeddd1763
-  checksum_type: directory
-  content_sha256: 6d3ed3a9347e6a17f0d9dbf0ad3e4eae27eaad7b8c2fa6d437670a1aeddd1763
-  install_mode: vendor
-  license: unknown
-  bridge_symlinks: []
-  scope: project
-  catalog_identity: https://git.cognovis.de/cognovis/library-core
 - name: bug-triage
   type: skill
   marketplace: local
@@ -3462,23 +3184,6 @@ installed:
   license: unknown
   bridge_symlinks:
   - .claude/skills/worktree-cleanup -> ../../.agents/skills/worktree-cleanup
-  scope: project
-  catalog_identity: https://git.cognovis.de/cognovis/library-core
-- name: bead-metrics
-  type: skill
-  marketplace: local
-  source: https://git.cognovis.de/cognovis/library-core/raw/branch/main/skills/bead-metrics/SKILL.md
-  source_commit: cbb583378386f699756b3ed14f24e01cfd3da48a
-  cache_path: /Users/malte/.local/share/library/skills/local/bead-metrics@cbb583378386f6/
-  install_target: .agents/skills/bead-metrics/
-  install_timestamp: '2026-08-21T14:44:54Z'
-  checksum_sha256: 3e00bbea07aa54d7bf2ac9d7a9a1435b85e8c95ccd88835aef490c9533a052ee
-  checksum_type: directory
-  content_sha256: 3e00bbea07aa54d7bf2ac9d7a9a1435b85e8c95ccd88835aef490c9533a052ee
-  install_mode: vendor
-  license: unknown
-  bridge_symlinks:
-  - .claude/skills/bead-metrics -> ../../.agents/skills/bead-metrics
   scope: project
   catalog_identity: https://git.cognovis.de/cognovis/library-core
 - name: git
