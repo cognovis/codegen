@@ -26,6 +26,7 @@ import {
     tsFieldName,
     tsModuleFileName,
     tsModuleName,
+    tsModuleSpecifier,
     tsNameFromCanonical,
     tsPackageDir,
     tsProfileModuleFileName,
@@ -168,7 +169,8 @@ export class TypeScript extends Writer<TypeScriptOptions> {
         const typeOnly = typeof last === "object" ? last.typeOnly : false;
         const entities = (typeof last === "object" ? rest.slice(0, -1) : rest) as string[];
         const keyword = typeOnly ? "import type" : "import";
-        const singleLine = `${keyword} { ${entities.join(", ")} } from "${tsPackageName}"`;
+        const specifier = tsModuleSpecifier(tsPackageName);
+        const singleLine = `${keyword} { ${entities.join(", ")} } from "${specifier}"`;
         if (singleLine.length <= (this.opts.lineWidth ?? 120)) {
             this.lineSM(singleLine);
         } else {
@@ -176,16 +178,16 @@ export class TypeScript extends Writer<TypeScriptOptions> {
                 for (const entity of entities) {
                     this.line(`${entity},`);
                 }
-            }, [` from "${tsPackageName}";`]);
+            }, [` from "${specifier}";`]);
         }
     }
 
     generateFhirPackageIndexFile(schemas: TypeSchema[], hasTerminology = false) {
         this.cat("index.ts", () => {
-            if (hasTerminology) this.lineSM(`export * from "./terminology"`);
+            if (hasTerminology) this.lineSM(`export * from "${tsModuleSpecifier("./terminology")}"`);
             const profiles = schemas.filter(isSnapshotProfileTypeSchema);
             if (profiles.length > 0) {
-                this.lineSM(`export * from "./profiles"`);
+                this.lineSM(`export * from "${tsModuleSpecifier("./profiles", "directory")}"`);
             }
 
             let exports = schemas
@@ -221,11 +223,12 @@ export class TypeScript extends Writer<TypeScriptOptions> {
 
             for (const exp of exports) {
                 this.debugComment(exp.identifier);
+                const specifier = tsModuleSpecifier(`./${exp.tsPackageName}`);
                 if (exp.typeExports.length > 0) {
-                    this.lineSM(`export type { ${exp.typeExports.join(", ")} } from "./${exp.tsPackageName}"`);
+                    this.lineSM(`export type { ${exp.typeExports.join(", ")} } from "${specifier}"`);
                 }
                 if (exp.valueExports.length > 0) {
-                    this.lineSM(`export { ${exp.valueExports.join(", ")} } from "./${exp.tsPackageName}"`);
+                    this.lineSM(`export { ${exp.valueExports.join(", ")} } from "${specifier}"`);
                 }
             }
         });
@@ -274,7 +277,9 @@ export class TypeScript extends Writer<TypeScriptOptions> {
         if (complexTypeDeps && complexTypeDeps.length > 0) {
             for (const dep of complexTypeDeps) {
                 this.debugComment(dep);
-                this.lineSM(`export type { ${tsResourceName(dep)} } from "${`../${this.modulePath(dep)}`}"`);
+                this.lineSM(
+                    `export type { ${tsResourceName(dep)} } from "${tsModuleSpecifier(`../${this.modulePath(dep)}`)}"`,
+                );
             }
             this.line();
         }

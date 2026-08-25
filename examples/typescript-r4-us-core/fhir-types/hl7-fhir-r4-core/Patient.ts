@@ -2,27 +2,27 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Address } from "../hl7-fhir-r4-core/Address";
-import type { Attachment } from "../hl7-fhir-r4-core/Attachment";
-import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
-import type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept";
-import type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint";
-import type { DomainResource } from "../hl7-fhir-r4-core/DomainResource";
-import type { HumanName } from "../hl7-fhir-r4-core/HumanName";
-import type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-import type { Period } from "../hl7-fhir-r4-core/Period";
-import type { Reference } from "../hl7-fhir-r4-core/Reference";
+import type { Address } from "../hl7-fhir-r4-core/Address.js";
+import type { Attachment } from "../hl7-fhir-r4-core/Attachment.js";
+import type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement.js";
+import type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept.js";
+import type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint.js";
+import type { DomainResource } from "../hl7-fhir-r4-core/DomainResource.js";
+import type { HumanName } from "../hl7-fhir-r4-core/HumanName.js";
+import type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+import type { Period } from "../hl7-fhir-r4-core/Period.js";
+import type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
-import type { Element } from "../hl7-fhir-r4-core/Element";
-export type { Address } from "../hl7-fhir-r4-core/Address";
-export type { Attachment } from "../hl7-fhir-r4-core/Attachment";
-export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement";
-export type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept";
-export type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint";
-export type { HumanName } from "../hl7-fhir-r4-core/HumanName";
-export type { Identifier } from "../hl7-fhir-r4-core/Identifier";
-export type { Period } from "../hl7-fhir-r4-core/Period";
-export type { Reference } from "../hl7-fhir-r4-core/Reference";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { Address } from "../hl7-fhir-r4-core/Address.js";
+export type { Attachment } from "../hl7-fhir-r4-core/Attachment.js";
+export type { BackboneElement } from "../hl7-fhir-r4-core/BackboneElement.js";
+export type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept.js";
+export type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint.js";
+export type { HumanName } from "../hl7-fhir-r4-core/HumanName.js";
+export type { Identifier } from "../hl7-fhir-r4-core/Identifier.js";
+export type { Period } from "../hl7-fhir-r4-core/Period.js";
+export type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
 export interface PatientCommunication extends BackboneElement {
     language: CodeableConcept<("ar" | "bn" | "cs" | "da" | "de" | "de-AT" | "de-CH" | "de-DE" | "el" | "en" | "en-AU" | "en-CA" | "en-GB" | "en-IN" | "en-NZ" | "en-SG" | "en-US" | "es" | "es-AR" | "es-ES" | "es-UY" | "fi" | "fr" | "fr-BE" | "fr-CH" | "fr-FR" | "fy" | "fy-NL" | "hi" | "hr" | "it" | "it-CH" | "it-IT" | "ja" | "ko" | "nl" | "nl-BE" | "nl-NL" | "no" | "no-NO" | "pa" | "pl" | "pt" | "pt-BR" | "ru" | "ru-RU" | "sr" | "sr-RS" | "sv" | "sv-SE" | "te" | "zh" | "zh-CN" | "zh-HK" | "zh-SG" | "zh-TW" | string)>;

@@ -2,8 +2,8 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Coding } from "../../hl7-fhir-r4-core/Coding";
-import type { Extension } from "../../hl7-fhir-r4-core/Extension";
+import type { Coding } from "../../hl7-fhir-r4-core/Coding.js";
+import type { Extension } from "../../hl7-fhir-r4-core/Extension.js";
 
 export type USCoreEthnicityExtension_Extension_OmbCategorySliceFlat = Omit<Extension, "url" | "value" | "valueBase64Binary" | "valueBoolean" | "valueCanonical" | "valueCode" | "valueDate" | "valueDateTime" | "valueDecimal" | "valueId" | "valueInstant" | "valueInteger" | "valueMarkdown" | "valueOid" | "valuePositiveInt" | "valueString" | "valueTime" | "valueUnsignedInt" | "valueUri" | "valueUrl" | "valueUuid" | "valueAddress" | "valueAge" | "valueAnnotation" | "valueAttachment" | "valueCodeableConcept" | "valueCoding" | "valueContactPoint" | "valueCount" | "valueDistance" | "valueDuration" | "valueHumanName" | "valueIdentifier" | "valueMoney" | "valuePeriod" | "valueQuantity" | "valueRange" | "valueRatio" | "valueReference" | "valueSampledData" | "valueSignature" | "valueTiming" | "valueContactDetail" | "valueContributor" | "valueDataRequirement" | "valueExpression" | "valueParameterDefinition" | "valueRelatedArtifact" | "valueTriggerDefinition" | "valueUsageContext" | "valueDosage" | "valueMeta"> & Coding;
 export type USCoreEthnicityExtension_Extension_OmbCategorySliceFlatAll = USCoreEthnicityExtension_Extension_OmbCategorySliceFlat;
@@ -42,7 +42,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type USCoreEthnicityExtensionProfileRaw = {
     extension: Extension[];
@@ -254,10 +254,10 @@ export class USCoreEthnicityExtensionProfile {
             errors: [
                 ...validateRequired(res, profileName, "extension"),
                 ...validateSliceCardinality(res, profileName, "extension", {"url":"ombCategory"}, "ombCategory", 0, 1),
-                ...validateSliceFields(res, profileName, "extension", {"url":"ombCategory"}, "ombCategory", ["value","valueCoding"]),
-                ...validateSliceFields(res, profileName, "extension", {"url":"detailed"}, "detailed", ["value","valueCoding"]),
+                ...validateSliceFields(res, profileName, "extension", {"url":"ombCategory"}, "ombCategory", [], [["valueCoding"]]),
+                ...validateSliceFields(res, profileName, "extension", {"url":"detailed"}, "detailed", [], [["valueCoding"]]),
                 ...validateSliceCardinality(res, profileName, "extension", {"url":"text"}, "text", 1, 1),
-                ...validateSliceFields(res, profileName, "extension", {"url":"text"}, "text", ["value","valueString"]),
+                ...validateSliceFields(res, profileName, "extension", {"url":"text"}, "text", [], [["valueString"]]),
                 ...validateRequired(res, profileName, "url"),
                 ...validateFixedValue(res, profileName, "url", USCoreEthnicityExtensionProfile.canonicalUrl),
             ],

@@ -2,11 +2,11 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint";
-import type { Element } from "../hl7-fhir-r4-core/Element";
+import type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint.js";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
 
-export type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint";
-export type { Element } from "../hl7-fhir-r4-core/Element";
+export type { ContactPoint } from "../hl7-fhir-r4-core/ContactPoint.js";
+export type { Element } from "../hl7-fhir-r4-core/Element.js";
 
 // CanonicalURL: http://hl7.org/fhir/StructureDefinition/ContactDetail (pkg: hl7.fhir.r4.core#4.0.1)
 export interface ContactDetail extends Element {
