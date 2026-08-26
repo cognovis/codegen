@@ -346,6 +346,8 @@ Maintainers follow this process:
 3. The workflow verifies the stable package after publication: the registry metadata and a newly downloaded tarball must match the checked tarball's `shasum` and `integrity`. It uploads the resulting package-identity evidence as the workflow artifact and writes the package, version, commit, checksums, and registry tarball URL to the job summary.
 4. Inspect the successful tag workflow and its `codegen-v<version>-release-evidence` artifact before handing the release to downstream consumers. A pre-existing version is only accepted on a rerun when its registry bytes already match the newly packed tarball; the workflow skips a second publish only in that case and fails on a mismatch.
 
+Exception for v0.2.0: package-identity evidence is retained in the job summary and log of tag run `32945564978`. Its named evidence artifact is absent because the hidden-file upload fix landed after the immutable tag; the artifact is authoritative from the next release onward.
+
 ## Recognition
 
 Contributors are recognized in:

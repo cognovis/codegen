@@ -22,6 +22,16 @@ describe("stable release artifact contract (codegen-8ja)", () => {
         expect(releaseWorkflow).toContain("release-evidence.json");
     });
 
+    it("uploads hidden release evidence and fails rather than silently omitting it", () => {
+        const evidenceStep = releaseWorkflow.slice(
+            releaseWorkflow.indexOf("Upload release package evidence"),
+            releaseWorkflow.indexOf("Create Github Release"),
+        );
+
+        expect(evidenceStep).toContain("include-hidden-files: true");
+        expect(evidenceStep).toContain("if-no-files-found: error");
+    });
+
     it("validates tag and packed manifest identity before a publish can occur", () => {
         const tagValidation = releaseWorkflow.indexOf("Validate release tag and package");
         const packageStep = releaseWorkflow.indexOf("Pack release artifact");
@@ -115,5 +125,11 @@ describe("stable release artifact contract (codegen-8ja)", () => {
     it("documents the pinned workflow and ancestor-based tag admission", () => {
         expect(contributingGuide).toContain("Bun 1.3.14 and npm 11.8.0");
         expect(contributingGuide).toContain("ancestor of the current `origin/main`");
+    });
+
+    it("documents the v0.2.0 evidence artifact exception", () => {
+        expect(contributingGuide).toContain("tag run `32945564978`");
+        expect(contributingGuide).toContain("hidden-file upload fix landed after the immutable tag");
+        expect(contributingGuide).toContain("authoritative from the next release onward");
     });
 });
