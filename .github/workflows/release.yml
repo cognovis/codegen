@@ -275,7 +275,8 @@ jobs:
         with:
           name: codegen-${{ github.ref_name }}-release-evidence
           path: .release-artifacts/
-          if-no-files-found: warn
+          include-hidden-files: true
+          if-no-files-found: error
 
       - name: Create Github Release
         uses: softprops/action-gh-release@v3
