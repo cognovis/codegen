@@ -2,10 +2,10 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Meta } from "../hl7-fhir-r4-core/Meta";
+import type { Meta } from "../hl7-fhir-r4-core/Meta.js";
 
-import type { Element } from "../hl7-fhir-r4-core/Element";
-export type { Meta } from "../hl7-fhir-r4-core/Meta";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { Meta } from "../hl7-fhir-r4-core/Meta.js";
 
 // CanonicalURL: http://hl7.org/fhir/StructureDefinition/Resource (pkg: hl7.fhir.r4.core#4.0.1)
 export interface Resource {

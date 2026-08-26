@@ -2,11 +2,11 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Observation, ObservationComponent } from "../../hl7-fhir-r4-core/Observation";
-import type { Period } from "../../hl7-fhir-r4-core/Period";
-import type { Quantity } from "../../hl7-fhir-r4-core/Quantity";
-import type { Reference } from "../../hl7-fhir-r4-core/Reference";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Observation, ObservationComponent } from "../../hl7-fhir-r4-core/Observation.js";
+import type { Period } from "../../hl7-fhir-r4-core/Period.js";
+import type { Quantity } from "../../hl7-fhir-r4-core/Quantity.js";
+import type { Reference } from "../../hl7-fhir-r4-core/Reference.js";
 
 export type Observation_bp_Category_VSCatSliceFlat = Omit<CodeableConcept, "coding">;
 export type Observation_bp_Category_VSCatSliceFlatAll = Observation_bp_Category_VSCatSliceFlat & {
@@ -39,7 +39,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type observation_bpProfileRaw = {
     status: ("registered" | "preliminary" | "final" | "amended" | "corrected" | "cancelled" | "entered-in-error" | "unknown");

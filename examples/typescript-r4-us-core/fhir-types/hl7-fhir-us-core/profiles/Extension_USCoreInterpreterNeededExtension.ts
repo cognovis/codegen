@@ -2,8 +2,8 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Coding } from "../../hl7-fhir-r4-core/Coding";
-import type { Extension } from "../../hl7-fhir-r4-core/Extension";
+import type { Coding } from "../../hl7-fhir-r4-core/Coding.js";
+import type { Extension } from "../../hl7-fhir-r4-core/Extension.js";
 
 import {
     applyFixedValue,
@@ -17,7 +17,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type USCoreInterpreterNeededExtensionProfileRaw = {
     valueCoding: Coding;

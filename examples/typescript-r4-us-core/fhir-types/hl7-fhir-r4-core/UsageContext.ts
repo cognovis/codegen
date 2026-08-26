@@ -2,19 +2,19 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept";
-import type { Coding } from "../hl7-fhir-r4-core/Coding";
-import type { Element } from "../hl7-fhir-r4-core/Element";
-import type { Quantity } from "../hl7-fhir-r4-core/Quantity";
-import type { Range } from "../hl7-fhir-r4-core/Range";
-import type { Reference } from "../hl7-fhir-r4-core/Reference";
+import type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+import type { Quantity } from "../hl7-fhir-r4-core/Quantity.js";
+import type { Range } from "../hl7-fhir-r4-core/Range.js";
+import type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
-export type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept";
-export type { Coding } from "../hl7-fhir-r4-core/Coding";
-export type { Element } from "../hl7-fhir-r4-core/Element";
-export type { Quantity } from "../hl7-fhir-r4-core/Quantity";
-export type { Range } from "../hl7-fhir-r4-core/Range";
-export type { Reference } from "../hl7-fhir-r4-core/Reference";
+export type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept.js";
+export type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+export type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { Quantity } from "../hl7-fhir-r4-core/Quantity.js";
+export type { Range } from "../hl7-fhir-r4-core/Range.js";
+export type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
 // CanonicalURL: http://hl7.org/fhir/StructureDefinition/UsageContext (pkg: hl7.fhir.r4.core#4.0.1)
 export interface UsageContext extends Element {

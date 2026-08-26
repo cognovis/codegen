@@ -2,24 +2,24 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Coding } from "../../hl7-fhir-r4-core/Coding";
-import type { Extension } from "../../hl7-fhir-r4-core/Extension";
-import type { HumanName } from "../../hl7-fhir-r4-core/HumanName";
-import type { Identifier } from "../../hl7-fhir-r4-core/Identifier";
-import type { Patient } from "../../hl7-fhir-r4-core/Patient";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Coding } from "../../hl7-fhir-r4-core/Coding.js";
+import type { Extension } from "../../hl7-fhir-r4-core/Extension.js";
+import type { HumanName } from "../../hl7-fhir-r4-core/HumanName.js";
+import type { Identifier } from "../../hl7-fhir-r4-core/Identifier.js";
+import type { Patient } from "../../hl7-fhir-r4-core/Patient.js";
 
 import {
     USCoreEthnicityExtensionProfile,
     type USCoreEthnicityExtensionProfileFlat,
-} from "./Extension_USCoreEthnicityExtension";
-import { USCoreIndividualSexExtensionProfile } from "./Extension_USCoreIndividualSexExtension";
-import { USCoreInterpreterNeededExtensionProfile } from "./Extension_USCoreInterpreterNeededExtension";
-import { USCoreRaceExtensionProfile, type USCoreRaceExtensionProfileFlat } from "./Extension_USCoreRaceExtension";
+} from "./Extension_USCoreEthnicityExtension.js";
+import { USCoreIndividualSexExtensionProfile } from "./Extension_USCoreIndividualSexExtension.js";
+import { USCoreInterpreterNeededExtensionProfile } from "./Extension_USCoreInterpreterNeededExtension.js";
+import { USCoreRaceExtensionProfile, type USCoreRaceExtensionProfileFlat } from "./Extension_USCoreRaceExtension.js";
 import {
     USCoreTribalAffiliationExtensionProfile,
     type USCoreTribalAffiliationExtensionProfileFlat,
-} from "./Extension_USCoreTribalAffiliationExtension";
+} from "./Extension_USCoreTribalAffiliationExtension.js";
 
 import {
     ensureProfile,
@@ -38,7 +38,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type USCorePatientProfileRaw = {
     identifier: Identifier[];

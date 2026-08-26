@@ -2,19 +2,19 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept";
-import type { Coding } from "../hl7-fhir-r4-core/Coding";
-import type { Duration } from "../hl7-fhir-r4-core/Duration";
-import type { Element } from "../hl7-fhir-r4-core/Element";
-import type { Period } from "../hl7-fhir-r4-core/Period";
-import type { Reference } from "../hl7-fhir-r4-core/Reference";
+import type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+import type { Duration } from "../hl7-fhir-r4-core/Duration.js";
+import type { Element } from "../hl7-fhir-r4-core/Element.js";
+import type { Period } from "../hl7-fhir-r4-core/Period.js";
+import type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
-export type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept";
-export type { Coding } from "../hl7-fhir-r4-core/Coding";
-export type { Duration } from "../hl7-fhir-r4-core/Duration";
-export type { Element } from "../hl7-fhir-r4-core/Element";
-export type { Period } from "../hl7-fhir-r4-core/Period";
-export type { Reference } from "../hl7-fhir-r4-core/Reference";
+export type { CodeableConcept } from "../hl7-fhir-r4-core/CodeableConcept.js";
+export type { Coding } from "../hl7-fhir-r4-core/Coding.js";
+export type { Duration } from "../hl7-fhir-r4-core/Duration.js";
+export type { Element } from "../hl7-fhir-r4-core/Element.js";
+export type { Period } from "../hl7-fhir-r4-core/Period.js";
+export type { Reference } from "../hl7-fhir-r4-core/Reference.js";
 
 export interface DataRequirementCodeFilter extends Element {
     code?: Coding[];

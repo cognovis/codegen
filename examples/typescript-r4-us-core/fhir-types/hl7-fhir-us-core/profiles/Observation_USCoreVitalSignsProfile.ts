@@ -2,14 +2,14 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Observation } from "../../hl7-fhir-r4-core/Observation";
-import type { Period } from "../../hl7-fhir-r4-core/Period";
-import type { Quantity } from "../../hl7-fhir-r4-core/Quantity";
-import type { Range } from "../../hl7-fhir-r4-core/Range";
-import type { Ratio } from "../../hl7-fhir-r4-core/Ratio";
-import type { Reference } from "../../hl7-fhir-r4-core/Reference";
-import type { SampledData } from "../../hl7-fhir-r4-core/SampledData";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Observation } from "../../hl7-fhir-r4-core/Observation.js";
+import type { Period } from "../../hl7-fhir-r4-core/Period.js";
+import type { Quantity } from "../../hl7-fhir-r4-core/Quantity.js";
+import type { Range } from "../../hl7-fhir-r4-core/Range.js";
+import type { Ratio } from "../../hl7-fhir-r4-core/Ratio.js";
+import type { Reference } from "../../hl7-fhir-r4-core/Reference.js";
+import type { SampledData } from "../../hl7-fhir-r4-core/SampledData.js";
 
 export type USCoreVitalSignsProfile_Category_VSCatSliceFlat = Omit<CodeableConcept, "coding">;
 export type USCoreVitalSignsProfile_Category_VSCatSliceFlatAll = USCoreVitalSignsProfile_Category_VSCatSliceFlat & {
@@ -33,7 +33,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type USCoreVitalSignsProfileRaw = {
     status: ("registered" | "preliminary" | "final" | "amended" | "corrected" | "cancelled" | "entered-in-error" | "unknown");

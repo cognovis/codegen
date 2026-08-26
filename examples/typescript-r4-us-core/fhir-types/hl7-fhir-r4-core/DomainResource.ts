@@ -2,12 +2,12 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { Extension } from "../hl7-fhir-r4-core/Extension";
-import type { Narrative } from "../hl7-fhir-r4-core/Narrative";
-import type { Resource } from "../hl7-fhir-r4-core/Resource";
+import type { Extension } from "../hl7-fhir-r4-core/Extension.js";
+import type { Narrative } from "../hl7-fhir-r4-core/Narrative.js";
+import type { Resource } from "../hl7-fhir-r4-core/Resource.js";
 
-export type { Extension } from "../hl7-fhir-r4-core/Extension";
-export type { Narrative } from "../hl7-fhir-r4-core/Narrative";
+export type { Extension } from "../hl7-fhir-r4-core/Extension.js";
+export type { Narrative } from "../hl7-fhir-r4-core/Narrative.js";
 
 // CanonicalURL: http://hl7.org/fhir/StructureDefinition/DomainResource (pkg: hl7.fhir.r4.core#4.0.1)
 export interface DomainResource<T extends Resource = Resource> extends Resource {
