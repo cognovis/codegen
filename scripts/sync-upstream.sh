@@ -5,8 +5,12 @@
 # `main` is the only Cognovis integration branch and it is published, so a sync
 # merges `upstream/main` into `main`: the history of the published branch is
 # never rewritten and every push here is plain (COGNOVIS.md, "Branch topology").
+#
 # This script is dry-run by default: it reports what a sync would do and
-# changes nothing.
+# changes nothing in the checkout. The fetch it performs is real, though -- it
+# moves the `upstream/*` remote-tracking refs that every worktree of this
+# repository shares, so pass --no-fetch when reporting from a task worktree.
+# The report is always about `main`, whichever branch is checked out.
 #
 # Usage:
 #   scripts/sync-upstream.sh                    # dry run: report only
@@ -16,8 +20,9 @@
 #
 # The gate is `apply-cognovis-overlay.sh --audit`, the focused regression tests,
 # and the build. It runs after every merge, including a no-op one, and any
-# failure exits non-zero without pushing. On a merge conflict the script stops
-# and reports `git merge --abort` as the rollback.
+# failure -- including a focused test file that no longer exists -- exits
+# non-zero without pushing. On a merge conflict the script stops and reports
+# `git merge --abort` as the rollback.
 #
 set -euo pipefail
 
@@ -29,6 +34,7 @@ UPSTREAM_REMOTE="upstream"
 UPSTREAM_BRANCH="main"
 PUBLISH_REMOTE="origin"
 UPSTREAM_REF="${UPSTREAM_REMOTE}/${UPSTREAM_BRANCH}"
+INTEGRATION_REF="refs/heads/${INTEGRATION_BRANCH}"
 OVERLAY_SCRIPT="scripts/apply-cognovis-overlay.sh"
 
 # The regression surface a bad upstream merge is most likely to break: profile
@@ -70,6 +76,10 @@ preflight() {
     require_remote "${UPSTREAM_REMOTE}"
     test -f "${REPO_ROOT}/${OVERLAY_SCRIPT}" ||
         die "missing ${OVERLAY_SCRIPT}; the overlay audit is part of the sync gate"
+    # The report is about the integration branch, never about whatever branch
+    # happens to be checked out, so that ref has to exist.
+    git -C "${REPO_ROOT}" rev-parse --verify --quiet "${INTEGRATION_REF}" >/dev/null ||
+        die "no ${INTEGRATION_REF} in ${REPO_ROOT}; the sync report is always about '${INTEGRATION_BRANCH}'"
 }
 
 # A merge must not mix into unrelated work, and the gate reads the working tree.
@@ -93,9 +103,12 @@ fetch_upstream() {
     fi
 }
 
-# 0 when upstream/main is already an ancestor of HEAD, 1 when a merge is needed.
+# 0 when upstream/main is already an ancestor of the integration branch, 1 when
+# a merge is needed. Asked about refs/heads/main and not about HEAD: the answer
+# must not change with the branch the report is run from. `--merge` additionally
+# requires HEAD to be that branch, so in the merge path the two coincide.
 merge_needed() {
-    ! git -C "${REPO_ROOT}" merge-base --is-ancestor "${UPSTREAM_REF}" HEAD
+    ! git -C "${REPO_ROOT}" merge-base --is-ancestor "${UPSTREAM_REF}" "${INTEGRATION_REF}"
 }
 
 report_state() {
@@ -103,21 +116,21 @@ report_state() {
     git -C "${REPO_ROOT}" rev-parse --verify --quiet "${UPSTREAM_REF}" >/dev/null ||
         die "${UPSTREAM_REF} is unknown; run without --no-fetch first"
 
-    behind="$(git -C "${REPO_ROOT}" rev-list --count "HEAD..${UPSTREAM_REF}")"
-    ahead="$(git -C "${REPO_ROOT}" rev-list --count "${UPSTREAM_REF}..HEAD")"
+    behind="$(git -C "${REPO_ROOT}" rev-list --count "${INTEGRATION_REF}..${UPSTREAM_REF}")"
+    ahead="$(git -C "${REPO_ROOT}" rev-list --count "${UPSTREAM_REF}..${INTEGRATION_REF}")"
 
-    heading "State"
-    info "checkout   : ${REPO_ROOT}"
-    info "branch     : $(current_branch)"
-    info "HEAD       : $(git -C "${REPO_ROOT}" rev-parse --short HEAD)"
+    heading "State: ${INTEGRATION_BRANCH} vs ${UPSTREAM_REF}"
+    info "checkout      : ${REPO_ROOT}"
+    info "checked out   : $(current_branch) (the report below is about '${INTEGRATION_BRANCH}')"
+    info "${INTEGRATION_BRANCH}          : $(git -C "${REPO_ROOT}" rev-parse --short "${INTEGRATION_REF}")"
     info "${UPSTREAM_REF} : $(git -C "${REPO_ROOT}" rev-parse --short "${UPSTREAM_REF}")"
-    info "ahead      : ${ahead} commit(s) not upstream (fork commits, see COGNOVIS.md)"
-    info "behind     : ${behind} upstream commit(s) not merged"
+    info "ahead         : ${ahead} commit(s) on ${INTEGRATION_BRANCH} not upstream (fork commits, see COGNOVIS.md)"
+    info "behind        : ${behind} upstream commit(s) not merged into ${INTEGRATION_BRANCH}"
 
     if merge_needed; then
-        info "merge      : needed"
+        info "merge         : needed"
     else
-        info "merge      : not needed (${UPSTREAM_REF} is already merged)"
+        info "merge         : not needed (${UPSTREAM_REF} is already merged)"
     fi
 }
 
@@ -163,8 +176,24 @@ run_step() {
     info "${label}: OK"
 }
 
+# `bun test a-real-file a-missing-file` exits 0 after running only the real one,
+# so a focused test that upstream renamed or deleted would drop out of the gate
+# silently. Existence is checked here instead, before bun is ever invoked.
+require_focused_tests() {
+    local file missing=0
+    for file in "${FOCUSED_TESTS[@]}"; do
+        if ! test -f "${REPO_ROOT}/${file}"; then
+            printf 'sync-upstream: focused test file is missing: %s\n' "${file}" >&2
+            missing=$((missing + 1))
+        fi
+    done
+    test "${missing}" -eq 0 ||
+        die "${missing} focused test file(s) named by the gate do not exist; upstream moved or removed them, so update FOCUSED_TESTS deliberately instead of syncing past a gate that silently shrank"
+}
+
 run_gate() {
     heading "Gate"
+    require_focused_tests
     run_step "overlay audit" "./${OVERLAY_SCRIPT}" --audit
     run_step "focused tests" bun test "${FOCUSED_TESTS[@]}"
     run_step "build" bun run build
@@ -182,7 +211,7 @@ push_main() {
 }
 
 usage() {
-    sed -n '3,21p' "${BASH_SOURCE[0]}" | sed 's|^# \{0,1\}||'
+    sed -n '3,25p' "${BASH_SOURCE[0]}" | sed 's|^# \{0,1\}||'
 }
 
 main() {

@@ -170,7 +170,7 @@ The two checks prove different things and both fail closed:
 
 `main` is published and carries fork commits, so it is never fast-forwardable from `upstream/main`. A sync is therefore a **merge of `upstream/main` into `main`** — never a rebase of the published branch, and never a force push. `scripts/sync-upstream.sh` is that procedure in executable form; it contains no `rebase` and no `--force`.
 
-Run it from a clean `main` checkout: `--merge` and `--push` refuse any other branch or a dirty working tree, while a dry run reports from anywhere.
+Run it from a clean `main` checkout: `--merge` and `--push` refuse any other branch or a dirty working tree. A dry run works from anywhere, and always reports on `main` — it compares `refs/heads/main` with `upstream/main` regardless of which branch is checked out.
 
 ```bash
 scripts/sync-upstream.sh                 # 1. dry run (default): fetch and report only
@@ -180,7 +180,7 @@ scripts/sync-upstream.sh --merge --push  # 3. ... and publish main once the gate
 
 Each step is deliberately separate, and each is safe to stop after:
 
-1. **Dry run.** Fetches `upstream` and reports the checkout, `HEAD`, `upstream/main`, how many commits `main` is ahead (the fork commits listed above) and behind, and whether a merge is needed. It changes nothing in the checkout, but the fetch itself is real: it moves the `upstream/*` remote-tracking refs, which every worktree of this repository shares. Pass `--no-fetch` to report against the refs already on disk — the safer form when reporting from a task worktree.
+1. **Dry run.** Fetches `upstream` and reports the checkout, the tips of `main` and `upstream/main`, how many commits `main` is ahead (the fork commits listed above) and behind, and whether a merge is needed. It changes nothing in the checkout, but the fetch itself is real: it moves the `upstream/*` remote-tracking refs, which every worktree of this repository shares. Pass `--no-fetch` to report against the refs already on disk — the safer form when reporting from a task worktree.
 2. **`--merge`.** Merges `upstream/main` into the current `main` checkout, then runs the gate. The gate is, in order: `scripts/apply-cognovis-overlay.sh --audit`, the focused regression tests, and `bun run build`. It runs after every merge, including a no-op one, so a green run also certifies that the fork classification still holds. Any failing step exits non-zero and leaves the merge local and unpublished.
 3. **`--push`.** Pushes `main` to `origin`, plainly. It is reachable only together with `--merge` and only after the gate passed in that same invocation; `--push` on its own is rejected. There is no path through this script that publishes an unverified merge.
 
