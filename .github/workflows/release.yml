@@ -76,6 +76,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -108,6 +110,14 @@ jobs:
           test "$GITHUB_REF_NAME" = "v$VERSION"
           echo "package_name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Validate release commit reaches origin/main
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_COMMIT="$(git rev-parse "$GITHUB_REF^{commit}")"
+          MAIN_COMMIT="$(git rev-parse origin/main^{commit})"
+          test "$TAG_COMMIT" = "$MAIN_COMMIT"
 
       - name: Pack release artifact
         id: package
@@ -208,10 +218,22 @@ jobs:
           REGISTRY_SHASUM="$(node -e 'const dist = require("./.release-artifacts/registry-dist.json"); process.stdout.write(dist.shasum)')"
           REGISTRY_INTEGRITY="$(node -e 'const dist = require("./.release-artifacts/registry-dist.json"); process.stdout.write(dist.integrity)')"
           TARBALL_URL="$(node -e 'const dist = require("./.release-artifacts/registry-dist.json"); process.stdout.write(dist.tarball)')"
+          REGISTRY_URL="$(npm config get registry)"
           test "$REGISTRY_SHASUM" = "$PACK_SHASUM"
           test "$REGISTRY_INTEGRITY" = "$PACK_INTEGRITY"
+          export REGISTRY_URL TARBALL_URL
+          node -e '
+            const registry = new URL(process.env.REGISTRY_URL);
+            const tarball = new URL(process.env.TARBALL_URL);
+            if (registry.protocol !== "https:" || tarball.protocol !== "https:")
+              throw new Error("Registry and tarball URLs must use HTTPS");
+            if (tarball.origin !== registry.origin)
+              throw new Error("Registry tarball must use the configured registry origin");
+            if (tarball.username || tarball.password)
+              throw new Error("Registry tarball URL must not include credentials");
+          '
 
-          curl --fail --location --silent --show-error --retry 5 --retry-all-errors \
+          curl --fail --location --max-redirs 0 --silent --show-error --retry 5 --retry-all-errors \
             --header "Authorization: Bearer $NODE_AUTH_TOKEN" \
             "$TARBALL_URL" --output .release-artifacts/downloaded.tgz
           DOWNLOADED_SHASUM="$(shasum -a 1 .release-artifacts/downloaded.tgz | awk '{print $1}')"
@@ -243,7 +265,7 @@ jobs:
 
       - name: Upload release package evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: codegen-${{ github.ref_name }}-release-evidence
           path: .release-artifacts/

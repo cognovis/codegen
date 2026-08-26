@@ -44,4 +44,25 @@ describe("stable release artifact contract (codegen-8ja)", () => {
         expect(tarballVerifier).toContain("missing.setMeasuredFinding({});");
         expect(tarballVerifier).toContain("node --input-type=module");
     });
+
+    it("does not forward registry credentials to an untrusted tarball origin or redirect", () => {
+        expect(releaseWorkflow).toContain('REGISTRY_URL="$(npm config get registry)"');
+        expect(releaseWorkflow).toContain('registry.protocol !== "https:"');
+        expect(releaseWorkflow).toContain("tarball.origin !== registry.origin");
+        expect(releaseWorkflow).toContain("tarball.username || tarball.password");
+        expect(releaseWorkflow).toContain("--location --max-redirs 0");
+    });
+
+    it("pins uploaded evidence and rejects a tag outside the current main release commit", () => {
+        const releaseSection = releaseWorkflow.slice(releaseWorkflow.indexOf("\n  release:\n"));
+        const reachabilityGuard = releaseSection.indexOf("Validate release commit reaches origin/main");
+        const packageStep = releaseSection.indexOf("Pack release artifact");
+
+        expect(releaseSection).toContain("fetch-depth: 0");
+        expect(reachabilityGuard).toBeGreaterThan(-1);
+        expect(packageStep).toBeGreaterThan(reachabilityGuard);
+        expect(releaseSection).toContain('git rev-parse "$GITHUB_REF^{commit}"');
+        expect(releaseSection).toContain("git rev-parse origin/main");
+        expect(releaseWorkflow).toContain("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2");
+    });
 });
