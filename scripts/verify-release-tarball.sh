@@ -9,6 +9,7 @@ test -d "$fixture_dir"
 tarball_path="$(cd "$(dirname "$tarball_path")" && pwd)/$(basename "$tarball_path")"
 
 verification_dir=$(mktemp -d)
+trap 'rm -r "$verification_dir"' EXIT
 package_root="$verification_dir/installed-package"
 generated_root="$verification_dir/generated"
 config_path="$verification_dir/codegen.json"
