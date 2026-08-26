@@ -166,13 +166,13 @@ class UscoreTribalAffiliationExtension:
         errors.extend(validate_required(self._resource, profile_name, "extension"))
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "extension", {"url":"tribalAffiliation"}, "tribalAffiliation", 1, 1))
         errors.extend(
-            validate_slice_fields(self._resource, profile_name, "extension", {"url":"tribalAffiliation"}, "tribalAffiliation", [
-                "value","valueCodeableConcept"
+            validate_slice_fields(self._resource, profile_name, "extension", {"url":"tribalAffiliation"}, "tribalAffiliation", [], [
+                ["valueCodeableConcept"]
         ]))
         errors.extend(validate_slice_cardinality(self._resource, profile_name, "extension", {"url":"isEnrolled"}, "isEnrolled", 0, 1))
         errors.extend(
-            validate_slice_fields(self._resource, profile_name, "extension", {"url":"isEnrolled"}, "isEnrolled", [
-                "value","valueBoolean"
+            validate_slice_fields(self._resource, profile_name, "extension", {"url":"isEnrolled"}, "isEnrolled", [], [
+                ["valueBoolean"]
         ]))
         errors.extend(validate_required(self._resource, profile_name, "url"))
         errors.extend(validate_fixed_value(self._resource, profile_name, "url", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation"))
