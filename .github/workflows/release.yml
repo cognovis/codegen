@@ -98,10 +98,82 @@ jobs:
       - name: Update npm
         run: npm install -g npm@latest
 
+      - name: Pack release artifact
+        id: package
+        shell: bash
+        run: |
+          mkdir -p .release-artifacts
+          npm pack --ignore-scripts --json --pack-destination .release-artifacts > .release-artifacts/pack.json
+          TARBALL="$(node -e 'const pack = require("./.release-artifacts/pack.json"); process.stdout.write(`.release-artifacts/${pack[0].filename}`)')"
+          echo "tarball=${TARBALL}" >> "$GITHUB_OUTPUT"
+          echo "shasum=$(node -e 'const pack = require("./.release-artifacts/pack.json"); process.stdout.write(pack[0].shasum)')" >> "$GITHUB_OUTPUT"
+          echo "integrity=$(node -e 'const pack = require("./.release-artifacts/pack.json"); process.stdout.write(pack[0].integrity)')" >> "$GITHUB_OUTPUT"
+
+      - name: Verify packed release artifact
+        shell: bash
+        run: bash scripts/verify-release-tarball.sh "${{ steps.package.outputs.tarball }}" "$GITHUB_WORKSPACE/test/assets/profile-sliced-choice"
+
       - name: Publish release
-        run: npm publish --tag latest
+        run: npm publish "${{ steps.package.outputs.tarball }}" --tag latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.COGNOVIS_NPM_TOKEN }}
+
+      - name: Verify published package identity
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.COGNOVIS_NPM_TOKEN }}
+          PACK_SHASUM: ${{ steps.package.outputs.shasum }}
+          PACK_INTEGRITY: ${{ steps.package.outputs.integrity }}
+        run: |
+          set -euo pipefail
+          PACKAGE_NAME="$(node -p 'require("./package.json").name')"
+          VERSION="${GITHUB_REF_NAME#v}"
+          test "$(node -p 'require("./package.json").version')" = "$VERSION"
+          test "$(npm view "$PACKAGE_NAME" dist-tags.latest)" = "$VERSION"
+
+          npm view "$PACKAGE_NAME@$VERSION" dist --json > .release-artifacts/registry-dist.json
+          REGISTRY_SHASUM="$(node -e 'const dist = require("./.release-artifacts/registry-dist.json"); process.stdout.write(dist.shasum)')"
+          REGISTRY_INTEGRITY="$(node -e 'const dist = require("./.release-artifacts/registry-dist.json"); process.stdout.write(dist.integrity)')"
+          TARBALL_URL="$(node -e 'const dist = require("./.release-artifacts/registry-dist.json"); process.stdout.write(dist.tarball)')"
+          test "$REGISTRY_SHASUM" = "$PACK_SHASUM"
+          test "$REGISTRY_INTEGRITY" = "$PACK_INTEGRITY"
+
+          curl --fail --location --silent --show-error --retry 5 --retry-all-errors \
+            --header "Authorization: Bearer $NODE_AUTH_TOKEN" \
+            "$TARBALL_URL" --output .release-artifacts/downloaded.tgz
+          DOWNLOADED_SHASUM="$(shasum -a 1 .release-artifacts/downloaded.tgz | awk '{print $1}')"
+          DOWNLOADED_INTEGRITY="$(node -e 'const { createHash } = require("node:crypto"); const { readFileSync } = require("node:fs"); process.stdout.write(`sha512-${createHash("sha512").update(readFileSync(".release-artifacts/downloaded.tgz")).digest("base64")}`)')"
+          test "$DOWNLOADED_SHASUM" = "$PACK_SHASUM"
+          test "$DOWNLOADED_INTEGRITY" = "$PACK_INTEGRITY"
+
+          RELEASE_COMMIT="$(git rev-parse HEAD)"
+          export PACKAGE_NAME VERSION RELEASE_COMMIT REGISTRY_SHASUM REGISTRY_INTEGRITY TARBALL_URL DOWNLOADED_SHASUM DOWNLOADED_INTEGRITY
+          node -e '
+            const { writeFileSync } = require("node:fs");
+            writeFileSync(".release-artifacts/release-evidence.json", JSON.stringify({
+              package: process.env.PACKAGE_NAME,
+              version: process.env.VERSION,
+              commit: process.env.RELEASE_COMMIT,
+              local: { shasum: process.env.PACK_SHASUM, integrity: process.env.PACK_INTEGRITY },
+              registry: { shasum: process.env.REGISTRY_SHASUM, integrity: process.env.REGISTRY_INTEGRITY, tarball: process.env.TARBALL_URL },
+              downloaded: { shasum: process.env.DOWNLOADED_SHASUM, integrity: process.env.DOWNLOADED_INTEGRITY },
+            }, null, 2));
+          '
+          {
+            echo "## Published package identity"
+            echo "- Package: \`$PACKAGE_NAME@$VERSION\`"
+            echo "- Commit: \`$RELEASE_COMMIT\`"
+            echo "- shasum: \`$REGISTRY_SHASUM\`"
+            echo "- integrity: \`$REGISTRY_INTEGRITY\`"
+            echo "- Registry tarball: \`$TARBALL_URL\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release package evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: codegen-${{ github.ref_name }}-release-evidence
+          path: .release-artifacts/
+          if-no-files-found: error
 
       - name: Create Github Release
         uses: softprops/action-gh-release@v3
