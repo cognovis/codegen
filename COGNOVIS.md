@@ -118,22 +118,20 @@ Fork commits on `main` that carry generator or CLI behavior. They are temporary:
 | [#209](https://github.com/atomic-ehr/codegen/pull/209) | Support a virtual FHIR `Base` for logical models. | `fa823b92` |
 | [#210](https://github.com/atomic-ehr/codegen/pull/210) | Opt-in per-package terminology surfaces: CodeSystem completeness rules, ValueSet expansion exclusion, package provenance. | `d0a133fa`, `7f84b9ea`, `9512e709`, `437c6612` |
 | [#211](https://github.com/atomic-ehr/codegen/pull/211) | Config-driven `generate` command for the CLI. | `895cd636`, `9fd5c3f9`, `e21e0cd4` |
+| [#212](https://github.com/atomic-ehr/codegen/pull/212) | Validate sliced choice components with at-least-one semantics, in both the TypeScript and the Python writer. | `a0cdafbd`, `49e2ffb4`, `17080759`, `62ba36ba`, `d99accc8`, `ba38ce4a` |
+| [#213](https://github.com/atomic-ehr/codegen/pull/213) | Emit extension-bearing relative specifiers so generated output loads under Node ESM. | `acd2583c`, `cc1610a2` |
 
 The earlier claim that no upstream pull request existed for `63e43b0a` is obsolete — that correction is #208.
 
+Each pull request branch is built on a clean `upstream/main` rather than cherry-picked from `main`, because the fork's snapshots and regenerated examples carry terminology output from #210 that does not exist on the upstream base. The transplanted branches therefore regenerate their own artifacts, and internal tracker IDs are stripped from the contributed code.
+
 ### Not yet submitted
 
-Delivered on `main` with no upstream pull request. This is a deliberate decision (2026-08-25) to let the open PRs land first, not an oversight. They are fork commits awaiting upstream PRs, and they are the reason `main` is not simply "upstream plus the overlay" today.
-
-| Work | Subject | Commits on `main` |
-|---|---|---|
-| codegen-g5s | Validate sliced choice components with at-least-one semantics (TypeScript), including multi-variant choice groups. | `a0cdafbd`, `49e2ffb4`, `17080759` |
-| codegen-wgn | Emit `.js` extensions on relative imports so generated output loads under Node ESM. | `acd2583c`, `cc1610a2` |
-| codegen-nud | The same at-least-one sliced-choice validation for the Python generator. | `62ba36ba`, `d99accc8`, `ba38ce4a` |
+Empty. Every generator and CLI change on `main` now has an open upstream pull request. Anything delivered here later belongs in this table until it does.
 
 ### Dependency security bump
 
-The `brace-expansion` bump to `^5.0.9` in both `dependencies` and `overrides` (`ebd6fb36` on `main`) is **already submitted**: every one of the four open pull requests carries it, so whichever lands first takes it upstream.
+The `brace-expansion` bump to `^5.0.9` in both `dependencies` and `overrides` (`ebd6fb36` on `main`) is **already submitted**: every one of the open pull requests carries it, so whichever lands first takes it upstream.
 
 | PR | Commit carrying the bump |
 |---|---|
@@ -141,6 +139,10 @@ The `brace-expansion` bump to `^5.0.9` in both `dependencies` and `overrides` (`
 | #209 | `ebd6fb36` — the same commit that is on `main` |
 | #210 | `a2ed7ab2` chore: bump brace-expansion to 5.0.9 for bun audit |
 | #211 | `7ca104c0` chore: bump brace-expansion to 5.0.9 for bun audit |
+| #212 | `46a39827` chore: bump brace-expansion to 5.0.9 for bun audit |
+| #213 | `d5230825` chore: bump brace-expansion to 5.0.9 for bun audit |
+
+Every contribution branch needs it, not as scope creep but because `upstream/main` fails its own CI: the `security` job runs `bun audit`, and upstream's `^5.0.8` matches GHSA-rgw5-rvv9-x895 (high, DoS). A branch transplanted onto a clean upstream base inherits that red check until the bump is added.
 
 It is called out separately because it has a consequence the other contributions do not: the overlay deliberately does not own dependency ranges, so applying the overlay to a fresh `upstream/main` checkout returns `brace-expansion` to upstream's `^5.0.8`. Until one of those pull requests merges, reapply the bump after a resync and rerun `bun install`.
 
