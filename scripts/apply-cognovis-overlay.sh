@@ -180,14 +180,12 @@ patch_package_json() {
         pkg.name = "@cognovis/codegen";
         pkg.scripts = pkg.scripts || {};
         pkg.scripts.prepare = "npx --no-install tsup";
-        // Verbatim from main. npm 12 reads allowScripts to permit the build of
-        // this package during a git install; the entry there still carries the
-        // pre-rename name, and the overlay reproduces the distribution as it is
-        // published rather than silently diverging from it. See COGNOVIS.md.
-        pkg.allowScripts = ["@atomic-ehr/codegen"];
+        // No allowScripts here: it never admitted the build of this package,
+        // and --verify asserts it stays absent. See check_no_allow_scripts.
+        delete pkg.allowScripts;
         fs.writeFileSync(file, `${JSON.stringify(pkg, null, 2)}\n`);
     ' "${file}"
-    info "patched  package.json (name, prepare, allowScripts)"
+    info "patched  package.json (name, prepare)"
 }
 
 patch_gitignore() {
@@ -237,6 +235,34 @@ apply_overlay() {
 }
 
 # --- verify ----------------------------------------------------------------
+
+# `allowScripts` must stay out of this package.json, here and in anything the
+# overlay produces. Measured against npm 12.0.2 (codegen-81z): npm reads the
+# field only from the root consumer project, skips it entirely for `-g`
+# installs, and honours only an object map (`{"pkg": true}`) -- an array is
+# silently inert. A git install runs `prepare` regardless, because pacote gates
+# it on `ignore-scripts` alone. The field never authorized this package's own
+# build, so shipping it would be dead config that reads like policy. What a git
+# install actually needs is `--allow-git=root`; see COGNOVIS.md.
+check_no_allow_scripts() {
+    local file="$1" label="$2" actual
+    test -f "${file}" || {
+        printf 'FAIL: %s is missing at %s\n' "${label}" "${file}" >&2
+        return 1
+    }
+    # shellcheck disable=SC2016  # the JS body is deliberately unexpanded by the shell
+    actual="$(bun -e '
+        const fs = require("node:fs");
+        const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+        process.stdout.write("allowScripts" in pkg ? JSON.stringify(pkg.allowScripts) : "");
+    ' "${file}")"
+    if test -n "${actual}"; then
+        printf 'FAIL: %s declares allowScripts %s; the field is dead config and must stay removed\n' \
+            "${label}" "${actual}" >&2
+        return 1
+    fi
+    return 0
+}
 
 VERIFY_TMP=""
 cleanup_verify() {
@@ -312,6 +338,11 @@ EOF
         failures=$((failures + 1))
     fi
 
+    check_no_allow_scripts "${work}/package.json" "applied package.json" ||
+        failures=$((failures + 1))
+    check_no_allow_scripts "${REPO_ROOT}/package.json" "this repository's package.json" ||
+        failures=$((failures + 1))
+
     if test "${failures}" -gt 0; then
         printf '\nVERIFY FAILED (%d violation(s))\n' "${failures}" >&2
         return 1
@@ -319,6 +350,7 @@ EOF
 
     printf 'OK: changed paths are a subset of the allowlist\n'
     printf 'OK: no src/typeschema/ or src/api/writer-generator/ path was touched\n'
+    printf 'OK: no allowScripts field here or in the applied tree\n'
     printf 'VERIFY PASSED\n'
     return 0
 }
