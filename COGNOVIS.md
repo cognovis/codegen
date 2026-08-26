@@ -32,6 +32,7 @@ package.json
 .github/workflows/release.yml
 scripts/release.sh
 scripts/apply-cognovis-overlay.sh
+scripts/sync-upstream.sh
 cliff.toml
 CHANGELOG.md
 COGNOVIS.md
@@ -49,6 +50,7 @@ tsup.config.ts
 | `.github/workflows/release.yml` | copy | The whole publish pipeline: `npm.cognovis.de`, the `@cognovis` scope, `COGNOVIS_NPM_TOKEN`, and the GitHub release step. Upstream edits to this file are intentionally discarded. |
 | `scripts/release.sh` | copy | Version derivation and `git-cliff` changelog generation. Supersedes the upstream script. |
 | `scripts/apply-cognovis-overlay.sh` | copy | The overlay applicator itself. It is an overlay path for the same reason as every other entry here: it differs from upstream, it will never be sent upstream, and contract decision 1 leaves no third category. Copying it means a fresh upstream checkout plus the overlay can reapply and re-verify itself without this repository. |
+| `scripts/sync-upstream.sh` | copy | The upstream sync runbook in executable form (see [Syncing with upstream](#syncing-with-upstream)). Fork-only for the same reason as the applicator: upstream has no upstream to merge from. |
 | `cliff.toml` | copy | Changelog configuration. Does not exist upstream. |
 | `CHANGELOG.md` | generated | Allowlisted so it is never mistaken for an upstream file, but **not written by the apply script** — `git-cliff` regenerates it during a release. |
 | `COGNOVIS.md` | copy | This contract. Does not exist upstream. |
@@ -163,3 +165,42 @@ The two checks prove different things and both fail closed:
 
 - `--verify` proves the **applicator**. An unparseable allowlist block, a written path that is not allowlisted, a patch whose pattern no longer matches upstream, any change under `src/typeschema/` or `src/api/writer-generator/`, or an `allowScripts` field reappearing in this repository or in the tree the overlay just produced, exits non-zero.
 - `--audit` proves **this repository**. It classifies every path of `git diff --name-only upstream/main HEAD` against the allowlist and the non-overlay patterns, and exits non-zero on any path that matches neither or both. This is the enforcement behind contract decision 1: when a future sync adds a file that nobody has classified, `--audit` fails, rather than this document quietly going out of date.
+
+## Syncing with upstream
+
+`main` is published and carries fork commits, so it is never fast-forwardable from `upstream/main`. A sync is therefore a **merge of `upstream/main` into `main`** — never a rebase of the published branch, and never a force push. `scripts/sync-upstream.sh` is that procedure in executable form; it contains no `rebase` and no `--force`.
+
+Run it from a clean `main` checkout: `--merge` and `--push` refuse any other branch or a dirty working tree. A dry run works from anywhere, and always reports on `main` — it compares `refs/heads/main` with `upstream/main` regardless of which branch is checked out.
+
+```bash
+scripts/sync-upstream.sh                 # 1. dry run (default): fetch and report only
+scripts/sync-upstream.sh --merge         # 2. merge upstream/main, then run the gate
+scripts/sync-upstream.sh --merge --push  # 3. ... and publish main once the gate passed
+```
+
+Each step is deliberately separate, and each is safe to stop after:
+
+1. **Dry run.** Fetches `upstream` and reports the checkout, the tips of `main` and `upstream/main`, how many commits `main` is ahead (the fork commits listed above) and behind, and whether a merge is needed. It changes nothing in the checkout, but the fetch itself is real: it moves the `upstream/*` remote-tracking refs, which every worktree of this repository shares. Pass `--no-fetch` to report against the refs already on disk — the safer form when reporting from a task worktree.
+2. **`--merge`.** Merges `upstream/main` into the current `main` checkout, then runs the gate. The gate is, in order: `scripts/apply-cognovis-overlay.sh --audit`, the focused regression tests, and `bun run build`. It runs after every merge, including a no-op one, so a green run also certifies that the fork classification still holds. Any failing step exits non-zero and leaves the merge local and unpublished.
+3. **`--push`.** Pushes `main` to `origin`, plainly. It is reachable only together with `--merge` and only after the gate passed in that same invocation; `--push` on its own is rejected. There is no path through this script that publishes an unverified merge.
+
+The gate's regression surface is `test/unit/api/writer-generator/typescript/profile-slices.test.ts`, `test/unit/typeschema/field-builder.test.ts`, and `test/api/write-generator/typescript.test.ts` — the tests covering the pending upstream contributions most likely to be disturbed by an upstream merge. When one of them fails after a merge, the fork commit it belongs to is listed under [Pending upstream contributions](#pending-upstream-contributions); a failure there usually means upstream reworked the same code and the fork commit needs rebuilding on top, not that the test is wrong.
+
+### When the merge conflicts
+
+The script stops, prints the conflicted paths, and leaves the merge in progress. Nothing has been pushed. Two ways out:
+
+```bash
+git merge --abort                 # roll back; main is untouched
+# ... or resolve, then:
+git add <path>... && git commit
+scripts/sync-upstream.sh --merge  # rerun: sees nothing to merge and runs the gate
+```
+
+Resolve by category, using the tables above:
+
+- **Overlay paths** (`package.json`, `.github/workflows/release.yml`, …) — resolve in favour of the Cognovis side, or take upstream's and reapply with `scripts/apply-cognovis-overlay.sh`. The apply script is the authority; a hand-merged overlay path is a guess.
+- **Pending upstream contributions** (generator and CLI sources, tests, examples) — resolve in favour of the fork commit unless upstream has merged that contribution, in which case take upstream's and drop the fork commit from the table above.
+- **A new, unclassified path** — the overlay audit in the gate will fail on it. Classify it in this document first: allowlist it, or record it as a non-overlay pattern. Do not silence the audit.
+
+After a sync that changes `package.json`, rerun `bun install`, and reapply the [`brace-expansion` bump](#dependency-security-bump) until one of the open pull requests carries it upstream.
