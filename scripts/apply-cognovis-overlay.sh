@@ -29,6 +29,13 @@ ALLOWLIST_DOC="COGNOVIS.md"
 # Generator behavior never belongs to the overlay (COGNOVIS.md contract decision 3).
 FORBIDDEN_PREFIXES="src/typeschema/ src/api/writer-generator/"
 
+# npm 12 reads `allowScripts` to admit this package's `prepare` build during a
+# git install, so the entry must name the package this fork publishes. --verify
+# asserts it independently in both places it has to hold: this repository, and
+# the tree the overlay produces. The two drifting apart is what left the stale
+# pre-rename name in place unnoticed (codegen-81z).
+ALLOW_SCRIPTS_EXPECTED='["@cognovis/codegen"]'
+
 die() {
     printf 'apply-cognovis-overlay: %s\n' "$1" >&2
     exit 1
@@ -180,11 +187,10 @@ patch_package_json() {
         pkg.name = "@cognovis/codegen";
         pkg.scripts = pkg.scripts || {};
         pkg.scripts.prepare = "npx --no-install tsup";
-        // Verbatim from main. npm 12 reads allowScripts to permit the build of
-        // this package during a git install; the entry there still carries the
-        // pre-rename name, and the overlay reproduces the distribution as it is
-        // published rather than silently diverging from it. See COGNOVIS.md.
-        pkg.allowScripts = ["@atomic-ehr/codegen"];
+        // npm 12 blocks lifecycle scripts by default; allowScripts is what
+        // admits the prepare build of this package during a git install, so it
+        // names the package the fork publishes. --verify keeps it in step.
+        pkg.allowScripts = ["@cognovis/codegen"];
         fs.writeFileSync(file, `${JSON.stringify(pkg, null, 2)}\n`);
     ' "${file}"
     info "patched  package.json (name, prepare, allowScripts)"
@@ -237,6 +243,29 @@ apply_overlay() {
 }
 
 # --- verify ----------------------------------------------------------------
+
+# Compare a package.json's `allowScripts` against the expected distribution
+# identity. The value is read as canonical JSON so formatting differences between
+# a hand-edited and a bun-written file cannot mask a mismatch.
+check_allow_scripts() {
+    local file="$1" label="$2" actual
+    test -f "${file}" || {
+        printf 'FAIL: %s is missing at %s\n' "${label}" "${file}" >&2
+        return 1
+    }
+    # shellcheck disable=SC2016  # the JS body is deliberately unexpanded by the shell
+    actual="$(bun -e '
+        const fs = require("node:fs");
+        const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+        process.stdout.write(JSON.stringify(pkg.allowScripts ?? null));
+    ' "${file}")"
+    if test "${actual}" != "${ALLOW_SCRIPTS_EXPECTED}"; then
+        printf 'FAIL: %s allowScripts is %s, expected %s\n' \
+            "${label}" "${actual}" "${ALLOW_SCRIPTS_EXPECTED}" >&2
+        return 1
+    fi
+    return 0
+}
 
 VERIFY_TMP=""
 cleanup_verify() {
@@ -312,6 +341,11 @@ EOF
         failures=$((failures + 1))
     fi
 
+    check_allow_scripts "${work}/package.json" "applied package.json" ||
+        failures=$((failures + 1))
+    check_allow_scripts "${REPO_ROOT}/package.json" "this repository's package.json" ||
+        failures=$((failures + 1))
+
     if test "${failures}" -gt 0; then
         printf '\nVERIFY FAILED (%d violation(s))\n' "${failures}" >&2
         return 1
@@ -319,6 +353,7 @@ EOF
 
     printf 'OK: changed paths are a subset of the allowlist\n'
     printf 'OK: no src/typeschema/ or src/api/writer-generator/ path was touched\n'
+    printf 'OK: allowScripts is %s here and in the applied tree\n' "${ALLOW_SCRIPTS_EXPECTED}"
     printf 'VERIFY PASSED\n'
     return 0
 }

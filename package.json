@@ -38,7 +38,7 @@
     "release": "bash ./scripts/release.sh"
   },
   "allowScripts": [
-    "@atomic-ehr/codegen"
+    "@cognovis/codegen"
   ],
   "repository": {
     "type": "git",
