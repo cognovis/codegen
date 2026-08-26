@@ -126,4 +126,10 @@ describe("stable release artifact contract (codegen-8ja)", () => {
         expect(contributingGuide).toContain("Bun 1.3.14 and npm 11.8.0");
         expect(contributingGuide).toContain("ancestor of the current `origin/main`");
     });
+
+    it("documents the v0.2.0 evidence artifact exception", () => {
+        expect(contributingGuide).toContain("tag run `32945564978`");
+        expect(contributingGuide).toContain("hidden-file upload fix landed after the immutable tag");
+        expect(contributingGuide).toContain("authoritative from the next release onward");
+    });
 });
