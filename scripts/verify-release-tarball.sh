@@ -82,9 +82,14 @@ const baseArgs = {
 
 const present = SlicedChoiceObservationProfile.apply(SlicedChoiceObservationProfile.createResource(baseArgs));
 present.setCodedFinding({ coding: [{ system: "http://example.test/CodeSystem/finding", code: "present" }] });
+present.setMeasuredFinding({ valueQuantity: { value: 3, unit: "mm" } });
 assert.doesNotThrow(() => SlicedChoiceObservationProfile.from(present.toResource()));
 
 const missing = SlicedChoiceObservationProfile.apply(SlicedChoiceObservationProfile.createResource(baseArgs));
-missing.setCodedFinding({});
-assert.throws(() => SlicedChoiceObservationProfile.from(missing.toResource()), /valueCodeableConcept is required/);
+missing.setCodedFinding({ coding: [{ system: "http://example.test/CodeSystem/finding", code: "present" }] });
+missing.setMeasuredFinding({});
+assert.throws(
+    () => SlicedChoiceObservationProfile.from(missing.toResource()),
+    /at least one of valueQuantity, valueString is required/,
+);
 NODE

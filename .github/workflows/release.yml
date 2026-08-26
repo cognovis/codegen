@@ -98,13 +98,34 @@ jobs:
       - name: Update npm
         run: npm install -g npm@latest
 
+      - name: Validate release tag and package
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACKAGE_NAME="$(node -p 'require("./package.json").name')"
+          VERSION="$(node -p 'require("./package.json").version')"
+          test "$GITHUB_REF_NAME" = "v$VERSION"
+          echo "package_name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Pack release artifact
         id: package
         shell: bash
+        env:
+          PACKAGE_NAME: ${{ steps.release.outputs.package_name }}
+          VERSION: ${{ steps.release.outputs.version }}
         run: |
+          set -euo pipefail
           mkdir -p .release-artifacts
           npm pack --ignore-scripts --json --pack-destination .release-artifacts > .release-artifacts/pack.json
-          TARBALL="$(node -e 'const pack = require("./.release-artifacts/pack.json"); process.stdout.write(`.release-artifacts/${pack[0].filename}`)')"
+          TARBALL="$(node -e '
+            const pack = require("./.release-artifacts/pack.json");
+            const candidate = pack[0];
+            if (!candidate || candidate.name !== process.env.PACKAGE_NAME || candidate.version !== process.env.VERSION)
+              throw new Error(`Packed manifest must be ${process.env.PACKAGE_NAME}@${process.env.VERSION}`);
+            process.stdout.write(`.release-artifacts/${candidate.filename}`);
+          ')"
           echo "tarball=${TARBALL}" >> "$GITHUB_OUTPUT"
           echo "shasum=$(node -e 'const pack = require("./.release-artifacts/pack.json"); process.stdout.write(pack[0].shasum)')" >> "$GITHUB_OUTPUT"
           echo "integrity=$(node -e 'const pack = require("./.release-artifacts/pack.json"); process.stdout.write(pack[0].integrity)')" >> "$GITHUB_OUTPUT"
@@ -113,7 +134,42 @@ jobs:
         shell: bash
         run: bash scripts/verify-release-tarball.sh "${{ steps.package.outputs.tarball }}" "$GITHUB_WORKSPACE/test/assets/profile-sliced-choice"
 
+      - name: Detect existing release
+        id: release-state
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.COGNOVIS_NPM_TOKEN }}
+          PACKAGE_NAME: ${{ steps.release.outputs.package_name }}
+          VERSION: ${{ steps.release.outputs.version }}
+          PACK_SHASUM: ${{ steps.package.outputs.shasum }}
+          PACK_INTEGRITY: ${{ steps.package.outputs.integrity }}
+        run: |
+          set -euo pipefail
+          set +e
+          npm view "$PACKAGE_NAME@$VERSION" dist --json > .release-artifacts/existing-dist.json 2> .release-artifacts/existing-dist.err
+          lookup_status=$?
+          set -e
+
+          if test "$lookup_status" = 0; then
+            node -e '
+              const dist = require("./.release-artifacts/existing-dist.json");
+              if (dist.shasum !== process.env.PACK_SHASUM || dist.integrity !== process.env.PACK_INTEGRITY)
+                throw new Error("Existing package bytes do not match the freshly packed release candidate");
+            '
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if rg -q "E404" .release-artifacts/existing-dist.err; then
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          cat .release-artifacts/existing-dist.err >&2
+          exit "$lookup_status"
+
       - name: Publish release
+        if: steps.release-state.outputs.already_published != 'true'
         run: npm publish "${{ steps.package.outputs.tarball }}" --tag latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.COGNOVIS_NPM_TOKEN }}
@@ -122,16 +178,33 @@ jobs:
         shell: bash
         env:
           NODE_AUTH_TOKEN: ${{ secrets.COGNOVIS_NPM_TOKEN }}
+          PACKAGE_NAME: ${{ steps.release.outputs.package_name }}
+          VERSION: ${{ steps.release.outputs.version }}
           PACK_SHASUM: ${{ steps.package.outputs.shasum }}
           PACK_INTEGRITY: ${{ steps.package.outputs.integrity }}
         run: |
           set -euo pipefail
-          PACKAGE_NAME="$(node -p 'require("./package.json").name')"
-          VERSION="${GITHUB_REF_NAME#v}"
-          test "$(node -p 'require("./package.json").version')" = "$VERSION"
-          test "$(npm view "$PACKAGE_NAME" dist-tags.latest)" = "$VERSION"
+          package_visible=false
+          for attempt in $(seq 1 5); do
+            if npm view "$PACKAGE_NAME@$VERSION" dist --json > .release-artifacts/registry-dist.json 2>> .release-artifacts/registry-dist.err && \
+              node -e 'const dist = require("./.release-artifacts/registry-dist.json"); process.exit(dist.shasum === process.env.PACK_SHASUM && dist.integrity === process.env.PACK_INTEGRITY ? 0 : 1)'; then
+              package_visible=true
+              break
+            fi
+            sleep 2
+          done
+          test "$package_visible" = true
 
-          npm view "$PACKAGE_NAME@$VERSION" dist --json > .release-artifacts/registry-dist.json
+          latest_visible=false
+          for attempt in $(seq 1 5); do
+            if test "$(npm view "$PACKAGE_NAME" dist-tags.latest 2>> .release-artifacts/latest-dist-tag.err)" = "$VERSION"; then
+              latest_visible=true
+              break
+            fi
+            sleep 2
+          done
+          test "$latest_visible" = true
+
           REGISTRY_SHASUM="$(node -e 'const dist = require("./.release-artifacts/registry-dist.json"); process.stdout.write(dist.shasum)')"
           REGISTRY_INTEGRITY="$(node -e 'const dist = require("./.release-artifacts/registry-dist.json"); process.stdout.write(dist.integrity)')"
           TARBALL_URL="$(node -e 'const dist = require("./.release-artifacts/registry-dist.json"); process.stdout.write(dist.tarball)')"
@@ -169,11 +242,12 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload release package evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: codegen-${{ github.ref_name }}-release-evidence
           path: .release-artifacts/
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - name: Create Github Release
         uses: softprops/action-gh-release@v3
