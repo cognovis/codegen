@@ -215,6 +215,9 @@ apply_overlay() {
     # up able to reapply and re-verify the overlay without this repository.
     copy_owned "scripts/apply-cognovis-overlay.sh" "${target}"
     chmod +x "${target}/scripts/apply-cognovis-overlay.sh"
+    # ... and its sync runbook, for the same reason.
+    copy_owned "scripts/sync-upstream.sh" "${target}"
+    chmod +x "${target}/scripts/sync-upstream.sh"
 
     # Identity patches against files upstream continues to own.
     patch_package_json "${target}"
