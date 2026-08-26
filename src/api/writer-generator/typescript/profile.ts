@@ -18,6 +18,7 @@ import {
     tsExtensionFlatTypeName,
     tsFieldName,
     tsModulePath,
+    tsModuleSpecifier,
     tsNameFromCanonical,
     tsPackageDir,
     tsProfileClassName,
@@ -244,7 +245,7 @@ export const generateProfileIndexFile = (
                 const className = tsProfileClassName(snapshot);
                 const moduleName = tsProfileModuleName(tsIndex, snapshot);
                 if (!exports.has(className)) {
-                    exports.set(className, `export { ${className} } from "./${moduleName}"`);
+                    exports.set(className, `export { ${className} } from "${tsModuleSpecifier(`./${moduleName}`)}"`);
                 }
             }
             for (const exp of [...exports.values()].sort()) {
