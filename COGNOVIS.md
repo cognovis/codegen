@@ -43,7 +43,7 @@ tsup.config.ts
 
 | Path | Mode | What the overlay owns |
 |---|---|---|
-| `package.json` | patch | `name` (`@cognovis/codegen`), the `prepare` script, and `allowScripts` — and nothing else. Dependencies and version stay upstream's; the release script owns the version. Because the overlay deliberately does not own dependency ranges, the [`brace-expansion` security bump](#dependency-security-bump) is **reset to upstream's range by a fresh apply** until an upstream pull request carries it. `allowScripts` is written as `["@cognovis/codegen"]`: npm 12 blocks lifecycle scripts by default, and this field is what admits the `prepare` build during a `git+https` install, so it must name the package the fork actually publishes. It carried the pre-rename `@atomic-ehr/codegen` until codegen-81z, and the overlay reproduced that stale value verbatim rather than inventing a different one — correctly, since the overlay reproduces the distribution rather than diverging from it, but the two then had nothing holding them together. `--verify` now asserts the value in this repository and in the applied tree at once, so a future rename cannot leave one of them behind. |
+| `package.json` | patch | `name` (`@cognovis/codegen`), the `prepare` script, and `allowScripts` — and nothing else. Dependencies and version stay upstream's; the release script owns the version. Because the overlay deliberately does not own dependency ranges, the [`brace-expansion` security bump](#dependency-security-bump) is **reset to upstream's range by a fresh apply** until an upstream pull request carries it. There is deliberately **no `allowScripts` field** — see [npm 12 and git installs](#npm-12-and-git-installs) — and `--verify` asserts it stays absent here and in the applied tree. |
 | `.gitignore` | patch | Appends `.intake/`. The `Library-managed project installs` block is not reapplied: although it is committed on `main` — the agent tooling writes it in place — it enumerates per-machine install paths, so a fresh apply deliberately drops it and `library` regenerates it on whatever machine next installs those files. |
 | `.github/workflows/ci.yml` | patch | The consumer smoke-test import, `@atomic-ehr/codegen` to `@cognovis/codegen`. Upstream keeps ownership of the job matrix. |
 | `.github/workflows/release.yml` | copy | The whole publish pipeline: `npm.cognovis.de`, the `@cognovis` scope, `COGNOVIS_NPM_TOKEN`, and the GitHub release step. Upstream edits to this file are intentionally discarded. |
@@ -54,6 +54,22 @@ tsup.config.ts
 | `COGNOVIS.md` | copy | This contract. Does not exist upstream. |
 | `src/cli/index.ts` | patch | **Line 1 only**: the `#!/usr/bin/env node` shebang becomes `#!/usr/bin/env bun`. This is the single `src/**` path in the overlay; it is permitted because the file's entire delta from upstream is that one line, and the Bun runtime choice is a distribution decision that upstream will not take. Contract decision 3 still holds — it is not a generator path, and the apply script writes nothing else in this file. |
 | `tsup.config.ts` | patch | The shebang written into the bundled CLI, likewise `node` to `bun`. |
+
+### npm 12 and git installs
+
+`main` carried `"allowScripts": ["@atomic-ehr/codegen"]` from `18ffacf0` until codegen-81z, on the belief that npm 12 reads the field to admit this package's own `prepare` build during `npm install -g git+<url>#<ref>`. Measured against npm 12.0.2, it does not, in three independent ways:
+
+- **Wrong consumer.** `lib/utils/resolve-allow-scripts.js` reads `allowScripts` from the *root project* at `npm.prefix`, and skips that layer outright when `npm.global` is set. A dependency manifest never authorizes its own scripts, and a `-g` install consults no project manifest at all.
+- **Wrong shape.** The field is an object map of spec to boolean, `{"pkg": true}`. An array parses to `{"0": "pkg"}`, whose value is a string rather than `true`, so the matcher counts it as neither allow nor deny. In a project-scoped install of a dependency with a `postinstall`, the array form behaves exactly like having no field at all, while the object map is honoured.
+- **Not the gate anyway.** For a git dependency, `prepare` is run by pacote's `DirFetcher`, which gates on `ignore-scripts` alone and never consults the policy. The build produces `dist` in the clone before the tarball is packed, with or without the field.
+
+What actually blocks a git install on npm 12 is a different setting: `allow-git` now defaults to `none`, so the install fails with `EALLOWGIT` before any script question arises. The working command is
+
+```bash
+npm install -g --allow-git=root git+https://github.com/cognovis/codegen.git#main
+```
+
+Do **not** add `--allow-scripts` to it. In a global install the flag is accepted, but it is inherited by the project-scoped install pacote runs inside the clone to prepare the git dependency, and that install rejects it with `EALLOWSCRIPTS` — which is the error `18ffacf0` was reacting to. The field it added in response was inert; removing `--allow-scripts` is what makes the install work.
 
 ### Deliberately not in the overlay
 
@@ -145,5 +161,5 @@ scripts/apply-cognovis-overlay.sh --list    # print the parsed allowlist
 
 The two checks prove different things and both fail closed:
 
-- `--verify` proves the **applicator**. An unparseable allowlist block, a written path that is not allowlisted, a patch whose pattern no longer matches upstream, any change under `src/typeschema/` or `src/api/writer-generator/`, or an `allowScripts` value that does not name the published package — in this repository or in the tree the overlay just produced — exits non-zero.
+- `--verify` proves the **applicator**. An unparseable allowlist block, a written path that is not allowlisted, a patch whose pattern no longer matches upstream, any change under `src/typeschema/` or `src/api/writer-generator/`, or an `allowScripts` field reappearing in this repository or in the tree the overlay just produced, exits non-zero.
 - `--audit` proves **this repository**. It classifies every path of `git diff --name-only upstream/main HEAD` against the allowlist and the non-overlay patterns, and exits non-zero on any path that matches neither or both. This is the enforcement behind contract decision 1: when a future sync adds a file that nobody has classified, `--audit` fails, rather than this document quietly going out of date.
