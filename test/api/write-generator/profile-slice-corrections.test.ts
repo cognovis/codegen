@@ -6,19 +6,15 @@ import type { RegularField } from "@root/typeschema/types";
 import { mkErrorLogger, mkR4Register, type PFS, registerFs } from "@typeschema-test/utils";
 
 // Behavior around profile coding slices, pinned via outcome snapshots on both
-// the field-builder and the generated-TypeScript level. PR #208 changes both:
+// the field-builder and the generated-TypeScript level (#208):
 //
-// - a required coding slice that fixes only `system` currently promotes the
-//   parent CodeableConcept to a fully fixed value (dropping the user-supplied
-//   code); #208 keeps it a constraint, so the field becomes a real input;
+// - a required coding slice that fixes only `system` constrains the slice but
+//   does not fix the parent CodeableConcept — the field stays a real input
+//   (a required one becomes part of the Raw args type with accessors);
 // - a slice accessor named like a field accessor inherited from a parent
-//   profile currently takes the colliding recommended name; #208 bumps it to
-//   a qualified candidate. (A slice named after an unconstrained base-resource
-//   field is pinned as well: that accessor stays as-is, since base fields are
-//   not part of the profile snapshot.)
-//
-// After #208 merges, refresh with `bun test profile-slice-corrections -u` and
-// review the flipped snapshots.
+//   profile is bumped to a qualified candidate (ComponentCategory). A slice
+//   named after an unconstrained base-resource field keeps its recommended
+//   name, since base fields are not part of the profile snapshot.
 
 const SNOMED = "http://snomed.info/sct";
 const METHOD_SYSTEM = "http://example.org/CodeSystem/method";
