@@ -16,3 +16,14 @@ export const resolveProfileResourceType = (base: TypeIdentifier | undefined): st
         );
     return base.name;
 };
+
+/** Always calls `resolveProfileResourceType`. Returns the literal or the thrown reason. */
+export const tryResolveProfileResourceType = (
+    base: TypeIdentifier | undefined,
+): { resourceType: string } | { error: string } => {
+    try {
+        return { resourceType: resolveProfileResourceType(base) };
+    } catch (error) {
+        return { error: error instanceof Error ? error.message : String(error) };
+    }
+};

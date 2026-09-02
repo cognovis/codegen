@@ -1,36 +1,79 @@
 import { describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { APIBuilder } from "@root/api/builder";
+import { mkErrorLogger, r4Manager } from "@typeschema-test/utils";
 
-/** Consumer contract: a generated profile class is usable as this structural type. */
+const PROFILE_PATH = "generated/types/hl7-fhir-r4-core/profiles/Observation_observation_bodyweight.ts";
+const PROFILE_IMPORT = "./generated/types/hl7-fhir-r4-core/profiles/Observation_observation_bodyweight";
+
+const consumerSource = `import { observation_bodyweightProfile } from "${PROFILE_IMPORT}";
+
 type ProfileDescriptor = {
     readonly resourceType: string;
     readonly canonicalUrl: string;
     from: (resource: never) => unknown;
-    createResource: (...args: never[]) => unknown;
+    createResource: (args: never) => unknown;
 };
 
-class BodyweightShapedProfile {
-    static readonly resourceType = "Observation";
-    static readonly canonicalUrl = "http://hl7.org/fhir/StructureDefinition/bodyweight";
-    private readonly resource = { resourceType: "Observation" as const };
-    static from(_resource: { resourceType: "Observation" }) {
-        return new BodyweightShapedProfile();
-    }
-    static createResource() {
-        return { resourceType: "Observation" as const };
-    }
-    toResource() {
-        return this.resource;
-    }
-}
-
-BodyweightShapedProfile satisfies ProfileDescriptor;
+const _descriptor: ProfileDescriptor = observation_bodyweightProfile;
+void _descriptor;
+`;
 
 describe("generated profile structural descriptor", () => {
-    test("a generated-shaped profile class is assignable without a Cognovis-specific import", () => {
-        const descriptor: ProfileDescriptor = BodyweightShapedProfile;
-        expect(descriptor.resourceType).toBe("Observation");
-        expect(descriptor.canonicalUrl).toBe("http://hl7.org/fhir/StructureDefinition/bodyweight");
-        expect(typeof descriptor.from).toBe("function");
-        expect(typeof descriptor.createResource).toBe("function");
+    test("a generated profile class is assignable without a Cognovis-specific import", async () => {
+        const result = await new APIBuilder({ register: r4Manager, logger: mkErrorLogger() })
+            .typeSchema({
+                treeShake: {
+                    "hl7.fhir.r4.core": {
+                        "http://hl7.org/fhir/StructureDefinition/bodyweight": {},
+                    },
+                },
+            })
+            .typescript({
+                inMemoryOnly: true,
+                withDebugComment: false,
+                generateProfile: true,
+                openResourceTypeSet: false,
+            })
+            .generate();
+
+        expect(result.success).toBeTrue();
+        const files = result.filesGenerated.typescript!;
+        expect(files[PROFILE_PATH]).toBeDefined();
+
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "codegen-dzn-descriptor-"));
+        try {
+            for (const [relPath, content] of Object.entries(files)) {
+                const absPath = path.join(tmpDir, relPath);
+                fs.mkdirSync(path.dirname(absPath), { recursive: true });
+                fs.writeFileSync(absPath, content);
+            }
+            fs.writeFileSync(path.join(tmpDir, "consumer.ts"), consumerSource);
+            fs.writeFileSync(
+                path.join(tmpDir, "tsconfig.json"),
+                JSON.stringify({
+                    compilerOptions: {
+                        strict: true,
+                        module: "esnext",
+                        moduleResolution: "bundler",
+                        target: "esnext",
+                        skipLibCheck: true,
+                        noEmit: true,
+                    },
+                    include: ["consumer.ts", "generated/**/*.ts"],
+                }),
+            );
+
+            const tsc = spawnSync("bunx", ["tsc", "--noEmit", "-p", "tsconfig.json"], {
+                cwd: tmpDir,
+                encoding: "utf8",
+            });
+            expect(tsc.status, tsc.stdout + tsc.stderr).toBe(0);
+        } finally {
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        }
     });
 });
