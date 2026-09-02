@@ -1,0 +1,67 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`TypeSchema: logical model specializing FHIR Base (R5, physical root) accepts an unversioned Base parent, full shape pinned 1`] = `
+{
+  "base": {
+    "kind": "complex-type",
+    "name": "Base",
+    "package": "hl7.fhir.r5.core",
+    "url": "http://hl7.org/fhir/StructureDefinition/Base",
+    "version": "5.0.0",
+  },
+  "dependencies": [
+    {
+      "kind": "complex-type",
+      "name": "Base",
+      "package": "hl7.fhir.r5.core",
+      "url": "http://hl7.org/fhir/StructureDefinition/Base",
+      "version": "5.0.0",
+    },
+    {
+      "kind": "primitive-type",
+      "name": "string",
+      "package": "hl7.fhir.r5.core",
+      "url": "http://hl7.org/fhir/StructureDefinition/string",
+      "version": "5.0.0",
+    },
+  ],
+  "description": undefined,
+  "fields": {
+    "title": {
+      "array": false,
+      "binding": undefined,
+      "choiceOf": undefined,
+      "choices": undefined,
+      "enum": undefined,
+      "excluded": false,
+      "max": undefined,
+      "min": undefined,
+      "mustSupport": undefined,
+      "reference": undefined,
+      "required": false,
+      "type": {
+        "kind": "primitive-type",
+        "name": "string",
+        "package": "hl7.fhir.r5.core",
+        "url": "http://hl7.org/fhir/StructureDefinition/string",
+        "version": "5.0.0",
+      },
+      "valueConstraint": undefined,
+    },
+  },
+  "identifier": {
+    "kind": "logical",
+    "name": "DocumentPlain",
+    "package": "mypackage",
+    "url": "http://example.org/StructureDefinition/DocumentPlain",
+    "version": "0.0.0",
+  },
+  "nested": undefined,
+  "slicing": undefined,
+  "typeFamily": undefined,
+}
+`;
+
+exports[`TypeSchema: logical model specializing FHIR Base (R4, virtual root) versioned Base parent 1`] = `"rejected: Base resource not found 'http://hl7.org/fhir/StructureDefinition/Base|4.0.1' for <http://example.org/StructureDefinition/DocumentVersioned> from mypackage#0.0.0"`;
+
+exports[`TypeSchema: logical model specializing FHIR Base (R4, virtual root) unversioned Base parent 1`] = `"rejected: Base resource not found 'http://hl7.org/fhir/StructureDefinition/Base' for <http://example.org/StructureDefinition/DocumentPlain> from mypackage#0.0.0"`;
