@@ -197,7 +197,7 @@ Each language generator accepts its own option object. All options are optional;
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `generateProfile` | `boolean` | `true` | Generate profile wrapper classes (factories, typed slice/extension accessors, `validate()`). |
+| `generateProfile` | `boolean` | `true` | Generate profile wrapper classes (factories, typed slice/extension accessors, `validate()`, and class-level `resourceType` / `canonicalUrl` descriptor metadata). |
 | `primitiveTypeExtension` | `boolean` | `true` | Emit sibling `_field` properties for [primitive element extensions](https://www.hl7.org/fhir/element.html#json). |
 | `openResourceTypeSet` | `boolean` | `false` | For resource families (`Resource`, `DomainResource`), keep the `resourceType` union open by adding a `string` fallback instead of a closed literal union. |
 | `extensionGetterDefault` | `"flat" \| "profile" \| "raw"` | `"flat"` | Default return shape for generated extension getters. |
@@ -440,6 +440,24 @@ Templates enable flexible code generation for any language or format (Go, Rust, 
 ### Profile Classes
 
 When generating TypeScript with `generateProfile: true`, the generator creates profile wrapper classes that provide a fluent API for working with FHIR profiles. These classes handle complex profile constraints like slicing and extensions automatically.
+
+Each generated profile class exposes static readonly descriptor metadata — `resourceType` and `canonicalUrl` — alongside `from()` and `createResource()`. Callers can pass the class itself where a structural descriptor `{ resourceType, canonicalUrl, from, createResource }` is required, without importing a generator-specific type.
+
+```typescript
+import { observation_bodyweightProfile } from "./profiles/Observation_observation_bodyweight";
+
+observation_bodyweightProfile.resourceType;  // "Observation"
+observation_bodyweightProfile.canonicalUrl;  // "http://hl7.org/fhir/StructureDefinition/bodyweight"
+
+type ProfileDescriptor = {
+    readonly resourceType: string;
+    readonly canonicalUrl: string;
+    from: (resource: unknown) => unknown;
+    createResource: (args: unknown) => unknown;
+};
+const descriptor: ProfileDescriptor = observation_bodyweightProfile;
+void descriptor;
+```
 
 ```typescript
 import { observation_bpProfile as bpProfile } from "./profiles/Observation_observation_bp";
