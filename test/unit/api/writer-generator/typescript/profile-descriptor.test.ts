@@ -14,8 +14,8 @@ const consumerSource = `import { observation_bodyweightProfile } from "${PROFILE
 type ProfileDescriptor = {
     readonly resourceType: string;
     readonly canonicalUrl: string;
-    from: (resource: never) => unknown;
-    createResource: (args: never) => unknown;
+    from(resource: unknown): unknown;
+    createResource(args: unknown): unknown;
 };
 
 const _descriptor: ProfileDescriptor = observation_bodyweightProfile;

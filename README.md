@@ -452,8 +452,8 @@ observation_bodyweightProfile.canonicalUrl;  // "http://hl7.org/fhir/StructureDe
 type ProfileDescriptor = {
     readonly resourceType: string;
     readonly canonicalUrl: string;
-    from: (resource: unknown) => unknown;
-    createResource: (args: unknown) => unknown;
+    from(resource: unknown): unknown;
+    createResource(args: unknown): unknown;
 };
 const descriptor: ProfileDescriptor = observation_bodyweightProfile;
 void descriptor;
