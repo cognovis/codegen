@@ -92,6 +92,7 @@ describe("Local Package Folder - Multi-Package Generation", async () => {
                     "generated/types/example-folder-structures/profiles/Bundle_ExampleTypedBundle.ts"
                 ];
             expect(profileFile).toBeDefined();
+            expect(profileFile).toContain('static readonly resourceType = "Bundle"');
             expect(profileFile).toMatchSnapshot();
         });
     });
