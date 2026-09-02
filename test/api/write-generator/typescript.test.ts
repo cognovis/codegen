@@ -231,13 +231,15 @@ describe("TypeScript R4 Example (with generateProfile)", async () => {
     const files = result.filesGenerated.typescript!;
 
     it("generates bodyweight profile with validate()", () => {
-        expect(
-            files["generated/types/hl7-fhir-r4-core/profiles/Observation_observation_bodyweight.ts"],
-        ).toMatchSnapshot();
+        const src = files["generated/types/hl7-fhir-r4-core/profiles/Observation_observation_bodyweight.ts"];
+        expect(src).toContain('static readonly resourceType = "Observation"');
+        expect(src).toMatchSnapshot();
     });
 
     it("generates bp profile with validate()", () => {
-        expect(files["generated/types/hl7-fhir-r4-core/profiles/Observation_observation_bp.ts"]).toMatchSnapshot();
+        const src = files["generated/types/hl7-fhir-r4-core/profiles/Observation_observation_bp.ts"];
+        expect(src).toContain('static readonly resourceType = "Observation"');
+        expect(src).toMatchSnapshot();
     });
 });
 
@@ -274,7 +276,9 @@ describe("TypeScript US Core Example", async () => {
     const files = result.filesGenerated.typescript!;
 
     it("generates US Core Patient profile", () => {
-        expect(files["generated/types/hl7-fhir-us-core/profiles/Patient_USCorePatientProfile.ts"]).toMatchSnapshot();
+        const src = files["generated/types/hl7-fhir-us-core/profiles/Patient_USCorePatientProfile.ts"];
+        expect(src).toContain('static readonly resourceType = "Patient"');
+        expect(src).toMatchSnapshot();
     });
 
     it("generates US Core Blood Pressure profile", () => {
@@ -290,6 +294,7 @@ describe("TypeScript US Core Example", async () => {
 
     it("generates US Core Race extension profile", () => {
         const key = "generated/types/hl7-fhir-us-core/profiles/Extension_USCoreRaceExtension.ts";
+        expect(files[key]).toContain('static readonly resourceType = "Extension"');
         expect(files[key]).toMatchSnapshot();
     });
 

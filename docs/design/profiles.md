@@ -125,10 +125,11 @@ export interface observation_bodyweight extends Observation {
 }
 ```
 
-2. **Profile class** — wraps the resource with factory methods, typed getters/setters, slice accessors, extension accessors, and validation:
+2. **Profile class** — wraps the resource with factory methods, typed getters/setters, slice accessors, extension accessors, and validation. The class itself is a structural descriptor `{ resourceType, canonicalUrl, from, createResource }`: callers can pass the generated class where those members are required, without a generated Cognovis-specific dependency.
 
 ```typescript
 export class observation_bodyweightProfile {
+    static readonly resourceType = "Observation"
     static readonly canonicalUrl = "http://hl7.org/fhir/StructureDefinition/bodyweight"
     private resource: Observation
 
@@ -182,6 +183,7 @@ export type birthPlaceProfileRaw = {
 }
 
 export class birthPlaceProfile {
+    static readonly resourceType = "Extension"
     static readonly canonicalUrl = "http://hl7.org/fhir/StructureDefinition/patient-birthPlace"
     private resource: Extension
 
@@ -221,6 +223,7 @@ export type nationalityProfileRaw = { extension?: Extension[] }
 export type nationalityProfileFlat = { code?: CodeableConcept; period?: Period }
 
 export class nationalityProfile {
+    static readonly resourceType = "Extension"
     static readonly canonicalUrl = "http://hl7.org/fhir/StructureDefinition/patient-nationality"
     private resource: Extension
 

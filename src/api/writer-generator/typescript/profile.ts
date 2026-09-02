@@ -34,6 +34,7 @@ import {
     generateExtensionMethods,
     resolveExtensionProfile,
 } from "./profile-extensions";
+import { isSupportedProfileRoot, resolveProfileResourceType } from "./profile-resource-type";
 import {
     collectRequiredSliceNames,
     collectSliceDefs,
@@ -815,6 +816,8 @@ export const generateProfileClass = (w: TypeScript, tsIndex: TypeSchemaIndex, sn
     w.comment("CanonicalURL:", canonicalUrl, `(pkg: ${packageMetaToFhir(packageMeta(snapshot))})`);
 
     w.curlyBlock(["export", "class", profileClassName], () => {
+        if (isSupportedProfileRoot(snapshot.base))
+            w.lineSM(`static readonly resourceType = ${JSON.stringify(resolveProfileResourceType(snapshot.base))}`);
         w.lineSM(`static readonly canonicalUrl = ${JSON.stringify(canonicalUrl)}`);
         w.line();
         generateStaticSliceFields(w, sliceDefs);
