@@ -1,6 +1,4 @@
 import assert from "node:assert";
-import * as Path from "node:path";
-import { fileURLToPath } from "node:url";
 import {
     canonicalToName,
     deriveResourceName,
@@ -24,17 +22,11 @@ import {
     type SpecializationTypeSchema,
     type TypeIdentifier,
 } from "@typeschema/types.ts";
+import { resolveGeneratorAsset } from "../assets";
 import { pyReferenceTypeParam } from "./naming-utils";
 import { generateNewProfiles } from "./profile";
 
-export const resolvePyAssets = (fn: string) => {
-    const __dirname = Path.dirname(fileURLToPath(import.meta.url));
-    const __filename = fileURLToPath(import.meta.url);
-    if (__filename.endsWith("dist/index.js")) {
-        return Path.resolve(__dirname, "..", "assets", "api", "writer-generator", "python", fn);
-    }
-    return Path.resolve(__dirname, "../../../..", "assets", "api", "writer-generator", "python", fn);
-};
+export const resolvePyAssets = (fn: string) => resolveGeneratorAsset(import.meta.url, "python", fn);
 
 type StringFormatKey = "snake_case" | "PascalCase" | "camelCase";
 
