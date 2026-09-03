@@ -478,7 +478,6 @@ export type KjConditionComplicationsOfAnesthesia_Evidence_PossibilityForVentilat
 
 import {
     ensureProfile,
-    applyFixedValue,
     applySliceMatch,
     matchesValue,
     setArraySlice,
@@ -504,6 +503,7 @@ export type KjConditionComplicationsOfAnesthesiaProfileRaw = {
     clinicalStatus: CodeableConcept<("active" | "inactive")>;
     verificationStatus: CodeableConcept<("confirmed" | "refuted" | "entered-in-error")>;
     category: CodeableConcept<("4" | "5")>[];
+    code: CodeableConcept<("4" | "5" | string)>;
     subject: Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */>;
     recordedDate: string;
     recorder: Reference<"PractitionerRole" /* http://nhn.no/kj/fhir/StructureDefinition/KjPractitionerRole */>;
@@ -542,17 +542,16 @@ export class KjConditionComplicationsOfAnesthesiaProfile {
 
     static apply (resource: Condition) : KjConditionComplicationsOfAnesthesiaProfile {
         ensureProfile(resource, KjConditionComplicationsOfAnesthesiaProfile.canonicalUrl);
-        applyFixedValue(resource, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/SubcategoriesOfCriticalInformation"}]});
         return new KjConditionComplicationsOfAnesthesiaProfile(resource);
     }
 
     static createResource (args: KjConditionComplicationsOfAnesthesiaProfileRaw) : Condition {
         const resource: Condition = {
             resourceType: "Condition",
-            code: {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/SubcategoriesOfCriticalInformation"}]},
             clinicalStatus: args.clinicalStatus,
             verificationStatus: args.verificationStatus,
             category: args.category,
+            code: args.code,
             subject: args.subject,
             recordedDate: args.recordedDate,
             recorder: args.recorder,
@@ -598,6 +597,15 @@ export class KjConditionComplicationsOfAnesthesiaProfile {
         return this;
     }
 
+    getCode () : CodeableConcept<("4" | "5" | string)> | undefined {
+        return this.resource.code as CodeableConcept<("4" | "5" | string)> | undefined;
+    }
+
+    setCode (value: CodeableConcept<("4" | "5" | string)>) : this {
+        Object.assign(this.resource, { code: value });
+        return this;
+    }
+
     getSubject () : Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */> | undefined {
         return this.resource.subject as Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */> | undefined;
     }
@@ -623,10 +631,6 @@ export class KjConditionComplicationsOfAnesthesiaProfile {
     setRecorder (value: Reference<"PractitionerRole" /* http://nhn.no/kj/fhir/StructureDefinition/KjPractitionerRole */>) : this {
         Object.assign(this.resource, { recorder: value });
         return this;
-    }
-
-    getCode () : CodeableConcept<("4" | "5" | string)> | undefined {
-        return this.resource.code as CodeableConcept<("4" | "5" | string)> | undefined;
     }
 
     getOnsetDateTime () : string | undefined {
@@ -820,7 +824,6 @@ export class KjConditionComplicationsOfAnesthesiaProfile {
                 ...validateRequired(res, profileName, "category"),
                 ...validateEnum(res, profileName, "category", ["4","5"]),
                 ...validateRequired(res, profileName, "code"),
-                ...validateFixedValue(res, profileName, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/SubcategoriesOfCriticalInformation"}]}),
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateChoiceProhibited(res, profileName, ["onsetPeriod","onsetRange","onsetString"]),
@@ -1217,7 +1220,6 @@ import { KjVerifierProfile } from "./Extension_KjVerifier";
 
 import {
     ensureProfile,
-    applyFixedValue,
     isExtension,
     getExtensionValue,
     pushExtension,
@@ -1238,6 +1240,7 @@ export type KjConditionInfectionProfileRaw = {
     clinicalStatus: CodeableConcept<("active" | "inactive")>;
     verificationStatus: CodeableConcept<("confirmed" | "refuted" | "entered-in-error")>;
     category: CodeableConcept<("3" | "4" | "5" | "7" | "10")>[];
+    code: CodeableConcept;
     subject: Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */>;
     recordedDate: string;
     recorder: Reference<"PractitionerRole" /* http://nhn.no/kj/fhir/StructureDefinition/KjPractitionerRole */>;
@@ -1272,17 +1275,16 @@ export class KjConditionInfectionProfile {
 
     static apply (resource: Condition) : KjConditionInfectionProfile {
         ensureProfile(resource, KjConditionInfectionProfile.canonicalUrl);
-        applyFixedValue(resource, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/TypeOfInfection"}]});
         return new KjConditionInfectionProfile(resource);
     }
 
     static createResource (args: KjConditionInfectionProfileRaw) : Condition {
         const resource: Condition = {
             resourceType: "Condition",
-            code: {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/TypeOfInfection"}]},
             clinicalStatus: args.clinicalStatus,
             verificationStatus: args.verificationStatus,
             category: args.category,
+            code: args.code,
             subject: args.subject,
             recordedDate: args.recordedDate,
             recorder: args.recorder,
@@ -1328,6 +1330,15 @@ export class KjConditionInfectionProfile {
         return this;
     }
 
+    getCode () : CodeableConcept | undefined {
+        return this.resource.code as CodeableConcept | undefined;
+    }
+
+    setCode (value: CodeableConcept) : this {
+        Object.assign(this.resource, { code: value });
+        return this;
+    }
+
     getSubject () : Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */> | undefined {
         return this.resource.subject as Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */> | undefined;
     }
@@ -1353,10 +1364,6 @@ export class KjConditionInfectionProfile {
     setRecorder (value: Reference<"PractitionerRole" /* http://nhn.no/kj/fhir/StructureDefinition/KjPractitionerRole */>) : this {
         Object.assign(this.resource, { recorder: value });
         return this;
-    }
-
-    getCode () : CodeableConcept | undefined {
-        return this.resource.code as CodeableConcept | undefined;
     }
 
     getOnsetDateTime () : string | undefined {
@@ -1552,7 +1559,6 @@ export class KjConditionInfectionProfile {
                 ...validateRequired(res, profileName, "category"),
                 ...validateEnum(res, profileName, "category", ["3","4","5","7","10"]),
                 ...validateRequired(res, profileName, "code"),
-                ...validateFixedValue(res, profileName, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/TypeOfInfection"}]}),
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateChoiceProhibited(res, profileName, ["onsetPeriod","onsetRange","onsetString"]),
@@ -1591,7 +1597,6 @@ import { KjVerifierProfile } from "./Extension_KjVerifier";
 
 import {
     ensureProfile,
-    applyFixedValue,
     isExtension,
     getExtensionValue,
     pushExtension,
@@ -1612,6 +1617,7 @@ export type KjConditionTransplantsAndOtherForeignBodiesProfileRaw = {
     clinicalStatus: CodeableConcept<("active" | "inactive")>;
     verificationStatus: CodeableConcept<("confirmed" | "refuted" | "entered-in-error")>;
     category: CodeableConcept<("problem-list-item" | "encounter-diagnosis" | string)>[];
+    code: CodeableConcept;
     subject: Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */>;
     recordedDate: string;
     recorder: Reference<"PractitionerRole" /* http://nhn.no/kj/fhir/StructureDefinition/KjPractitionerRole */>;
@@ -1646,17 +1652,16 @@ export class KjConditionTransplantsAndOtherForeignBodiesProfile {
 
     static apply (resource: Condition) : KjConditionTransplantsAndOtherForeignBodiesProfile {
         ensureProfile(resource, KjConditionTransplantsAndOtherForeignBodiesProfile.canonicalUrl);
-        applyFixedValue(resource, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/SubcategoriesOfCriticalInformation"}]});
         return new KjConditionTransplantsAndOtherForeignBodiesProfile(resource);
     }
 
     static createResource (args: KjConditionTransplantsAndOtherForeignBodiesProfileRaw) : Condition {
         const resource: Condition = {
             resourceType: "Condition",
-            code: {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/SubcategoriesOfCriticalInformation"}]},
             clinicalStatus: args.clinicalStatus,
             verificationStatus: args.verificationStatus,
             category: args.category,
+            code: args.code,
             subject: args.subject,
             recordedDate: args.recordedDate,
             recorder: args.recorder,
@@ -1702,6 +1707,15 @@ export class KjConditionTransplantsAndOtherForeignBodiesProfile {
         return this;
     }
 
+    getCode () : CodeableConcept | undefined {
+        return this.resource.code as CodeableConcept | undefined;
+    }
+
+    setCode (value: CodeableConcept) : this {
+        Object.assign(this.resource, { code: value });
+        return this;
+    }
+
     getSubject () : Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */> | undefined {
         return this.resource.subject as Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */> | undefined;
     }
@@ -1727,10 +1741,6 @@ export class KjConditionTransplantsAndOtherForeignBodiesProfile {
     setRecorder (value: Reference<"PractitionerRole" /* http://nhn.no/kj/fhir/StructureDefinition/KjPractitionerRole */>) : this {
         Object.assign(this.resource, { recorder: value });
         return this;
-    }
-
-    getCode () : CodeableConcept | undefined {
-        return this.resource.code as CodeableConcept | undefined;
     }
 
     getOnsetDateTime () : string | undefined {
@@ -1925,7 +1935,6 @@ export class KjConditionTransplantsAndOtherForeignBodiesProfile {
                 ...validateEnum(res, profileName, "verificationStatus", ["confirmed","refuted","entered-in-error"]),
                 ...validateRequired(res, profileName, "category"),
                 ...validateRequired(res, profileName, "code"),
-                ...validateFixedValue(res, profileName, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/SubcategoriesOfCriticalInformation"}]}),
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateChoiceProhibited(res, profileName, ["onsetPeriod","onsetRange","onsetString"]),
@@ -2639,7 +2648,6 @@ import type { Device } from "../../hl7-fhir-r4-core/Device";
 
 import {
     ensureProfile,
-    applyFixedValue,
     validateRequired,
     validateExcluded,
     validateFixedValue,
@@ -2651,6 +2659,10 @@ import {
     validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers";
+
+export type KjDeviceProfileRaw = {
+    type: CodeableConcept<("1" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "18" | "19" | "27" | "28" | "29" | string)>;
+}
 
 // CanonicalURL: http://nhn.no/kj/fhir/StructureDefinition/KjDevice (pkg: nhn.fhir.no.kjernejournal#1.0.0)
 export class KjDeviceProfile {
@@ -2681,21 +2693,20 @@ export class KjDeviceProfile {
 
     static apply (resource: Device) : KjDeviceProfile {
         ensureProfile(resource, KjDeviceProfile.canonicalUrl);
-        applyFixedValue(resource, "type", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/ImplantsAndOtherForeignBodies"}]});
         return new KjDeviceProfile(resource);
     }
 
-    static createResource () : Device {
+    static createResource (args: KjDeviceProfileRaw) : Device {
         const resource: Device = {
             resourceType: "Device",
-            type: {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/ImplantsAndOtherForeignBodies"}]},
+            type: args.type,
             meta: { profile: [KjDeviceProfile.canonicalUrl] },
         }
         return resource;
     }
 
-    static create () : KjDeviceProfile {
-        const resource = KjDeviceProfile.createResource();
+    static create (args: KjDeviceProfileRaw) : KjDeviceProfile {
+        const resource = KjDeviceProfile.createResource(args);
         return KjDeviceProfile.apply(resource);
     }
 
@@ -2706,6 +2717,11 @@ export class KjDeviceProfile {
     // Field accessors
     getType () : CodeableConcept<("1" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "18" | "19" | "27" | "28" | "29" | string)> | undefined {
         return this.resource.type as CodeableConcept<("1" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "18" | "19" | "27" | "28" | "29" | string)> | undefined;
+    }
+
+    setType (value: CodeableConcept<("1" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "18" | "19" | "27" | "28" | "29" | string)>) : this {
+        Object.assign(this.resource, { type: value });
+        return this;
     }
 
     // Extensions
@@ -2719,7 +2735,6 @@ export class KjDeviceProfile {
                 ...validateReference(res, profileName, "definition", ["DeviceDefinition"]),
                 ...validateEnum(res, profileName, "status", ["active","inactive","entered-in-error","unknown"]),
                 ...validateRequired(res, profileName, "type"),
-                ...validateFixedValue(res, profileName, "type", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/ImplantsAndOtherForeignBodies"}]}),
                 ...validateReference(res, profileName, "patient", ["Patient"]),
                 ...validateReference(res, profileName, "owner", ["Organization"]),
                 ...validateReference(res, profileName, "location", ["Location"]),
@@ -3818,7 +3833,6 @@ export type KjFlag_Category_KjCategorySliceFlatAll = KjFlag_Category_KjCategoryS
 
 import {
     ensureProfile,
-    applyFixedValue,
     applySliceMatch,
     matchesValue,
     setArraySlice,
@@ -3842,6 +3856,7 @@ import {
 
 export type KjFlagProfileRaw = {
     status: ("active" | "inactive" | "entered-in-error");
+    code: CodeableConcept<("2" | "3" | "4" | "5" | string)>;
     subject: Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */>;
     period: Period;
     author: Reference<"PractitionerRole" /* http://nhn.no/kj/fhir/StructureDefinition/KjPractitionerRole */>;
@@ -3881,7 +3896,6 @@ export class KjFlagProfile {
 
     static apply (resource: Flag) : KjFlagProfile {
         ensureProfile(resource, KjFlagProfile.canonicalUrl);
-        applyFixedValue(resource, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/OtherProceduralChanges"}]});
         resource.category = ensureSliceDefaults(
             [...(resource.category ?? [])],
             KjFlagProfile.KjCategorySliceMatch,
@@ -3897,9 +3911,9 @@ export class KjFlagProfile {
 
         const resource: Flag = {
             resourceType: "Flag",
-            code: {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/OtherProceduralChanges"}]},
             category: categoryWithDefaults,
             status: args.status,
+            code: args.code,
             subject: args.subject,
             period: args.period,
             author: args.author,
@@ -3924,6 +3938,15 @@ export class KjFlagProfile {
 
     setStatus (value: ("active" | "inactive" | "entered-in-error")) : this {
         Object.assign(this.resource, { status: value });
+        return this;
+    }
+
+    getCode () : CodeableConcept<("2" | "3" | "4" | "5" | string)> | undefined {
+        return this.resource.code as CodeableConcept<("2" | "3" | "4" | "5" | string)> | undefined;
+    }
+
+    setCode (value: CodeableConcept<("2" | "3" | "4" | "5" | string)>) : this {
+        Object.assign(this.resource, { code: value });
         return this;
     }
 
@@ -3961,10 +3984,6 @@ export class KjFlagProfile {
     setCategory (value: CodeableConcept[]) : this {
         Object.assign(this.resource, { category: value });
         return this;
-    }
-
-    getCode () : CodeableConcept<("2" | "3" | "4" | "5" | string)> | undefined {
-        return this.resource.code as CodeableConcept<("2" | "3" | "4" | "5" | string)> | undefined;
     }
 
     // Extensions
@@ -4145,7 +4164,6 @@ export class KjFlagProfile {
                 ...validateEnum(res, profileName, "status", ["active","inactive","entered-in-error"]),
                 ...validateSliceCardinality(res, profileName, "category", {"coding":{"system":"http://nhn.no/kj/fhir/CodeSystem/SubcategoriesOfCriticalInformation"}}, "KjCategory", 1, 1),
                 ...validateRequired(res, profileName, "code"),
-                ...validateFixedValue(res, profileName, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/OtherProceduralChanges"}]}),
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateRequired(res, profileName, "period"),
@@ -4175,7 +4193,6 @@ import type { Reference } from "../../hl7-fhir-r4-core/Reference";
 
 import {
     ensureProfile,
-    applyFixedValue,
     validateRequired,
     validateExcluded,
     validateFixedValue,
@@ -4191,6 +4208,7 @@ import {
 export type KjPractitionerRoleProfileRaw = {
     practitioner: Reference<"Practitioner" /* http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner */>;
     organization: Reference<"Organization" /* http://hl7.no/fhir/StructureDefinition/no-basis-Organization */>;
+    code: CodeableConcept[];
 }
 
 // CanonicalURL: http://nhn.no/kj/fhir/StructureDefinition/KjPractitionerRole (pkg: nhn.fhir.no.kjernejournal#1.0.0)
@@ -4222,16 +4240,15 @@ export class KjPractitionerRoleProfile {
 
     static apply (resource: PractitionerRole) : KjPractitionerRoleProfile {
         ensureProfile(resource, KjPractitionerRoleProfile.canonicalUrl);
-        applyFixedValue(resource, "code", [{"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/CategoriesOfHealthProfessionals"}]}]);
         return new KjPractitionerRoleProfile(resource);
     }
 
     static createResource (args: KjPractitionerRoleProfileRaw) : PractitionerRole {
         const resource: PractitionerRole = {
             resourceType: "PractitionerRole",
-            code: [{"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/CategoriesOfHealthProfessionals"}]}],
             practitioner: args.practitioner,
             organization: args.organization,
+            code: args.code,
             meta: { profile: [KjPractitionerRoleProfile.canonicalUrl] },
         }
         return resource;
@@ -4269,6 +4286,11 @@ export class KjPractitionerRoleProfile {
         return this.resource.code as CodeableConcept[] | undefined;
     }
 
+    setCode (value: CodeableConcept[]) : this {
+        Object.assign(this.resource, { code: value });
+        return this;
+    }
+
     // Extensions
     // Slices
     // Validation
@@ -4282,7 +4304,6 @@ export class KjPractitionerRoleProfile {
                 ...validateRequired(res, profileName, "organization"),
                 ...validateReference(res, profileName, "organization", ["Organization"]),
                 ...validateRequired(res, profileName, "code"),
-                ...validateFixedValue(res, profileName, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/CategoriesOfHealthProfessionals"}]}),
                 ...validateReference(res, profileName, "location", ["Location"]),
                 ...validateReference(res, profileName, "healthcareService", ["HealthcareService"]),
                 ...validateReference(res, profileName, "endpoint", ["Endpoint"]),
@@ -4321,7 +4342,6 @@ import { KjVerifierProfile } from "./Extension_KjVerifier";
 
 import {
     ensureProfile,
-    applyFixedValue,
     isExtension,
     getExtensionValue,
     pushExtension,
@@ -4340,6 +4360,8 @@ import {
 
 export type KjProcedureProfileRaw = {
     status: ("in-progress" | "entered-in-error" | "completed");
+    category: CodeableConcept;
+    code: CodeableConcept;
     subject: Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */>;
     recorder: Reference<"PractitionerRole" /* http://nhn.no/kj/fhir/StructureDefinition/KjPractitionerRole */>;
 }
@@ -4373,17 +4395,15 @@ export class KjProcedureProfile {
 
     static apply (resource: Procedure) : KjProcedureProfile {
         ensureProfile(resource, KjProcedureProfile.canonicalUrl);
-        applyFixedValue(resource, "category", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/SubcategoriesOfCriticalInformation"}]});
-        applyFixedValue(resource, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/OngoingTreatment"}]});
         return new KjProcedureProfile(resource);
     }
 
     static createResource (args: KjProcedureProfileRaw) : Procedure {
         const resource: Procedure = {
             resourceType: "Procedure",
-            category: {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/SubcategoriesOfCriticalInformation"}]},
-            code: {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/OngoingTreatment"}]},
             status: args.status,
+            category: args.category,
+            code: args.code,
             subject: args.subject,
             recorder: args.recorder,
             meta: { profile: [KjProcedureProfile.canonicalUrl] },
@@ -4410,6 +4430,24 @@ export class KjProcedureProfile {
         return this;
     }
 
+    getCategory () : CodeableConcept | undefined {
+        return this.resource.category as CodeableConcept | undefined;
+    }
+
+    setCategory (value: CodeableConcept) : this {
+        Object.assign(this.resource, { category: value });
+        return this;
+    }
+
+    getCode () : CodeableConcept | undefined {
+        return this.resource.code as CodeableConcept | undefined;
+    }
+
+    setCode (value: CodeableConcept) : this {
+        Object.assign(this.resource, { code: value });
+        return this;
+    }
+
     getSubject () : Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */> | undefined {
         return this.resource.subject as Reference<"Patient" /* http://hl7.no/fhir/StructureDefinition/no-basis-Patient */> | undefined;
     }
@@ -4426,14 +4464,6 @@ export class KjProcedureProfile {
     setRecorder (value: Reference<"PractitionerRole" /* http://nhn.no/kj/fhir/StructureDefinition/KjPractitionerRole */>) : this {
         Object.assign(this.resource, { recorder: value });
         return this;
-    }
-
-    getCategory () : CodeableConcept | undefined {
-        return this.resource.category as CodeableConcept | undefined;
-    }
-
-    getCode () : CodeableConcept | undefined {
-        return this.resource.code as CodeableConcept | undefined;
     }
 
     getPerformedDateTime () : string | undefined {
@@ -4664,9 +4694,7 @@ export class KjProcedureProfile {
                 ...validateRequired(res, profileName, "status"),
                 ...validateEnum(res, profileName, "status", ["in-progress","entered-in-error","completed"]),
                 ...validateRequired(res, profileName, "category"),
-                ...validateFixedValue(res, profileName, "category", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/SubcategoriesOfCriticalInformation"}]}),
                 ...validateRequired(res, profileName, "code"),
-                ...validateFixedValue(res, profileName, "code", {"coding":[{"system":"http://nhn.no/kj/fhir/CodeSystem/OngoingTreatment"}]}),
                 ...validateRequired(res, profileName, "subject"),
                 ...validateReference(res, profileName, "subject", ["Patient"]),
                 ...validateChoiceProhibited(res, profileName, ["performedPeriod","performedString","performedRange"]),
