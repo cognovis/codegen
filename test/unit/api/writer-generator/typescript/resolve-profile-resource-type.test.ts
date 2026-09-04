@@ -23,8 +23,16 @@ describe("resolveProfileResourceType", () => {
         expect(resolveProfileResourceType(makeIdentifier("resource", "Bundle"))).toBe("Bundle");
     });
 
-    test("Extension complex-type base returns Extension", () => {
-        expect(resolveProfileResourceType(makeIdentifier("complex-type", "Extension"))).toBe("Extension");
+    test("throws for an Extension complex-type base", () => {
+        expect(() => resolveProfileResourceType(makeIdentifier("complex-type", "Extension"))).toThrow(
+            /supported FHIR|not a supported/i,
+        );
+    });
+
+    test("throws for a datatype complex-type base", () => {
+        expect(() => resolveProfileResourceType(makeIdentifier("complex-type", "Address"))).toThrow(
+            /supported FHIR|not a supported/i,
+        );
     });
 
     test("uses the resolved base name when a decoy URL would imply a different type", () => {

@@ -815,11 +815,15 @@ export const generateProfileClass = (w: TypeScript, tsIndex: TypeSchemaIndex, sn
     w.comment("CanonicalURL:", canonicalUrl, `(pkg: ${packageMetaToFhir(packageMeta(snapshot))})`);
 
     w.curlyBlock(["export", "class", profileClassName], () => {
-        const resolved = tryResolveProfileResourceType(snapshot.base);
-        if ("resourceType" in resolved) {
-            w.lineSM(`static readonly resourceType = ${JSON.stringify(resolved.resourceType)}`);
-        } else {
-            w.logger()?.error(`Cannot emit static resourceType for profile '${profileClassName}': ${resolved.error}`);
+        if (isResourceIdentifier(snapshot.base)) {
+            const resolved = tryResolveProfileResourceType(snapshot.base);
+            if ("resourceType" in resolved) {
+                w.lineSM(`static readonly resourceType = ${JSON.stringify(resolved.resourceType)}`);
+            } else {
+                w.logger()?.error(
+                    `Cannot emit static resourceType for profile '${profileClassName}': ${resolved.error}`,
+                );
+            }
         }
         w.lineSM(`static readonly canonicalUrl = ${JSON.stringify(canonicalUrl)}`);
         w.line();

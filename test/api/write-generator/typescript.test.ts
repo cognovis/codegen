@@ -296,7 +296,7 @@ describe("TypeScript US Core Example", async () => {
 
     it("generates US Core Race extension profile", () => {
         const key = "generated/types/hl7-fhir-us-core/profiles/Extension_USCoreRaceExtension.ts";
-        expect(files[key]).toContain('static readonly resourceType = "Extension"');
+        expect(files[key]).not.toContain("static readonly resourceType");
         expect(files[key]).toMatchSnapshot();
     });
 

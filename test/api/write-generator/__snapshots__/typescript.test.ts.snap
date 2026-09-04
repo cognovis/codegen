@@ -2169,7 +2169,6 @@ export type USCoreRaceExtensionProfileFlat = {
 
 // CanonicalURL: http://hl7.org/fhir/us/core/StructureDefinition/us-core-race (pkg: hl7.fhir.us.core#8.0.1)
 export class USCoreRaceExtensionProfile {
-    static readonly resourceType = "Extension";
     static readonly canonicalUrl = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race";
 
     private static readonly ombCategorySliceMatch: Record<string, unknown> = {"url":"ombCategory"};
