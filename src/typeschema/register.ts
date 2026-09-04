@@ -19,6 +19,9 @@ import type {
 import { enrichFHIRSchema, enrichValueSet, packageMetaToFhir, packageMetaToNpm } from "@typeschema/types";
 
 const BARE_RESOURCE_NAME_RE = /^[a-zA-Z0-9]+$/;
+const FHIR_BASE_CANONICAL = "http://hl7.org/fhir/StructureDefinition/Base";
+
+export const isFhirBaseCanonical = (canonical: string): boolean => canonical.split("|")[0] === FHIR_BASE_CANONICAL;
 
 export type Register = {
     testAppendFs(fs: FHIRSchema): void;
@@ -359,6 +362,7 @@ export const registerFromManager = async (
         while (fs?.base) {
             const pkg = fs.package_meta;
             const baseUrl = ensureSpecializationCanonicalUrl(fs.base);
+            if (fs.kind === "logical" && fs.derivation === "specialization" && isFhirBaseCanonical(baseUrl)) break;
             fs = resolveFs(pkg, baseUrl);
             if (fs === undefined)
                 throw new Error(

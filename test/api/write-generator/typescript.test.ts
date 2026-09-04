@@ -133,7 +133,7 @@ describe("TypeScript profile fixed CodeableConcept semantics", async () => {
                                 slices: {
                                     InsuranceType: {
                                         min: 1,
-                                        match: { system: fixedSystem },
+                                        match: { system: fixedSystem, code: "PKV" },
                                     },
                                 },
                             },
@@ -171,7 +171,9 @@ describe("TypeScript profile fixed CodeableConcept semantics", async () => {
         expect(profileFile).toBeDefined();
         const profileTs = profileFile![1];
 
-        expect(profileTs).toContain(`applyFixedValue(resource, "type", {"coding":[{"system":"${fixedSystem}"}]})`);
+        expect(profileTs).toContain(
+            `applyFixedValue(resource, "type", {"coding":[{"system":"${fixedSystem}","code":"PKV"}]})`,
+        );
         expect(profileTs).not.toContain("Object.assign(resource");
         expect(profileTs).not.toContain(`validateEnum(res, profileName, "type", ["UNK"])`);
         expect(profileTs).not.toContain(`CodeableConcept<("UNK")>`);

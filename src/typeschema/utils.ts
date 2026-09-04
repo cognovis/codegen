@@ -359,6 +359,12 @@ export type TypeSchemaIndex = {
         baseTypeId: TypeIdentifier,
         sliceElements: string[],
     ) => ConstrainedChoiceInfo | undefined;
+    sliceChoiceVariants: (
+        pkgName: PkgName,
+        baseTypeId: TypeIdentifier,
+        sliceElements: string[],
+        name: string,
+    ) => string[] | undefined;
     isWithMetaField: (profile: ProfileTypeSchema | SnapshotProfileTypeSchema) => boolean;
     entityTree: () => EntityTree;
     exportTree: (filename: string) => Promise<void>;
@@ -782,6 +788,24 @@ export const mkTypeSchemaIndex = (
         return undefined;
     };
 
+    /** The choice variants a slice may carry for the choice declaration `name`
+     *  (e.g. `value` inside a sliced `component`): the variants the slice narrows
+     *  to, or every variant of the declaration when the slice narrows none.
+     *  Returns undefined when `name` is not a choice declaration — a plain field. */
+    const sliceChoiceVariants = (
+        pkgName: PkgName,
+        baseTypeId: TypeIdentifier,
+        sliceElements: string[],
+        name: string,
+    ): string[] | undefined => {
+        const baseSchema = resolveByUrl(pkgName, baseTypeId.url as CanonicalUrl);
+        if (!baseSchema || !("fields" in baseSchema) || !baseSchema.fields) return undefined;
+        const field = baseSchema.fields[name];
+        if (!field || !isChoiceDeclarationField(field)) return undefined;
+        const narrowed = field.choices.filter((c) => sliceElements.includes(c));
+        return narrowed.length > 0 ? narrowed : field.choices;
+    };
+
     const isWithMetaField = (profile: ProfileTypeSchema | SnapshotProfileTypeSchema): boolean => {
         const genealogy = tryHierarchy(profile);
         if (!genealogy) return false;
@@ -837,6 +861,7 @@ export const mkTypeSchemaIndex = (
         findLastSpecializationByIdentifier,
         flatProfile,
         constrainedChoice,
+        sliceChoiceVariants,
         isWithMetaField,
         entityTree,
         exportTree,

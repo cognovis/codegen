@@ -195,6 +195,42 @@ describe("Field Builder Core Logic", async () => {
             expect(field.type?.name).toBe("string" as Name);
         });
 
+        it("does not fix a CodeableConcept from a system-only required coding slice", () => {
+            const codingSlice = {
+                min: 1,
+                match: { system: "http://snomed.info/sct" },
+            };
+            const rawElement = {
+                type: "CodeableConcept",
+                elements: {
+                    coding: {
+                        type: "Coding",
+                        array: true,
+                        slicing: {
+                            slices: { snomed: codingSlice },
+                        },
+                    },
+                },
+            } as unknown as FHIRSchemaElement;
+            const fhirSchema: PFS = {
+                name: "Specimen",
+                type: "Specimen",
+                kind: "resource",
+                url: "http://hl7.org/fhir/StructureDefinition/Specimen",
+            };
+
+            const field = mkField(
+                r4,
+                registerFs(r4, fhirSchema),
+                ["type"],
+                { type: "CodeableConcept" },
+                undefined,
+                rawElement,
+            ) as RegularField;
+
+            expect(field.valueConstraint).toBeUndefined();
+        });
+
         it("should handle min and max constraints", async () => {
             const element: FHIRSchemaElement = {
                 type: "integer",

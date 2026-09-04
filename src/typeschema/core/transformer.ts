@@ -8,7 +8,7 @@ import assert from "node:assert";
 import type { FHIRSchemaElement } from "@atomic-ehr/fhirschema";
 import { shouldSkipCanonical } from "@root/typeschema/skip-hack";
 import type { CodegenLog } from "@root/utils/log";
-import type { Register } from "@typeschema/register";
+import { isFhirBaseCanonical, type Register } from "@typeschema/register";
 import {
     concatIdentifiers,
     extractExtensionDeps,
@@ -144,17 +144,19 @@ export const extractProfileDependencies = (
 export function transformFhirSchema(register: Register, fhirSchema: RichFHIRSchema, logger?: CodegenLog): TypeSchema[] {
     let base: Identifier | undefined;
     if (fhirSchema.base) {
-        const baseFs = register.resolveFs(
-            fhirSchema.package_meta,
-            register.ensureSpecializationCanonicalUrl(fhirSchema.base),
-        );
-        if (!baseFs)
+        const baseUrl = register.ensureSpecializationCanonicalUrl(fhirSchema.base);
+        const baseFs = register.resolveFs(fhirSchema.package_meta, baseUrl);
+        const isVirtualLogicalBase =
+            fhirSchema.kind === "logical" && fhirSchema.derivation === "specialization" && isFhirBaseCanonical(baseUrl);
+        if (!baseFs && !isVirtualLogicalBase)
             throw new Error(
                 `Base resource not found '${fhirSchema.base}' for <${fhirSchema.url}> from ${packageMetaToFhir(fhirSchema.package_meta)}`,
             );
-        const baseId = mkIdentifier(baseFs);
-        assert(!isNestedIdentifier(baseId), `Unexpected nested base for ${fhirSchema.url}`);
-        base = baseId;
+        if (baseFs) {
+            const baseId = mkIdentifier(baseFs);
+            assert(!isNestedIdentifier(baseId), `Unexpected nested base for ${fhirSchema.url}`);
+            base = baseId;
+        }
     }
 
     const { fields, slicing } = mkFields(register, fhirSchema, [], fhirSchema.elements, logger);
