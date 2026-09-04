@@ -1,6 +1,6 @@
 {
   "name": "@cognovis/codegen",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Code generation tools for FHIR resources and TypeSchema definitions",
   "keywords": [
     "fhir",
