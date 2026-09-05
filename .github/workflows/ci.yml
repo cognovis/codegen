@@ -113,7 +113,7 @@ jobs:
       - name: Generate FHIR R4 type tree
         working-directory: /tmp/test-install
         run: |
-          cat > generate.ts <<'SCRIPT'
+          cat > generate.mjs <<'SCRIPT'
           import { APIBuilder } from "@cognovis/codegen";
 
           const generate = async () => {
@@ -136,11 +136,9 @@ jobs:
           SCRIPT
 
           if [ "${{ matrix.package-manager }}" == "bun" ]; then
-            bun generate.ts
-          elif [ "${{ matrix.package-manager }}" == "npm" ]; then
-            npx tsx generate.ts
+            bun generate.mjs
           else
-            pnpm dlx tsx generate.ts
+            node generate.mjs
           fi
 
       - name: Verify output
