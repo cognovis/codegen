@@ -39,6 +39,17 @@ describe("Optional constrained profile fields (codegen-fw1)", async () => {
         expect(() => profile.from(resource)).not.toThrow();
     });
 
+    it("accepts a present matching repeating pattern", () => {
+        const category = [{ coding: [{ system: "http://example.test/category", code: "example" }] }];
+        expect(() => profile.from({ ...resource, category })).not.toThrow();
+    });
+
+    it("parses its own factory output with the populated repeating pattern", () => {
+        const created = profile.createResource({ status: "active", subject: { reference: "Patient/example" } });
+        expect(created.category).toEqual([{ coding: [{ system: "http://example.test/category", code: "example" }] }]);
+        expect(() => profile.from(created)).not.toThrow();
+    });
+
     it("still requires a constrained required field", () => {
         const { intent: _intent, ...withoutIntent } = resource;
         expect(() => profile.from(withoutIntent)).toThrow("required field 'intent' is missing");
