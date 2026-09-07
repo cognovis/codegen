@@ -211,6 +211,9 @@ apply_overlay() {
     copy_owned ".github/workflows/release.yml" "${target}"
     copy_owned "scripts/release.sh" "${target}"
     chmod +x "${target}/scripts/release.sh"
+    copy_owned "scripts/verify-release-tarball.sh" "${target}"
+    chmod +x "${target}/scripts/verify-release-tarball.sh"
+    copy_owned "CONTRIBUTING.md" "${target}"
     # The overlay carries its own applicator: a fresh upstream checkout must end
     # up able to reapply and re-verify the overlay without this repository.
     copy_owned "scripts/apply-cognovis-overlay.sh" "${target}"

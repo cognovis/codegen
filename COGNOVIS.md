@@ -1,6 +1,6 @@
 # Cognovis codegen fork
 
-`main` is the sole Cognovis integration branch. It is based on the [atomic-ehr/codegen `main`](https://github.com/atomic-ehr/codegen/tree/main) baseline at `f724a661` (v0.0.18) and carries exactly two kinds of change, which are kept strictly separate:
+`main` is the sole Cognovis integration branch. It is based on the [atomic-ehr/codegen `main`](https://github.com/atomic-ehr/codegen/tree/main) baseline at `4dbfe2c6` (after #208–#212, #215–#217) and carries exactly two kinds of change, which are kept strictly separate:
 
 - a **distribution overlay** — package identity, publish registry, Bun shebang, and changelog tooling. These are permanent fork properties that will never be sent upstream.
 - **pending upstream contributions** — generator and CLI fixes that live on `main` only until atomic-ehr merges them. These are ordinary fork commits, never overlay paths.
@@ -31,8 +31,10 @@ package.json
 .github/workflows/ci.yml
 .github/workflows/release.yml
 scripts/release.sh
+scripts/verify-release-tarball.sh
 scripts/apply-cognovis-overlay.sh
 scripts/sync-upstream.sh
+CONTRIBUTING.md
 cliff.toml
 CHANGELOG.md
 COGNOVIS.md
@@ -44,11 +46,13 @@ tsup.config.ts
 
 | Path | Mode | What the overlay owns |
 |---|---|---|
-| `package.json` | patch | `name` (`@cognovis/codegen`), the `prepare` script, and `allowScripts` — and nothing else. Dependencies and version stay upstream's; the release script owns the version. Because the overlay deliberately does not own dependency ranges, the [`brace-expansion` security bump](#dependency-security-bump) is **reset to upstream's range by a fresh apply** until an upstream pull request carries it. There is deliberately **no `allowScripts` field** — see [npm 12 and git installs](#npm-12-and-git-installs) — and `--verify` asserts it stays absent here and in the applied tree. |
+| `package.json` | patch | `name` (`@cognovis/codegen`), the `prepare` script, and `allowScripts` — and nothing else. Dependencies and version stay upstream's; the release script owns the version. There is deliberately **no `allowScripts` field** — see [npm 12 and git installs](#npm-12-and-git-installs) — and `--verify` asserts it stays absent here and in the applied tree. |
 | `.gitignore` | patch | Appends `.intake/`. The `Library-managed project installs` block is not reapplied: although it is committed on `main` — the agent tooling writes it in place — it enumerates per-machine install paths, so a fresh apply deliberately drops it and `library` regenerates it on whatever machine next installs those files. |
 | `.github/workflows/ci.yml` | patch | The consumer smoke-test import, `@atomic-ehr/codegen` to `@cognovis/codegen`. Upstream keeps ownership of the job matrix. |
 | `.github/workflows/release.yml` | copy | The whole publish pipeline: `npm.cognovis.de`, the `@cognovis` scope, `COGNOVIS_NPM_TOKEN`, and the GitHub release step. Upstream edits to this file are intentionally discarded. |
 | `scripts/release.sh` | copy | Version derivation and `git-cliff` changelog generation. Supersedes the upstream script. |
+| `scripts/verify-release-tarball.sh` | copy | Post-pack smoke that installs the named tarball and runs `atomic-codegen generate --config` against a sliced-choice fixture. Does not exist upstream. |
+| `CONTRIBUTING.md` | copy | The maintainer release section: `bun run release`, `npm.cognovis.de`, and the package-identity evidence contract. Upstream's npmjs.org release steps are intentionally discarded. |
 | `scripts/apply-cognovis-overlay.sh` | copy | The overlay applicator itself. It is an overlay path for the same reason as every other entry here: it differs from upstream, it will never be sent upstream, and contract decision 1 leaves no third category. Copying it means a fresh upstream checkout plus the overlay can reapply and re-verify itself without this repository. |
 | `scripts/sync-upstream.sh` | copy | The upstream sync runbook in executable form (see [Syncing with upstream](#syncing-with-upstream)). Fork-only for the same reason as the applicator: upstream has no upstream to merge from. |
 | `cliff.toml` | copy | Changelog configuration. Does not exist upstream. |
@@ -79,14 +83,15 @@ These paths differ between `upstream/main` and `main`, and each one is excluded 
 
 | Path | Why it is not overlay |
 |---|---|
-| `README.md` | Documents the terminology generator options — pending upstream contribution (#210). |
-| `CLAUDE.md` | Documents sliced-choice validation and Node ESM import emission — pending upstream contribution (codegen-g5s, codegen-wgn, codegen-nud). |
+| `README.md` | Documents the terminology generator options and profile `resourceType` descriptors — pending upstream contribution. |
+| `CLAUDE.md` | Documents sliced-choice validation and Node ESM import emission — pending upstream contribution (codegen-wgn / #213). |
+| `docs/design/profiles.md` | Documents generated profile `resourceType` descriptors — pending upstream contribution (codegen-dzn). |
 | `tsconfig.json` | `resolveJsonModule` exists to support the CLI version fix that reads `package.json` — pending upstream contribution, not distribution identity. |
 | `bun.lock` | Derived from `package.json`; regenerate with `bun install` after applying the overlay. |
 | `.library.lock` | Machine-local agent tooling state. Never part of a distribution. |
 | `.intake/` | Machine-local scratch directory; ignored, never committed. |
 | `src/typeschema/**`, `src/api/writer-generator/**` | Forbidden by contract decision 3. |
-| `src/api/generate-config.ts` | The generate-command and terminology configuration surface (commits `d0a133fa`, `7f84b9ea`, `895cd636`) — pending upstream contributions #210 and #211. Its terminology keys are explicitly not being sent upstream as configuration, but the file is still generator surface, not distribution identity. |
+| `src/api/generate-config.ts` | The generate command is upstream (#211, #217). The remaining delta is the TypeScript `terminology` config keys, which were not sent upstream as configuration. |
 | `src/cli/commands/**`, `test/**`, `assets/**`, `examples/**` | Generator and CLI behavior plus its evidence — all pending upstream contributions. |
 
 The table above is prose for humans. The block below is its machine-readable form: glob patterns for every path that may legitimately differ from upstream without being overlay. `--audit` classifies the real fork diff against the allowlist and these patterns together, and fails on any path matching neither — that is what makes "no third category" an executable rule rather than an assertion.
@@ -94,6 +99,7 @@ The table above is prose for humans. The block below is its machine-readable for
 ```non-overlay-patterns
 CLAUDE.md
 README.md
+docs/design/profiles.md
 tsconfig.json
 bun.lock
 .library.lock
@@ -114,37 +120,20 @@ Fork commits on `main` that carry generator or CLI behavior. They are temporary:
 
 | PR | Subject | Commits on `main` |
 |---|---|---|
-| [#208](https://github.com/atomic-ehr/codegen/pull/208) | Preserve profile inputs and slice accessors. Keeps a required `Coding` slice with only a fixed system from being treated as a fully fixed `CodeableConcept`. | `63e43b0a`, `51240167` |
-| [#209](https://github.com/atomic-ehr/codegen/pull/209) | Support a virtual FHIR `Base` for logical models. | `fa823b92` |
-| [#210](https://github.com/atomic-ehr/codegen/pull/210) | Opt-in per-package terminology surfaces: CodeSystem completeness rules, ValueSet expansion exclusion, package provenance. | `d0a133fa`, `7f84b9ea`, `9512e709`, `437c6612` |
-| [#211](https://github.com/atomic-ehr/codegen/pull/211) | Config-driven `generate` command for the CLI. | `895cd636`, `9fd5c3f9`, `e21e0cd4` |
-| [#212](https://github.com/atomic-ehr/codegen/pull/212) | Validate sliced choice components with at-least-one semantics, in both the TypeScript and the Python writer. | `a0cdafbd`, `49e2ffb4`, `17080759`, `62ba36ba`, `d99accc8`, `ba38ce4a` |
-| [#213](https://github.com/atomic-ehr/codegen/pull/213) | Emit extension-bearing relative specifiers so generated output loads under Node ESM. | `acd2583c`, `cc1610a2` |
+| [#213](https://github.com/atomic-ehr/codegen/pull/213) | Emit extension-bearing relative specifiers so generated output loads under Node ESM. Upstream #219 is the preferred opt-in (`moduleSpecifierStyle: "node-esm"`) and supersedes this if they add the key to `TYPESCRIPT_KEYS`. | `acd2583c`, `cc1610a2` |
 
-The earlier claim that no upstream pull request existed for `63e43b0a` is obsolete — that correction is #208.
+#208–#212 merged upstream (with #215–#217 follow-ups) and are on `main` via the `4dbfe2c6` sync.
 
-Each pull request branch is built on a clean `upstream/main` rather than cherry-picked from `main`, because the fork's snapshots and regenerated examples carry terminology output from #210 that does not exist on the upstream base. The transplanted branches therefore regenerate their own artifacts, and internal tracker IDs are stripped from the contributed code.
+Each pull request branch is built on a clean `upstream/main` rather than cherry-picked from `main`. The transplanted branches regenerate their own artifacts, and internal tracker IDs are stripped from the contributed code.
 
 ### Not yet submitted
 
-Empty. Every generator and CLI change on `main` now has an open upstream pull request. Anything delivered here later belongs in this table until it does.
-
-### Dependency security bump
-
-The `brace-expansion` bump to `^5.0.9` in both `dependencies` and `overrides` (`ebd6fb36` on `main`) is **already submitted**: every one of the open pull requests carries it, so whichever lands first takes it upstream.
-
-| PR | Commit carrying the bump |
+| Subject | Notes |
 |---|---|
-| #208 | `028cc3a3` chore: update brace-expansion security fix |
-| #209 | `ebd6fb36` — the same commit that is on `main` |
-| #210 | `a2ed7ab2` chore: bump brace-expansion to 5.0.9 for bun audit |
-| #211 | `7ca104c0` chore: bump brace-expansion to 5.0.9 for bun audit |
-| #212 | `46a39827` chore: bump brace-expansion to 5.0.9 for bun audit |
-| #213 | `d5230825` chore: bump brace-expansion to 5.0.9 for bun audit |
-
-Every contribution branch needs it, not as scope creep but because `upstream/main` fails its own CI: the `security` job runs `bun audit`, and upstream's `^5.0.8` matches GHSA-rgw5-rvv9-x895 (high, DoS). A branch transplanted onto a clean upstream base inherits that red check until the bump is added.
-
-It is called out separately because it has a consequence the other contributions do not: the overlay deliberately does not own dependency ranges, so applying the overlay to a fresh `upstream/main` checkout returns `brace-expansion` to upstream's `^5.0.8`. Until one of those pull requests merges, reapply the bump after a resync and rerun `bun install`.
+| Profile class `resourceType` descriptor (codegen-dzn) | Static `resourceType` on generated profile classes. |
+| Optional constrained profile fields (codegen-fw1) | Keep optional pattern/fixed fields as real inputs. |
+| Package-smoke as plain JavaScript (codegen-hcr) | CI consumer smoke uses `generate.mjs` + `node`, not `tsx`. |
+| Generate-config `terminology` keys | JSON whitelist for `terminology.enabled` / `packageVerification`. |
 
 ## Applying the overlay
 
@@ -205,4 +194,4 @@ Resolve by category, using the tables above:
 - **Pending upstream contributions** (generator and CLI sources, tests, examples) — resolve in favour of the fork commit unless upstream has merged that contribution, in which case take upstream's and drop the fork commit from the table above.
 - **A new, unclassified path** — the overlay audit in the gate will fail on it. Classify it in this document first: allowlist it, or record it as a non-overlay pattern. Do not silence the audit.
 
-After a sync that changes `package.json`, rerun `bun install`, and reapply the [`brace-expansion` bump](#dependency-security-bump) until one of the open pull requests carries it upstream.
+After a sync that changes `package.json`, rerun `bun install`.
