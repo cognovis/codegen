@@ -31,7 +31,7 @@ type ProfileClass = {
  * real generated validator rather than against emitted source text.
  */
 const loadProfileModule = async (relativePath: string, source: string): Promise<ProfileClass> => {
-    const dir = await fs.mkdtemp(Path.join(os.tmpdir(), "codegen-g5s-"));
+    const dir = await fs.mkdtemp(Path.join(os.tmpdir(), "codegen-sliced-choice-"));
     const dest = Path.join(dir, relativePath);
     await fs.mkdir(Path.dirname(dest), { recursive: true });
     await fs.writeFile(dest, source);
@@ -44,7 +44,7 @@ const loadProfileModule = async (relativePath: string, source: string): Promise<
 };
 
 /**
- * Regression for codegen-g5s: a slice that constrains a choice element
+ * Regression: a slice that constrains a choice element
  * (`Observation.component:codedFinding.value[x]` narrowed to CodeableConcept and
  * required) used to be validated with all-of semantics over
  * `["value", "valueCodeableConcept"]`. `value` is not a FHIR element, so no
@@ -54,7 +54,7 @@ const loadProfileModule = async (relativePath: string, source: string): Promise<
  * The fixture is a generic StructureDefinition, not a copy of the profile the
  * defect was reported on, so the fix has to be generic too.
  */
-describe("Sliced choice component validation (codegen-g5s)", async () => {
+describe("Sliced choice component validation", async () => {
     const result = await new APIBuilder({ logger: mkSilentLogger() })
         .localStructureDefinitions({
             package: { name: "example.test.slicedchoice", version: "0.0.1" },

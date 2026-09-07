@@ -526,7 +526,7 @@ def test_profile_from_empty_resource_reports_missing_required_fields() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Sliced choice validation (codegen-nud)
+# Sliced choice validation
 #
 # The race extension slices `extension` and requires the choice element
 # `value[x]` inside each slice, narrowed to a single type. The choice base name

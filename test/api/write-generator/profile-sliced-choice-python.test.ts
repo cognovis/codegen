@@ -19,17 +19,17 @@ const sliceFieldsCall = (match: string, sliceName: string, requiredFields: strin
     ].join("\n");
 
 /**
- * Regression for codegen-nud, the Python twin of codegen-g5s: a slice that
+ * Regression, the Python twin of the TypeScript sliced choice fix: a slice that
  * constrains a choice element (`Observation.component:codedFinding.value[x]`
  * narrowed to CodeableConcept and required) used to be validated with all-of
  * semantics over `["value", "valueCodeableConcept"]`. `value` is not a FHIR
  * element on a flattened resource, so no conformant resource could ever satisfy
  * the generated validator.
  *
- * The fixture is the generic StructureDefinition added by codegen-g5s, so the
+ * The fixture is the generic StructureDefinition of the TypeScript test, so the
  * fix has to be generic too.
  */
-describe("Python sliced choice component validation (codegen-nud)", async () => {
+describe("Python sliced choice component validation", async () => {
     const result = await new APIBuilder({ logger: mkSilentLogger() })
         .localStructureDefinitions({
             package: { name: "example.test.slicedchoice", version: "0.0.1" },

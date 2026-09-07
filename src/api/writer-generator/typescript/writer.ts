@@ -65,7 +65,7 @@ export type TypeScriptOptions = {
     terminology?: {
         /** Emit one terminology module for every resolved package. Defaults to false. */
         enabled?: boolean;
-        /** Verification values copied from `cognovis-fhir-types.manifest.json` closure entries. */
+        /** Optional map of `name@version` package refs to a closure verification state. */
         packageVerification?: Record<string, string>;
     };
 } & WriterOptions;

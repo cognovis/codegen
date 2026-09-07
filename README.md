@@ -113,6 +113,29 @@ yarn add @atomic-ehr/codegen
     - `bun run generate-types.ts`
     - `pnpm exec tsx generate-types.ts`
 
+Alternatively, drive the same pipeline from a JSON config file, with no script at all:
+
+```json
+{
+    "version": 1,
+    "builders": [
+        {
+            "name": "core",
+            "fromPackages": [{ "name": "hl7.fhir.r4.core", "version": "4.0.1" }],
+            "typescript": {},
+            "outputTo": "./fhir-types"
+        }
+    ]
+}
+```
+
+```bash
+atomic-codegen generate --config ./codegen.json            # run every builder
+atomic-codegen generate --config ./codegen.json --dry-run  # print the plan without generating
+```
+
+Relative paths resolve against the config file's directory, unknown keys are rejected with the full list of problems, and `outputTo` is removed before generation by default (set `"cleanOutput": false` to keep it). A config may hold several builders: each maps to one `APIBuilder` pipeline (`fromPackages`/`fromPackageRefs`/`localTgzPackages`/`localStructureDefinitions` inputs, `typeSchema` transformations, and `typescript`/`python`/`csharp`/`introspection` generators — see `GenerateConfigBuilder` in `src/api/generate-config.ts`). A failed builder does not stop the others, and the run exits non-zero if any failed.
+
 ### Usage Examples
 
 See the [examples/](examples/) directory for working demonstrations:
@@ -211,7 +234,7 @@ Each language generator accepts its own option object. All options are optional;
 | `lineWidth` | `number` | `120` | Maximum line width before wrapping. |
 | `withDebugComment` | `boolean` | `false` | Emit comments tracing each generated type back to its source schema. |
 | `terminology.enabled` | `boolean` | `false` | Emit a `terminology.ts` module for every package in the resolved closure. |
-| `terminology.packageVerification` | `Record<string, string>` | `{}` | Map package references such as `hl7.fhir.r4.core@4.0.1` to the verification state recorded in `cognovis-fhir-types.manifest.json`. |
+| `terminology.packageVerification` | `Record<string, string>` | `{}` | Map package references such as `hl7.fhir.r4.core@4.0.1` to a closure verification state (`registry-integrity`, `unverifiable`, ...). Absent entries record `not-recorded`. |
 
 When terminology generation is enabled, each exported symbol includes its canonical identity, source package and version, declared content mode, and verification state. Only CodeSystems declaring `content: "complete"` emit code unions and display maps. ValueSet expansions are never promoted to constants, and an `unverifiable` package emits identity and provenance without concept content.
 
