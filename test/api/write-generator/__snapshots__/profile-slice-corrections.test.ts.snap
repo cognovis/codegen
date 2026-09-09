@@ -20,8 +20,8 @@ exports[`TypeScript profile slice corrections system-only coding slices: full pr
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Observation } from "../../hl7-fhir-r4-core/Observation";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Observation } from "../../hl7-fhir-r4-core/Observation.js";
 
 import {
     ensureProfile,
@@ -36,7 +36,7 @@ import {
     validateChoiceProhibited,
     validateMustSupport,
     validatePatternValue,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type SystemOnlyCodingObservationProfileRaw = {
     bodySite: CodeableConcept;
@@ -46,6 +46,7 @@ export type SystemOnlyCodingObservationProfileRaw = {
 
 // CanonicalURL: http://example.org/StructureDefinition/system-only-coding (pkg: codegen.test#1.0.0)
 export class SystemOnlyCodingObservationProfile {
+    static readonly resourceType = "Observation";
     static readonly canonicalUrl = "http://example.org/StructureDefinition/system-only-coding";
 
     private resource: Observation;
@@ -152,8 +153,8 @@ exports[`TypeScript profile slice corrections colliding slice accessor: full pro
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Observation, ObservationComponent } from "../../hl7-fhir-r4-core/Observation";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Observation, ObservationComponent } from "../../hl7-fhir-r4-core/Observation.js";
 
 export type CollidingSliceObservation_Component_CategorySliceFlat = Omit<ObservationComponent, "code">;
 export type CollidingSliceObservation_Component_CategorySliceFlatAll = CollidingSliceObservation_Component_CategorySliceFlat;
@@ -175,7 +176,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type CollidingSliceObservationProfileRaw = {
     status: ("registered" | "preliminary" | "final" | "amended" | "corrected" | "cancelled" | "entered-in-error" | "unknown");
@@ -185,6 +186,7 @@ export type CollidingSliceObservationProfileRaw = {
 
 // CanonicalURL: http://example.org/StructureDefinition/colliding-slice (pkg: codegen.test#1.0.0)
 export class CollidingSliceObservationProfile {
+    static readonly resourceType = "Observation";
     static readonly canonicalUrl = "http://example.org/StructureDefinition/colliding-slice";
 
     private static readonly categorySliceMatch: Record<string, unknown> = {
@@ -324,8 +326,8 @@ exports[`TypeScript profile slice corrections inherited-field colliding slice ac
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept";
-import type { Observation, ObservationComponent } from "../../hl7-fhir-r4-core/Observation";
+import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
+import type { Observation, ObservationComponent } from "../../hl7-fhir-r4-core/Observation.js";
 
 export type InheritedCollisionObservation_Component_CategorySliceFlat = Omit<ObservationComponent, "code">;
 export type InheritedCollisionObservation_Component_CategorySliceFlatAll = InheritedCollisionObservation_Component_CategorySliceFlat;
@@ -347,7 +349,7 @@ import {
     validateChoiceRequired,
     validateChoiceProhibited,
     validateMustSupport,
-} from "../../profile-helpers";
+} from "../../profile-helpers.js";
 
 export type InheritedCollisionObservationProfileRaw = {
     status: ("registered" | "preliminary" | "final" | "amended" | "corrected" | "cancelled" | "entered-in-error" | "unknown");
@@ -357,6 +359,7 @@ export type InheritedCollisionObservationProfileRaw = {
 
 // CanonicalURL: http://example.org/StructureDefinition/inherited-collision (pkg: codegen.test#1.0.0)
 export class InheritedCollisionObservationProfile {
+    static readonly resourceType = "Observation";
     static readonly canonicalUrl = "http://example.org/StructureDefinition/inherited-collision";
 
     private static readonly categorySliceMatch: Record<string, unknown> = {
