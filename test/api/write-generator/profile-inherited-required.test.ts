@@ -71,6 +71,19 @@ describe("Profile inherited base-required fields (codegen-8iw)", async () => {
         // The import must be present for the emitted call to typecheck.
         expect(file).toMatch(/import\s*\{[^}]*\bvalidateRequired\b/);
     });
+
+    const requiredComplexExtensionKey = Object.keys(result.filesGenerated.typescript ?? {}).find((k) =>
+        k.includes("RequiredComplexExtension"),
+    );
+    const requiredComplexExtensionFile = () =>
+        requiredComplexExtensionKey ? result.filesGenerated.typescript![requiredComplexExtensionKey] : undefined;
+
+    it("does not replace required complex-extension input with an empty object", () => {
+        const file = requiredComplexExtensionFile();
+        expect(file).toBeDefined();
+        expect(file).toContain("resolveInput(args)");
+        expect(file).not.toContain("resolveInput(args ?? {})");
+    });
 });
 
 describe("Profile inherited base-required fields, Python writer (codegen-8iw)", async () => {

@@ -529,7 +529,8 @@ const generateFactoryMethods = (
             ? `args: ${rawInputTypeName} | ${inputTypeName}`
             : `args?: ${rawInputTypeName} | ${inputTypeName}`;
         w.curlyBlock(["static", "createResource", `(${createResourceSig})`, `: ${tsBaseResourceName}`], () => {
-            w.lineSM(`const resolvedExtensions = ${profileClassName}.resolveInput(args ?? {})`);
+            const inputExpression = hasParams ? "args" : "args ?? {}";
+            w.lineSM(`const resolvedExtensions = ${profileClassName}.resolveInput(${inputExpression})`);
             const extSliceField = factoryInfo.sliceAutoFields.find((f) => f.name === "extension");
             if (extSliceField) {
                 const matchRefs = extSliceField.sliceNames.map(
