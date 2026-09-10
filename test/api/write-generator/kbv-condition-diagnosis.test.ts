@@ -27,6 +27,7 @@ describe("KBV Condition Diagnosis generation (kbv.basis@1.9.0)", async () => {
             withDebugComment: false,
             generateProfile: true,
             openResourceTypeSet: false,
+            moduleSpecifierStyle: "node-esm",
         })
         .typeSchema({
             treeShake: {

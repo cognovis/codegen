@@ -28,7 +28,7 @@ describe("SQL-on-FHIR", async () => {
             .fromPackage(r5Core.name, r5Core.version)
             .fromPackageRef(packageUrl)
             .typeSchema({ treeShake: treeShakeConfig })
-            .typescript({ inMemoryOnly: true })
+            .typescript({ inMemoryOnly: true, moduleSpecifierStyle: "node-esm" })
             .generate();
 
         it("should succeed", () => {

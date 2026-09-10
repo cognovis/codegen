@@ -36,7 +36,7 @@ describe("Local Package Folder - Multi-Package Generation", async () => {
         const result = await new APIBuilder({ logger: mkSilentLogger() })
             .localStructureDefinitions(localPackageConfig)
             .typeSchema({ treeShake: treeShakeConfig })
-            .typescript({ inMemoryOnly: true })
+            .typescript({ inMemoryOnly: true, moduleSpecifierStyle: "node-esm" })
             .generate();
 
         it("should succeed", () => {
@@ -79,7 +79,12 @@ describe("Local Package Folder - Multi-Package Generation", async () => {
                     },
                 },
             })
-            .typescript({ inMemoryOnly: true, generateProfile: true, withDebugComment: false })
+            .typescript({
+                inMemoryOnly: true,
+                generateProfile: true,
+                withDebugComment: false,
+                moduleSpecifierStyle: "node-esm",
+            })
             .generate();
 
         it("should succeed", () => {

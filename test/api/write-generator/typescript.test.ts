@@ -23,6 +23,7 @@ describe("TypeScript Writer Generator", async () => {
     const result = await new APIBuilder({ register: r4Manager, logger: mkErrorLogger() })
         .typescript({
             inMemoryOnly: true,
+            moduleSpecifierStyle: "node-esm",
         })
         .generate();
     const files = result.filesGenerated.typescript!;
@@ -189,6 +190,7 @@ describe("TypeScript CDA with Logical Model Promotion to Resource", async () => 
         })
         .typescript({
             inMemoryOnly: true,
+            moduleSpecifierStyle: "node-esm",
         })
         .generate();
     const files = result.filesGenerated.typescript!;
@@ -215,6 +217,7 @@ describe("TypeScript R4 Example (with generateProfile)", async () => {
             withDebugComment: false,
             generateProfile: true,
             openResourceTypeSet: false,
+            moduleSpecifierStyle: "node-esm",
         })
         .generate();
 
@@ -268,6 +271,7 @@ describe("TypeScript US Core Example", async () => {
             withDebugComment: false,
             generateProfile: true,
             openResourceTypeSet: false,
+            moduleSpecifierStyle: "node-esm",
         })
         .generate();
 

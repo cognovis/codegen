@@ -174,6 +174,7 @@ describe("TypeScript profile slice corrections", async () => {
             withDebugComment: false,
             generateProfile: true,
             openResourceTypeSet: false,
+            moduleSpecifierStyle: "node-esm",
         })
         .generate();
     const files = result.filesGenerated.typescript ?? {};

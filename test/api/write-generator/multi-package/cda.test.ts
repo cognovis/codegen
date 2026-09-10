@@ -22,7 +22,7 @@ describe("CDA", async () => {
         const result = await new APIBuilder({ logger: mkSilentLogger() })
             .fromPackage("hl7.cda.uv.core", "2.0.1-sd")
             .typeSchema({ treeShake: treeShakeConfig })
-            .typescript({ inMemoryOnly: true })
+            .typescript({ inMemoryOnly: true, moduleSpecifierStyle: "node-esm" })
             .generate();
 
         it("should succeed", () => {
