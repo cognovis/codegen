@@ -1,6 +1,6 @@
 # Cognovis codegen fork
 
-`main` is the sole Cognovis integration branch. It is based on the [atomic-ehr/codegen `main`](https://github.com/atomic-ehr/codegen/tree/main) baseline at `4dbfe2c6` (after #208–#212, #215–#217) and carries exactly two kinds of change, which are kept strictly separate:
+`main` is the sole Cognovis integration branch. It is based on the [atomic-ehr/codegen `main`](https://github.com/atomic-ehr/codegen/tree/main) baseline at `12658b04` (after #208–#212 and #215–#219, including the terminology surface and configurable TypeScript module specifiers) and carries exactly two kinds of change, which are kept strictly separate:
 
 - a **distribution overlay** — package identity, publish registry, Bun shebang, and changelog tooling. These are permanent fork properties that will never be sent upstream.
 - **pending upstream contributions** — generator and CLI fixes that live on `main` only until atomic-ehr merges them. These are ordinary fork commits, never overlay paths.
@@ -83,15 +83,15 @@ These paths differ between `upstream/main` and `main`, and each one is excluded 
 
 | Path | Why it is not overlay |
 |---|---|
-| `README.md` | Documents the terminology generator options and profile `resourceType` descriptors — pending upstream contribution. |
-| `CLAUDE.md` | Documents sliced-choice validation and Node ESM import emission — pending upstream contribution (codegen-wgn / #213). |
+| `README.md` | Documents the remaining profile `resourceType` descriptor and JSON configuration integration, plus the upstream terminology and module-specifier behavior exposed by this baseline. |
+| `CLAUDE.md` | Documents the remaining profile constraints and the upstream extensionless/default versus explicit Node ESM configuration. |
 | `docs/design/profiles.md` | Documents generated profile `resourceType` descriptors — pending upstream contribution (codegen-dzn). |
 | `tsconfig.json` | `resolveJsonModule` exists to support the CLI version fix that reads `package.json` — pending upstream contribution, not distribution identity. |
 | `bun.lock` | Derived from `package.json`; regenerate with `bun install` after applying the overlay. |
 | `.library.lock` | Machine-local agent tooling state. Never part of a distribution. |
 | `.intake/` | Machine-local scratch directory; ignored, never committed. |
 | `src/typeschema/**`, `src/api/writer-generator/**` | Forbidden by contract decision 3. |
-| `src/api/generate-config.ts` | The generate command is upstream (#211, #217). The remaining delta is the TypeScript `terminology` config keys, which were not sent upstream as configuration. |
+| `src/api/generate-config.ts` | The generate command is upstream (#211, #217). The remaining delta is builder-scoped dependency pins and the JSON whitelist/validation for the upstream TypeScript terminology and module-specifier options. |
 | `src/cli/commands/**`, `test/**`, `assets/**`, `examples/**` | Generator and CLI behavior plus its evidence — all pending upstream contributions. |
 
 The table above is prose for humans. The block below is its machine-readable form: glob patterns for every path that may legitimately differ from upstream without being overlay. `--audit` classifies the real fork diff against the allowlist and these patterns together, and fails on any path matching neither — that is what makes "no third category" an executable rule rather than an assertion.
@@ -116,13 +116,14 @@ examples/*
 
 Fork commits on `main` that carry generator or CLI behavior. They are temporary: each one leaves `main` when upstream merges it. None of them may be added to the overlay allowlist.
 
-### Open pull requests
+### Superseded upstream contributions
 
-| PR | Subject | Commits on `main` |
-|---|---|---|
-| [#213](https://github.com/atomic-ehr/codegen/pull/213) | Emit extension-bearing relative specifiers so generated output loads under Node ESM. Upstream #219 is the preferred opt-in (`moduleSpecifierStyle: "node-esm"`) and supersedes this if they add the key to `TYPESCRIPT_KEYS`. | `acd2583c`, `cc1610a2` |
+| PR | Result in the `12658b04` baseline |
+|---|---|
+| [#218](https://github.com/atomic-ehr/codegen/pull/218) | The normalized terminology surface, package filter, open verification labels, and special `unverifiable` handling are upstream. The fork carries no separate terminology writer or register implementation. |
+| [#219](https://github.com/atomic-ehr/codegen/pull/219) | `moduleSpecifierStyle` replaces the fork's unconditional `.js` rewrite. The upstream default is `extensionless`; Node ESM consumers and the checked-in Node regression/example opt into `node-esm`. The older [#213](https://github.com/atomic-ehr/codegen/pull/213) is closed and superseded. |
 
-#208–#212 merged upstream (with #215–#217 follow-ups) and are on `main` via the `4dbfe2c6` sync.
+#208–#212 and #215–#219 are on `main` through the `12658b04` upstream merge.
 
 Each pull request branch is built on a clean `upstream/main` rather than cherry-picked from `main`. The transplanted branches regenerate their own artifacts, and internal tracker IDs are stripped from the contributed code.
 
@@ -131,9 +132,10 @@ Each pull request branch is built on a clean `upstream/main` rather than cherry-
 | Subject | Notes |
 |---|---|
 | Profile class `resourceType` descriptor (codegen-dzn) | Static `resourceType` on generated profile classes. |
-| Optional constrained profile fields (codegen-fw1) | Keep optional pattern/fixed fields as real inputs. |
+| Profile input and validation corrections | Preserve optional and repeating fixed/pattern constraints, required complex extension inputs, slice defaults, and extension flat factory fields. |
+| Resource references and virtual logical `Base` | Accept concrete targets for abstract `Resource` references and represent unresolved virtual R4 `Base` shapes without inventing a concrete dependency. |
 | Package-smoke as plain JavaScript (codegen-hcr) | CI consumer smoke uses `generate.mjs` + `node`, not `tsx`. |
-| Generate-config `terminology` keys | JSON whitelist for `terminology.enabled` / `packageVerification`. |
+| Generate-config follow-ups | Builder-scoped `forceDependencies` and JSON validation for `moduleSpecifierStyle`, `terminology.enabled`, `terminology.packages`, and open-string `packageVerification`. |
 
 ## Applying the overlay
 

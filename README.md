@@ -180,8 +180,10 @@ const builder = new APIBuilder()
         generateProfile?: boolean,
         withDebugComment?: boolean,
         openResourceTypeSet?: boolean,
+        moduleSpecifierStyle?: "extensionless" | "node-esm",
         terminology?: {
             enabled: true,
+            packages: ["hl7.fhir.r4.core@4.0.1"],
             packageVerification: {
                 "hl7.fhir.r4.core@4.0.1": "registry-integrity",
             },
@@ -229,14 +231,16 @@ Each language generator accepts its own option object. All options are optional;
 | `generateProfile` | `boolean` | `true` | Generate profile wrapper classes (factories, typed slice/extension accessors, `validate()`, and class-level `resourceType` / `canonicalUrl` descriptor metadata). |
 | `primitiveTypeExtension` | `boolean` | `true` | Emit sibling `_field` properties for [primitive element extensions](https://www.hl7.org/fhir/element.html#json). |
 | `openResourceTypeSet` | `boolean` | `false` | For resource families (`Resource`, `DomainResource`), keep the `resourceType` union open by adding a `string` fallback instead of a closed literal union. |
+| `moduleSpecifierStyle` | `"extensionless" \| "node-esm"` | `"extensionless"` | Write relative imports and exports without extensions, or emit explicit `.js` file targets for generated output that will run directly under Node ESM. |
 | `extensionGetterDefault` | `"flat" \| "profile" \| "raw"` | `"flat"` | Default return shape for generated extension getters. |
 | `sliceGetterDefault` | `"flat" \| "raw"` | `"flat"` | Default return shape for generated slice getters (`flat` strips discriminators, `raw` returns the full FHIR element). |
 | `lineWidth` | `number` | `120` | Maximum line width before wrapping. |
 | `withDebugComment` | `boolean` | `false` | Emit comments tracing each generated type back to its source schema. |
 | `terminology.enabled` | `boolean` | `false` | Emit a `terminology.ts` module for every package in the resolved closure. |
+| `terminology.packages` | `string[]` | all resolved packages | Limit terminology modules to the listed `name@version` package references. |
 | `terminology.packageVerification` | `Record<string, string>` | `{}` | Map package references such as `hl7.fhir.r4.core@4.0.1` to a closure verification state (`registry-integrity`, `unverifiable`, ...). Absent entries record `not-recorded`. |
 
-When terminology generation is enabled, each exported symbol includes its canonical identity, source package and version, declared content mode, and verification state. Only CodeSystems declaring `content: "complete"` emit code unions and display maps. ValueSet expansions are never promoted to constants, and an `unverifiable` package emits identity and provenance without concept content.
+When terminology generation is enabled, each exported symbol includes its canonical identity, source package and version, and verification state. CodeSystem entries also include their declared content mode. Verification labels are open strings so callers can preserve their own attestation vocabulary. Only the literal `unverifiable` has special output behavior: it emits identity and provenance without concept content. Otherwise, CodeSystems declaring `content: "complete"` emit code unions and display maps. ValueSet expansions are never promoted to constants.
 
 **Python** — `.python({ ... })`
 
