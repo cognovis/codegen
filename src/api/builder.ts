@@ -182,42 +182,6 @@ const packageMetaFromRef = (packageRef: string): PackageMeta | undefined => {
     return { name: packageRef.slice(0, separator), version: packageRef.slice(separator + 1) || "latest" };
 };
 
-const assertUnambiguousDependencyClosure = async (
-    manager: ReturnType<typeof CanonicalManager>,
-    rootPackages: PackageMeta[],
-): Promise<void> => {
-    const packages = [...rootPackages].sort((left, right) =>
-        packageMetaToNpm(left).localeCompare(packageMetaToNpm(right)),
-    );
-    const visited = new Set<string>();
-    const requirements: PackageMeta[] = [...rootPackages];
-
-    for (let index = 0; index < packages.length; index += 1) {
-        const pkg = packages[index];
-        if (!pkg || visited.has(pkg.name)) continue;
-        visited.add(pkg.name);
-
-        const manifest = await manager.packageJson(pkg.name);
-        if (typeof manifest.name === "string" && typeof manifest.version === "string") {
-            requirements.push({ name: manifest.name, version: manifest.version });
-        }
-        for (const [name, version] of Object.entries(manifest.dependencies ?? {}).sort(([left], [right]) =>
-            left.localeCompare(right),
-        )) {
-            const dependency = { name, version };
-            requirements.push(dependency);
-            packages.push(dependency);
-        }
-    }
-
-    const conflicts = packageVersionConflicts(requirements);
-    if (conflicts.length === 0) return;
-
-    throw new Error(
-        `Conflicting transitive package versions: ${conflicts.flat().join(", ")}. The canonical manager resolves one version per package name; pin one version across the shared dependency closure.`,
-    );
-};
-
 /**
  * High-Level API Builder class
  *
@@ -548,7 +512,6 @@ export class APIBuilder {
                 const packageMetas = Object.values(ref2meta);
                 const resolvedRoots = [...packageMetas, ...resolvedLocalPackages];
                 assertUnambiguousRootPackageVersions([...this.requestedPackages, ...resolvedRoots]);
-                await assertUnambiguousDependencyClosure(this.manager, resolvedRoots);
                 register = await registerFromManager(this.manager, {
                     logger: this.logger.fork("reg"),
                     focusedPackages: packageMetas,

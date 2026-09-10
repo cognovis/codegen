@@ -9,9 +9,6 @@ import { mkTypeSchemaIndex } from "@root/typeschema/utils";
 import { mkSilentLogger } from "@typeschema-test/utils";
 import manifestRootA from "../../../assets/multi-root-packages/manifest-root-a/package.json" with { type: "json" };
 import manifestRootB from "../../../assets/multi-root-packages/manifest-root-b/package.json" with { type: "json" };
-import manifestRootBPinned from "../../../assets/multi-root-packages/manifest-root-b-pinned/package.json" with {
-    type: "json",
-};
 import manifestSharedV2 from "../../../assets/multi-root-packages/manifest-shared-v2/package.json" with {
     type: "json",
 };
@@ -43,15 +40,17 @@ describe("APIBuilder multi-root package identities", () => {
     });
 
     /**
-     * Generated fixture sources: test/assets/multi-root-packages/manifest-root-a/package.json and
-     * test/assets/multi-root-packages/manifest-root-b/package.json.
-     * Selectors: $.dependencies.fixture.manifest.shared.
-     * Literal dependency identities: fixture.manifest.shared@1.0.0 and fixture.manifest.shared@2.0.0.
+     * Generated fixture sources: test/assets/multi-root-packages/manifest-root-a/package.json,
+     * test/assets/multi-root-packages/manifest-root-b/package.json, and
+     * test/assets/multi-root-packages/manifest-shared-v2/package.json.
+     * Selectors: both root $.dependencies.fixture.manifest.shared declarations and the resolved
+     * shared package $.name + $.version = fixture.manifest.shared@2.0.0.
      */
-    it("rejects conflicting transitive versions found in loaded root manifests", async () => {
+    it("accepts one resolved dependency identity despite differing root manifest declarations", async () => {
         const manifests: Record<string, Record<string, unknown>> = {
             [manifestRootA.name]: manifestRootA,
             [manifestRootB.name]: manifestRootB,
+            [manifestSharedV2.name]: manifestSharedV2,
         };
         const manager = {
             addPackages: async () => ({}),
@@ -64,86 +63,9 @@ describe("APIBuilder multi-root package identities", () => {
                     name: manifestRootB.name,
                     version: manifestRootB.version,
                 },
-            }),
-            packageJson: async (packageName: string) => manifests[packageName] ?? {},
-            search: async () => {
-                throw new Error("register search was reached before manifest conflicts were rejected");
-            },
-        } as unknown as ReturnType<typeof CanonicalManager>;
-
-        const report = await new APIBuilder({ manager, logger: mkSilentLogger() })
-            .fromPackage(manifestRootA.name, manifestRootA.version)
-            .fromPackage(manifestRootB.name, manifestRootB.version)
-            .generate();
-
-        expect(report.success).toBeFalse();
-        expect(report.errors.join("\n")).toContain("fixture.manifest.shared@1.0.0");
-        expect(report.errors.join("\n")).toContain("fixture.manifest.shared@2.0.0");
-        expect(report.errors.join("\n")).toMatch(/conflict|different versions|multiple versions/i);
-    });
-
-    /**
-     * Generated fixture sources: test/assets/multi-root-packages/manifest-root-a/package.json and
-     * test/assets/multi-root-packages/manifest-shared-v2/package.json.
-     * Selectors: $.dependencies.fixture.manifest.shared and $.name + $.version.
-     * Literal concrete identities: fixture.manifest.shared@1.0.0 and fixture.manifest.shared@2.0.0.
-     */
-    it("rejects a root version conflicting with another root's loaded dependency", async () => {
-        const manifests: Record<string, Record<string, unknown>> = {
-            [manifestRootA.name]: manifestRootA,
-            [manifestSharedV2.name]: manifestSharedV2,
-        };
-        const manager = {
-            addPackages: async () => ({}),
-            init: async () => ({
-                [`${manifestRootA.name}@${manifestRootA.version}`]: {
-                    name: manifestRootA.name,
-                    version: manifestRootA.version,
-                },
                 [`${manifestSharedV2.name}@${manifestSharedV2.version}`]: {
                     name: manifestSharedV2.name,
                     version: manifestSharedV2.version,
-                },
-            }),
-            packageJson: async (packageName: string) => manifests[packageName] ?? {},
-            search: async () => {
-                throw new Error("register search was reached before root/dependency conflict rejection");
-            },
-        } as unknown as ReturnType<typeof CanonicalManager>;
-
-        const report = await new APIBuilder({ manager, logger: mkSilentLogger() })
-            .fromPackage(manifestRootA.name, manifestRootA.version)
-            .fromPackage(manifestSharedV2.name, manifestSharedV2.version)
-            .generate();
-
-        expect(report.success).toBeFalse();
-        expect(report.errors.join("\n")).toContain("fixture.manifest.shared@1.0.0");
-        expect(report.errors.join("\n")).toContain("fixture.manifest.shared@2.0.0");
-        expect(report.errors.join("\n")).toMatch(/conflict|different versions|multiple versions/i);
-    });
-
-    /**
-     * Worked example source: codegen-za2 Acceptance Criterion 3, explicit consistent dependency pins.
-     * Pointer: codegen-za2/acceptance-criteria/3/consistent-pin.
-     * Fixture selectors: manifest-root-a/package.json and manifest-root-b-pinned/package.json at
-     * $.dependencies.fixture.manifest.shared = 1.0.0.
-     */
-    it("accepts consistent dependency versions in processed root manifests", async () => {
-        const manifests: Record<string, Record<string, unknown>> = {
-            [manifestRootA.name]: manifestRootA,
-            [manifestRootBPinned.name]: manifestRootBPinned,
-            "fixture.manifest.shared": { name: "fixture.manifest.shared", version: "1.0.0", dependencies: {} },
-        };
-        const manager = {
-            addPackages: async () => ({}),
-            init: async () => ({
-                [`${manifestRootA.name}@${manifestRootA.version}`]: {
-                    name: manifestRootA.name,
-                    version: manifestRootA.version,
-                },
-                [`${manifestRootBPinned.name}@${manifestRootBPinned.version}`]: {
-                    name: manifestRootBPinned.name,
-                    version: manifestRootBPinned.version,
                 },
             }),
             packageJson: async (packageName: string) => manifests[packageName] ?? {},
@@ -152,7 +74,7 @@ describe("APIBuilder multi-root package identities", () => {
 
         const report = await new APIBuilder({ manager, logger: mkSilentLogger() })
             .fromPackage(manifestRootA.name, manifestRootA.version)
-            .fromPackage(manifestRootBPinned.name, manifestRootBPinned.version)
+            .fromPackage(manifestRootB.name, manifestRootB.version)
             .generate();
 
         expect(report.success).toBeTrue();
