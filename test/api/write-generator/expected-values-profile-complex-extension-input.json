@@ -1,0 +1,32 @@
+{
+  "test_tree": "test",
+  "expected_values": [
+    {
+      "name": "required complex Extension createResource input",
+      "value": "static createResource (args: RequiredComplexExtensionProfileRaw | RequiredComplexExtensionProfileFlat) : Extension",
+      "source_kind": "generated_fixture",
+      "source": "profile-complex-extension-input",
+      "test_path": "test/api/write-generator/profile-complex-extension-input.test.ts",
+      "fixture_path": "profile-complex-extension-input",
+      "selector": "RequiredComplexExtension"
+    },
+    {
+      "name": "required complex Extension input without fallback",
+      "value": "RequiredComplexExtensionProfile.resolveInput(args)",
+      "source_kind": "generated_fixture",
+      "source": "profile-complex-extension-input",
+      "test_path": "test/api/write-generator/profile-complex-extension-input.test.ts",
+      "fixture_path": "profile-complex-extension-input",
+      "selector": "RequiredComplexExtension"
+    },
+    {
+      "name": "optional complex Extension createResource input",
+      "value": "static createResource (args?: OptionalComplexExtensionProfileRaw | OptionalComplexExtensionProfileFlat) : Extension",
+      "source_kind": "generated_fixture",
+      "source": "profile-complex-extension-input",
+      "test_path": "test/api/write-generator/profile-complex-extension-input.test.ts",
+      "fixture_path": "profile-complex-extension-input",
+      "selector": "OptionalComplexExtension"
+    }
+  ]
+}
