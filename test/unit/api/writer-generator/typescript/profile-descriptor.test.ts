@@ -8,6 +8,7 @@ import { mkErrorLogger, r4Manager } from "@typeschema-test/utils";
 
 const PROFILE_PATH = "generated/types/hl7-fhir-r4-core/profiles/Observation_observation_bodyweight.ts";
 const PROFILE_IMPORT = "./generated/types/hl7-fhir-r4-core/profiles/Observation_observation_bodyweight";
+const TSC_PATH = Bun.resolveSync("typescript/bin/tsc", import.meta.dir);
 
 const consumerSource = `import { observation_bodyweightProfile } from "${PROFILE_IMPORT}";
 
@@ -67,13 +68,14 @@ describe("generated profile structural descriptor", () => {
                 }),
             );
 
-            const tsc = spawnSync("bunx", ["tsc", "--noEmit", "-p", "tsconfig.json"], {
+            const tsc = spawnSync(process.execPath, [TSC_PATH, "--noEmit", "-p", "tsconfig.json"], {
                 cwd: tmpDir,
                 encoding: "utf8",
+                timeout: 20_000,
             });
-            expect(tsc.status, tsc.stdout + tsc.stderr).toBe(0);
+            expect(tsc.status, `${tsc.error?.message ?? ""}${tsc.stdout}${tsc.stderr}`).toBe(0);
         } finally {
             fs.rmSync(tmpDir, { recursive: true, force: true });
         }
-    });
+    }, 30_000);
 });
