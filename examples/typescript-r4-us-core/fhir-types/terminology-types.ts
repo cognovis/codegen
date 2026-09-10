@@ -2,7 +2,7 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { CodeSystem } from "./hl7-fhir-r4-core/CodeSystem";
+import type { CodeSystem } from "./hl7-fhir-r4-core/CodeSystem.js";
 
 export type TerminologyVerification = "registry-integrity" | "unverifiable" | (string & {});
 

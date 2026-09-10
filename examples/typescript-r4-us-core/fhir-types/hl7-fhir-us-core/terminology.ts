@@ -2,7 +2,7 @@
 // GitHub: https://github.com/atomic-ehr/codegen
 // Any manual changes made to this file may be overwritten.
 
-import type { TerminologyEntry, CodedTerminologyEntry } from "../terminology-types";
+import type { TerminologyEntry, CodedTerminologyEntry } from "../terminology-types.js";
 
 export type USCoreCarePlanCategoryExtensionCodesCode = "assess-plan";
 export const USCoreCarePlanCategoryExtensionCodesCodeSystem = {

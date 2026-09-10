@@ -20,6 +20,9 @@ if (require.main === module) {
             withDebugComment: false,
             generateProfile: true,
             openResourceTypeSet: false,
+            // This checked-in example is executed as plain JavaScript under Node,
+            // so its generated relative imports must name explicit .js files.
+            moduleSpecifierStyle: "node-esm",
             // Opt-in per-package terminology surface: runtime code lists and
             // display maps for CodeSystems that declare `content: complete`.
             // The allowlist keeps it to US Core — without it, every package in
