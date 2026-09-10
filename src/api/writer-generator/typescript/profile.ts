@@ -17,7 +17,6 @@ import {
     tsCamelCase,
     tsExtensionFlatTypeName,
     tsFieldName,
-    tsModuleSpecifier,
     tsNameFromCanonical,
     tsProfileClassName,
     tsProfileModuleName,
@@ -242,13 +241,12 @@ export const generateProfileIndexFile = (
             const exports: Map<string, string> = new Map();
             for (const snapshot of snapshots) {
                 const className = tsProfileClassName(snapshot);
-                const moduleName = tsProfileModuleName(tsIndex, snapshot);
                 if (!exports.has(className)) {
-                    exports.set(className, `export { ${className} } from "${tsModuleSpecifier(`./${moduleName}`)}"`);
+                    exports.set(className, tsProfileModuleName(tsIndex, snapshot));
                 }
             }
-            for (const exp of [...exports.values()].sort()) {
-                w.lineSM(exp);
+            for (const className of [...exports.keys()].sort()) {
+                w.tsExport(`./${exports.get(className)}`, className);
             }
         });
     });
@@ -315,12 +313,13 @@ export const generateProfileImports = (
     tsIndex: TypeSchemaIndex,
     snapshot: SnapshotProfileTypeSchema,
 ) => {
+    const terminologyImports = w.enumTerminologyLinks(tsIndex, snapshot).imports;
     const usedTypes = new Map<string, { importPath: string; tsName: string }>();
 
     const getModulePath = (typeId: TypeIdentifier): string => {
         if (isNestedIdentifier(typeId)) {
             const path = tsNameFromCanonical(typeId.url, true);
-            if (path) return `../../${w.packageDirectory(typeId)}/${pascalCase(path)}`;
+            if (path) return `../../${w.packageDir(typeId)}/${pascalCase(path)}`;
         }
         return `../../${w.modulePath(typeId)}`;
     };
@@ -363,6 +362,15 @@ export const generateProfileImports = (
         w.tsImport(importPath, ...names.sort(), { typeOnly: true });
     }
     if (sortedModules.length > 0) w.line();
+
+    // Value imports into emitted terminology modules: enum validations whose
+    // code lists are fully explained by emitted systems reference them instead
+    // of inlining literals.
+    const sortedTerminology = [...terminologyImports.entries()].sort(([left], [right]) => left.localeCompare(right));
+    for (const [moduleDir, symbols] of sortedTerminology) {
+        w.tsImport(`../../${moduleDir}/terminology`, ...[...symbols].sort());
+    }
+    if (sortedTerminology.length > 0) w.line();
 
     // Import extension profile classes for delegation in setters
     const extProfileImports = new Map<string, { modulePath: string; hasFlatInput: boolean }>();

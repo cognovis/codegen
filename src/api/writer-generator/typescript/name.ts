@@ -44,10 +44,6 @@ export const tsModuleFileName = (id: TypeIdentifier): string => {
     return `${tsModuleName(id)}.ts`;
 };
 
-export const tsModulePath = (id: TypeIdentifier): string => {
-    return `${tsPackageDir(id.package)}/${tsModuleName(id)}`;
-};
-
 export const tsNameFromCanonical = (canonical: string | undefined, dropFragment = true) => {
     if (!canonical) return undefined;
     const localName = extractNameFromCanonical(canonical as CanonicalUrl, dropFragment);
@@ -108,12 +104,12 @@ export const tsSliceStaticName = (name: string): string => name.replace(/\[x\]/g
 
 export const tsValueFieldName = (id: TypeIdentifier): string => `value${uppercaseFirstLetter(id.name)}`;
 
-/** Node's ESM resolver takes relative specifiers literally: it appends no
- *  extension and reads no directory index. Generated modules are published as
- *  ESM `.js`, so every relative specifier must carry its `.js` suffix — for a
- *  directory, that is its index module. Bare package specifiers stay untouched. */
-export const tsModuleSpecifier = (specifier: string, target: "module" | "directory" = "module"): string => {
-    if (!specifier.startsWith(".")) return specifier;
-    if (target === "directory") return `${specifier}/index.js`;
-    return specifier.endsWith(".js") ? specifier : `${specifier}.js`;
+const TS_IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
+/** An object-literal property key for emitted value code: bare when it is a
+ *  valid identifier, quoted otherwise — and computed for "__proto__", whose
+ *  plain form is the prototype setter and would not create an own property. */
+export const tsObjectKey = (key: string): string => {
+    if (key === "__proto__") return '["__proto__"]';
+    return TS_IDENTIFIER_RE.test(key) ? key : JSON.stringify(key);
 };

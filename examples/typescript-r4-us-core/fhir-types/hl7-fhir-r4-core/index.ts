@@ -7,6 +7,8 @@ export type { BackboneElement } from "./BackboneElement.js";
 export type { Bundle, BundleEntry, BundleEntryRequest, BundleEntryResponse, BundleEntrySearch, BundleLink } from "./Bundle.js";
 export { isBundle } from "./Bundle.js";
 export type { CodeableConcept } from "./CodeableConcept.js";
+export type { CodeSystem, CodeSystemConcept, CodeSystemConceptDesignation, CodeSystemConceptProperty, CodeSystemFilter, CodeSystemProperty } from "./CodeSystem.js";
+export { isCodeSystem } from "./CodeSystem.js";
 export type { Coding } from "./Coding.js";
 export type { ContactDetail } from "./ContactDetail.js";
 export type { ContactPoint } from "./ContactPoint.js";
