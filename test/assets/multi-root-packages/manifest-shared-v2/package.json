@@ -1,0 +1,6 @@
+{
+  "name": "fixture.manifest.shared",
+  "version": "2.0.0",
+  "fhirVersions": ["4.0.1"],
+  "dependencies": {}
+}
