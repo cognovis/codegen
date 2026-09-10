@@ -490,6 +490,7 @@ const generateFactoryMethods = (
     // widen createResource and create to accept Input | Raw
     const subSlicesForInput = snapshot.base.name === "Extension" ? collectSubExtensionSlices(snapshot) : [];
     const hasInputHelper = subSlicesForInput.length > 0;
+    const requiresFactoryInput = hasParams || subSlicesForInput.some((sub) => sub.isRequired);
 
     if (hasInputHelper) {
         const rawInputTypeName = `${profileClassName}Raw`;
@@ -533,11 +534,11 @@ const generateFactoryMethods = (
         w.line();
 
         // createResource — accepts Input | Raw
-        const createResourceSig = hasParams
+        const createResourceSig = requiresFactoryInput
             ? `args: ${rawInputTypeName} | ${inputTypeName}`
             : `args?: ${rawInputTypeName} | ${inputTypeName}`;
         w.curlyBlock(["static", "createResource", `(${createResourceSig})`, `: ${tsBaseResourceName}`], () => {
-            const inputExpression = hasParams ? "args" : "args ?? {}";
+            const inputExpression = requiresFactoryInput ? "args" : "args ?? {}";
             w.lineSM(`const resolvedExtensions = ${profileClassName}.resolveInput(${inputExpression})`);
             for (const field of factoryInfo.sliceAutoFields) {
                 if (field.name === "extension") continue;
@@ -593,7 +594,7 @@ const generateFactoryMethods = (
         w.line();
 
         // create — accepts Input | Raw, delegates to createResource
-        const createSig = hasParams
+        const createSig = requiresFactoryInput
             ? `args: ${rawInputTypeName} | ${inputTypeName}`
             : `args?: ${rawInputTypeName} | ${inputTypeName}`;
         w.curlyBlock(["static", "create", `(${createSig})`, `: ${profileClassName}`], () => {
