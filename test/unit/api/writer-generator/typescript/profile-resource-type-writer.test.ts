@@ -57,6 +57,13 @@ const makeSnapshot = (name: string, base: TypeIdentifier): SnapshotProfileTypeSc
 const resourceBase = makeBase("resource", "Observation");
 const extensionBase = makeBase("complex-type", "Extension");
 const datatypeBase = makeBase("complex-type", "Address");
+const codeBase: TypeIdentifier = {
+    kind: "primitive-type",
+    name: "code" as Name,
+    package: "hl7.fhir.r4.core",
+    version: "4.0.1",
+    url: "http://hl7.org/fhir/StructureDefinition/code" as CanonicalUrl,
+};
 
 const resourceSchema: ResourceTypeSchema = {
     identifier: resourceBase as ResourceTypeSchema["identifier"],
@@ -66,6 +73,10 @@ const extensionSchema: ComplexTypeTypeSchema = {
 };
 const datatypeSchema: ComplexTypeTypeSchema = {
     identifier: datatypeBase as ComplexTypeTypeSchema["identifier"],
+};
+const codeSchema: PrimitiveTypeSchema = {
+    identifier: codeBase as PrimitiveTypeSchema["identifier"],
+    base: primitiveBase,
 };
 
 const generateProfile = (
@@ -113,5 +124,76 @@ describe("TypeScript profile writer resourceType descriptor", () => {
         expect(logger.buffer().filter((entry) => entry.level === "ERROR")).toEqual([]);
         expect(generated).toContain(`export class ${name}`);
         expect(generated).not.toContain("static readonly resourceType");
+    });
+});
+
+describe("TypeScript extension profile Flat factory input", () => {
+    const slice = (name: string, min = 0) => ({
+        min,
+        max: 1,
+        match: { url: name },
+        elements: ["url", "valueString"],
+        nameCandidates: { candidates: [name], recommended: name },
+    });
+
+    const extensionSnapshot = (
+        name: string,
+        options: { extraAutoField?: boolean; collidingSubSlice?: boolean } = {},
+    ): SnapshotProfileTypeSchema => {
+        const fields: SnapshotProfileTypeSchema["fields"] = {
+            valueCode: { type: codeBase, required: true },
+            extension: { type: extensionBase, array: true },
+        };
+        const slicing: NonNullable<SnapshotProfileTypeSchema["slicing"]> = {
+            extension: {
+                slices: {
+                    [options.collidingSubSlice ? "valueCode" : "name"]: slice(
+                        options.collidingSubSlice ? "valueCode" : "name",
+                    ),
+                    value: slice("value"),
+                },
+            },
+        };
+        if (options.extraAutoField) {
+            fields.component = { type: extensionBase, array: true };
+            slicing.component = {
+                slices: {
+                    requiredComponent: slice("requiredComponent", 1),
+                },
+            };
+        }
+        return { ...makeSnapshot(name, extensionBase), fields, slicing };
+    };
+
+    test("Flat includes required factory params and optional non-extension slice auto-fields", () => {
+        const schemas = [extensionSchema, codeSchema];
+        const { generated } = generateProfile(extensionSnapshot("RenderingEngineViewHintsExt"), schemas);
+        const flatBody = generated.match(/export type RenderingEngineViewHintsExtProfileFlat = \{([\s\S]*?)\n\}/)?.[1];
+
+        expect(flatBody).toContain("valueCode: string;");
+        expect(flatBody).toContain("name?: string;");
+        expect(flatBody).toContain("value?: string;");
+        expect(flatBody).not.toContain("extension");
+        expect(generated).toContain(
+            "createResource (args: RenderingEngineViewHintsExtProfileRaw | RenderingEngineViewHintsExtProfileFlat)",
+        );
+        expect(generated).toContain("valueCode: args.valueCode,");
+
+        const { generated: withAutoField } = generateProfile(
+            extensionSnapshot("RenderingEngineViewHintsWithAuto", { extraAutoField: true }),
+            schemas,
+        );
+        const withAutoFlatBody = withAutoField.match(
+            /export type RenderingEngineViewHintsWithAutoProfileFlat = \{([\s\S]*?)\n\}/,
+        )?.[1];
+        expect(withAutoFlatBody).toContain("valueCode: string;");
+        expect(withAutoFlatBody).toContain("component?: Extension[];");
+
+        expect(() =>
+            generateProfile(
+                extensionSnapshot("RenderingEngineViewHintsCollision", { collidingSubSlice: true }),
+                schemas,
+            ),
+        ).toThrow(/flat.*collision.*valueCode|valueCode.*collision/i);
     });
 });
