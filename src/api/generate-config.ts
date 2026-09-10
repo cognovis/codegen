@@ -62,6 +62,8 @@ export type GenerateConfigBuilder = {
      */
     cleanOutput?: boolean;
     throwException?: boolean;
+    /** Replace the global dependency pins for this builder's closure. */
+    forceDependencies?: Record<string, string>;
 };
 
 export type GenerateConfigOptions = {
@@ -132,6 +134,7 @@ const BUILDER_KEYS = [
     "outputTo",
     "cleanOutput",
     "throwException",
+    "forceDependencies",
 ] as const satisfies readonly (keyof GenerateConfigBuilder)[];
 
 const PACKAGE_KEYS = ["name", "version"] as const satisfies readonly (keyof GenerateConfigPackage)[];
@@ -429,6 +432,8 @@ const readBuilder = (ctx: Ctx, value: unknown, path: string): GenerateConfigBuil
         builder.cleanOutput = readBoolean(ctx, record.cleanOutput, childPath(path, "cleanOutput"));
     if (record.throwException !== undefined)
         builder.throwException = readBoolean(ctx, record.throwException, childPath(path, "throwException"));
+    if (record.forceDependencies !== undefined)
+        builder.forceDependencies = readStringMap(ctx, record.forceDependencies, childPath(path, "forceDependencies"));
 
     const hasInput = INPUT_KEYS.some((key) => record[key] !== undefined);
     if (!hasInput)
@@ -613,9 +618,8 @@ const runBuilder = async (
     createBuilder: BuilderFactory,
     logger: CodegenLogManager | undefined,
 ): Promise<BuilderRunResult> => {
-    const preprocessPackage = options.forceDependencies
-        ? mkForceDependenciesPreprocessor(options.forceDependencies)
-        : undefined;
+    const forceDependencies = config.forceDependencies ?? options.forceDependencies;
+    const preprocessPackage = forceDependencies ? mkForceDependenciesPreprocessor(forceDependencies) : undefined;
 
     try {
         const builder = createBuilder({
