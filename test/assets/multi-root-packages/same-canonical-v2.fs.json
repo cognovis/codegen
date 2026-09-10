@@ -1,0 +1,15 @@
+{
+  "package_meta": {
+    "name": "fixture.same-canonical",
+    "version": "2.0.0"
+  },
+  "description": "Version two of the shared logical model",
+  "derivation": "specialization",
+  "type": "SharedRecord",
+  "name": "SharedRecord",
+  "kind": "logical",
+  "url": "https://fixture.example/fhir/StructureDefinition/SharedRecord",
+  "base": "",
+  "class": "logical",
+  "version": "2.0.0"
+}
