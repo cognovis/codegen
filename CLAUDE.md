@@ -70,6 +70,7 @@ FHIR Package → TypeSchema Generator → TypeSchema Format → Code Generators 
 ## Configuration
 
 - **CLI config**: JSON file consumed by `atomic-codegen generate --config` (schema and validation in `src/api/generate-config.ts`; relative paths resolve against the config file's directory)
+- **TypeScript module specifiers**: `moduleSpecifierStyle` defaults to `"extensionless"`; use `"node-esm"` when transpiled output runs directly under Node ESM and therefore needs explicit `.js` targets
 - **Default packages**: `hl7.fhir.r4.core@4.0.1`
 - **Output dir**: `./generated` by default
 - **Cache**: `.typeschema-cache/` for performance optimization

@@ -201,6 +201,55 @@ patch_gitignore() {
     info "patched  .gitignore (.intake/)"
 }
 
+patch_ci_workflow() {
+    local target="$1"
+    guard_write ".github/workflows/ci.yml"
+    local file="${target}/.github/workflows/ci.yml"
+    local tmp="${file}.overlay-tmp"
+    test -f "${file}" || die "expected upstream .github/workflows/ci.yml"
+
+    bun -e '
+        const fs = require("node:fs");
+        const [file, output] = process.argv.slice(1);
+        let source = fs.readFileSync(file, "utf8");
+        const packageManagers = source.indexOf("  package-managers:\n");
+        if (packageManagers === -1) throw new Error("package-managers job not found");
+
+        const upstreamImport = "@atomic-ehr/codegen";
+        const forkImport = "@cognovis/codegen";
+        if (!source.includes(upstreamImport) && !source.includes(forkImport)) {
+            throw new Error("package smoke import not found");
+        }
+        source = source.replaceAll(upstreamImport, forkImport);
+
+        const conditional = [
+            "      - name: Setup Bun",
+            "        if: matrix.package-manager == '\''bun'\''",
+            "        uses: oven-sh/setup-bun@v2",
+        ].join("\n");
+        const unconditional = [
+            "      - name: Setup Bun",
+            "        uses: oven-sh/setup-bun@v2",
+        ].join("\n");
+        const job = source.slice(packageManagers);
+        if (job.includes(conditional)) {
+            source = source.slice(0, packageManagers) + job.replace(conditional, unconditional);
+        } else if (!job.includes(unconditional)) {
+            throw new Error("package-managers Bun setup did not match the supported workflow shape");
+        }
+
+        fs.writeFileSync(output, source);
+    ' "${file}" "${tmp}"
+
+    if cmp -s "${file}" "${tmp}"; then
+        rm -f "${tmp}"
+        info "skipped  .github/workflows/ci.yml (already patched)"
+        return 0
+    fi
+    mv "${tmp}" "${file}"
+    info "patched  .github/workflows/ci.yml"
+}
+
 apply_overlay() {
     local target="$1"
     test -d "${target}" || die "target directory does not exist: ${target}"
@@ -225,9 +274,7 @@ apply_overlay() {
     # Identity patches against files upstream continues to own.
     patch_package_json "${target}"
     patch_gitignore "${target}"
-    patch_sed ".github/workflows/ci.yml" "${target}" \
-        's|@atomic-ehr/codegen|@cognovis/codegen|g' \
-        '@cognovis/codegen'
+    patch_ci_workflow "${target}"
     patch_sed "src/cli/index.ts" "${target}" \
         '1s|^#!/usr/bin/env node$|#!/usr/bin/env bun|' \
         '#!/usr/bin/env bun'

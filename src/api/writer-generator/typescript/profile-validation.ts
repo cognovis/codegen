@@ -56,6 +56,7 @@ export const collectRegularFieldValidation = (
     canonicalUrlExpr?: { url: string; expr: string },
     tsIndex?: TypeSchemaIndex,
     fieldSlicing?: FieldSlicing,
+    enumExprs?: ReadonlyMap<string, string>,
 ) => {
     if (field.excluded) {
         errors.push(`...validateExcluded(res, profileName, ${JSON.stringify(name)})`);
@@ -76,7 +77,8 @@ export const collectRegularFieldValidation = (
 
     if (field.enum) {
         const target = field.enum.isOpen ? warnings : errors;
-        target.push(`...validateEnum(res, profileName, ${JSON.stringify(name)}, ${JSON.stringify(field.enum.values)})`);
+        const valuesExpr = enumExprs?.get(name) ?? JSON.stringify(field.enum.values);
+        target.push(`...validateEnum(res, profileName, ${JSON.stringify(name)}, ${valuesExpr})`);
     }
 
     if (field.mustSupport && !field.required)
@@ -124,6 +126,7 @@ export const generateValidateMethod = (
     const canonicalUrlExpr = canonicalUrl
         ? { url: canonicalUrl, expr: `${tsProfileClassName(snapshot)}.canonicalUrl` }
         : undefined;
+    const enumLinks = w.enumTerminologyLinks(tsIndex, snapshot);
     w.curlyBlock(["validate(): { errors: string[]; warnings: string[] }"], () => {
         w.line(`const profileName = "${profileName}"`);
         w.line("const res = this.resource");
@@ -150,6 +153,7 @@ export const generateValidateMethod = (
                 canonicalUrlExpr,
                 tsIndex,
                 snapshot.slicing?.[name],
+                enumLinks.exprs,
             );
         }
 
