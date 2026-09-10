@@ -588,6 +588,37 @@ describe("forceDependencies", () => {
         });
     });
 
+    it("allows one builder to replace the global forceDependencies mapping", async () => {
+        const raw = {
+            ...validConfig(),
+            options: { forceDependencies: { "de.basisprofil.r4": "1.6.0" } },
+        };
+        (raw.builders[0] as Record<string, unknown>).forceDependencies = {
+            "de.basisprofil.r4": "1.5.2",
+        };
+        raw.builders.push({
+            name: "modern",
+            fromPackages: [{ name: "example.modern", version: "1.0.0" }],
+            typescript: {},
+            outputTo: "./out/modern",
+        });
+
+        const config = parseGenerateConfig(raw, CONFIG_PATH);
+        const factory = mkFactory();
+        await runGenerateConfig(config, { createBuilder: factory.createBuilder });
+
+        const historical = factory.seen[0]!.preprocessPackage;
+        const modern = factory.seen[1]!.preprocessPackage;
+        expect(historical).toBeDefined();
+        expect(modern).toBeDefined();
+        expect(historical!(packageContext({ "de.basisprofil.r4": "1.4.0" }))).toMatchObject({
+            packageJson: { dependencies: { "de.basisprofil.r4": "1.5.2" } },
+        });
+        expect(modern!(packageContext({ "de.basisprofil.r4": "1.4.0" }))).toMatchObject({
+            packageJson: { dependencies: { "de.basisprofil.r4": "1.6.0" } },
+        });
+    });
+
     it("rejects a non-string forced version", () => {
         const raw = { ...validConfig(), options: { forceDependencies: { "de.basisprofil.r4": 1.6 } } };
 
