@@ -48,7 +48,7 @@ tsup.config.ts
 |---|---|---|
 | `package.json` | patch | `name` (`@cognovis/codegen`), the `prepare` script, and `allowScripts` — and nothing else. Dependencies and version stay upstream's; the release script owns the version. There is deliberately **no `allowScripts` field** — see [npm 12 and git installs](#npm-12-and-git-installs) — and `--verify` asserts it stays absent here and in the applied tree. |
 | `.gitignore` | patch | Appends `.intake/`. The `Library-managed project installs` block is not reapplied: although it is committed on `main` — the agent tooling writes it in place — it enumerates per-machine install paths, so a fresh apply deliberately drops it and `library` regenerates it on whatever machine next installs those files. |
-| `.github/workflows/ci.yml` | patch | The consumer smoke-test import, `@atomic-ehr/codegen` to `@cognovis/codegen`. Upstream keeps ownership of the job matrix. |
+| `.github/workflows/ci.yml` | patch | The consumer smoke-test import, `@atomic-ehr/codegen` to `@cognovis/codegen`, and Bun setup for every package-manager leg because the Cognovis CLI distribution uses a Bun shebang. Upstream keeps ownership of the job matrix. |
 | `.github/workflows/release.yml` | copy | The whole publish pipeline: `npm.cognovis.de`, the `@cognovis` scope, `COGNOVIS_NPM_TOKEN`, and the GitHub release step. Upstream edits to this file are intentionally discarded. |
 | `scripts/release.sh` | copy | Version derivation and `git-cliff` changelog generation. Supersedes the upstream script. |
 | `scripts/verify-release-tarball.sh` | copy | Post-pack smoke that installs the named tarball and runs `atomic-codegen generate --config` against a sliced-choice fixture. Does not exist upstream. |

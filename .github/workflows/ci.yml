@@ -81,7 +81,6 @@ jobs:
           name: package-tarball
 
       - name: Setup Bun
-        if: matrix.package-manager == 'bun'
         uses: oven-sh/setup-bun@v2
 
       - name: Setup Node.js
