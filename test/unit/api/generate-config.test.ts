@@ -125,6 +125,31 @@ describe("parseGenerateConfig", () => {
         expect(config.builders[0]!.typescript).toEqual(raw.builders[0]!.typescript);
     });
 
+    /**
+     * Worked example source: tdd slice assignment for codegen-agr.
+     * Pointer: codegen-agr/config-red assignment: reject invalid module style and terminology package item types.
+     */
+    it("rejects invalid TypeScript module and terminology option values", () => {
+        const raw = validConfig();
+        raw.builders[0]!.typescript = {
+            moduleSpecifierStyle: "commonjs",
+            terminology: { enabled: true, packages: ["fixture.ig@1.2.3", 42] },
+        };
+
+        try {
+            parseGenerateConfig(raw, CONFIG_PATH);
+            throw new Error("expected a GenerateConfigError");
+        } catch (error) {
+            const issues = (error as GenerateConfigError).issues;
+            expect(issues.map((issue) => issue.path)).toEqual([
+                "builders[0].typescript.moduleSpecifierStyle",
+                "builders[0].typescript.terminology.packages[1]",
+            ]);
+            expect(issues[0]!.message).toContain("extensionless, node-esm");
+            expect(issues[1]!.message).toContain("expected a string");
+        }
+    });
+
     it("rejects an unknown key in a builder and names it", () => {
         const raw = validConfig();
         (raw.builders[0] as Record<string, unknown>).typscript = {};
@@ -354,6 +379,35 @@ describe("parseGenerateConfig", () => {
 });
 
 describe("runGenerateConfig", () => {
+    /**
+     * Worked example source: tdd slice assignment for codegen-agr.
+     * Pointer: codegen-agr/config-red assignment: custom attestation label and unverifiable behavior.
+     * The requested JSON example combines "node-esm", "fixture.ig@1.2.3",
+     * "publisher-signature", and "unverifiable" at the public config runner seam.
+     */
+    it("passes TypeScript module and terminology options from JSON to generation", async () => {
+        const raw = validConfig();
+        raw.builders[0]!.typescript = {
+            moduleSpecifierStyle: "node-esm",
+            terminology: {
+                enabled: true,
+                packages: ["fixture.ig@1.2.3", "restricted.ig@2.0.0"],
+                packageVerification: {
+                    "fixture.ig@1.2.3": "publisher-signature",
+                    "restricted.ig@2.0.0": "unverifiable",
+                },
+            },
+        };
+        const config = parseGenerateConfig(raw, CONFIG_PATH);
+        const factory = mkFactory();
+
+        await runGenerateConfig(config, { createBuilder: factory.createBuilder });
+
+        expect(factory.recordings[0]!.calls.find((call) => call.method === "typescript")!.args).toEqual([
+            raw.builders[0]!.typescript,
+        ]);
+    });
+
     it("applies one builder's configuration in a fixed order", async () => {
         const config = parseGenerateConfig(
             {

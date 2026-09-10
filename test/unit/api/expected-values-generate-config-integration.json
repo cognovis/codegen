@@ -1,0 +1,61 @@
+{
+  "test_tree": "test",
+  "expected_values": [
+    {
+      "name": "Node ESM module specifier style",
+      "value": "node-esm",
+      "source_kind": "worked_example",
+      "source": "tdd slice assignment for codegen-agr",
+      "test_path": "test/unit/api/generate-config.test.ts",
+      "worked_example_pointer": "codegen-agr/config-red assignment: custom attestation label and unverifiable behavior"
+    },
+    {
+      "name": "Selected terminology package",
+      "value": "fixture.ig@1.2.3",
+      "source_kind": "worked_example",
+      "source": "tdd slice assignment for codegen-agr",
+      "test_path": "test/unit/api/generate-config.test.ts",
+      "worked_example_pointer": "codegen-agr/config-red assignment: custom attestation label and unverifiable behavior"
+    },
+    {
+      "name": "Custom terminology attestation",
+      "value": "publisher-signature",
+      "source_kind": "worked_example",
+      "source": "tdd slice assignment for codegen-agr",
+      "test_path": "test/unit/api/generate-config.test.ts",
+      "worked_example_pointer": "codegen-agr/config-red assignment: custom attestation label and unverifiable behavior"
+    },
+    {
+      "name": "Emitted custom terminology attestation",
+      "value": "publisher-signature",
+      "source_kind": "worked_example",
+      "source": "tdd slice assignment for codegen-agr",
+      "test_path": "test/unit/api/writer-generator/typescript/terminology.test.ts",
+      "worked_example_pointer": "codegen-agr/config-red assignment: custom attestation label and unverifiable behavior"
+    },
+    {
+      "name": "Unverifiable terminology attestation",
+      "value": "unverifiable",
+      "source_kind": "worked_example",
+      "source": "tdd slice assignment for codegen-agr",
+      "test_path": "test/unit/api/generate-config.test.ts",
+      "worked_example_pointer": "codegen-agr/config-red assignment: custom attestation label and unverifiable behavior"
+    },
+    {
+      "name": "Invalid module style issue path",
+      "value": "builders[0].typescript.moduleSpecifierStyle",
+      "source_kind": "worked_example",
+      "source": "tdd slice assignment for codegen-agr",
+      "test_path": "test/unit/api/generate-config.test.ts",
+      "worked_example_pointer": "codegen-agr/config-red assignment: reject invalid module style and terminology package item types"
+    },
+    {
+      "name": "Invalid terminology package issue path",
+      "value": "builders[0].typescript.terminology.packages[1]",
+      "source_kind": "worked_example",
+      "source": "tdd slice assignment for codegen-agr",
+      "test_path": "test/unit/api/generate-config.test.ts",
+      "worked_example_pointer": "codegen-agr/config-red assignment: reject invalid module style and terminology package item types"
+    }
+  ]
+}

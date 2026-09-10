@@ -8,6 +8,7 @@ exports[`module specifier styles node-esm package index pinned 1`] = `
 exports[`module specifier styles node-esm profiles barrel pinned 1`] = `
 "export { MinimalRequiredExtensionProfile } from "./Extension_MinimalRequiredExtension.js";
 export { PraxisProposalProvenanceProfile } from "./Provenance_PraxisProposalProvenance.js";
+export { RequiredComplexExtensionProfile } from "./Extension_RequiredComplexExtension.js";
 "
 `;
 

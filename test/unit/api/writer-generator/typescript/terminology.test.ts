@@ -581,6 +581,17 @@ describe("TypeScript terminology surface", () => {
         expect(result.filesGenerated.typescript?.["generated/types/fixture-ig/terminology.ts"]).toBeUndefined();
     });
 
+    /**
+     * Worked example source: tdd slice assignment for codegen-agr.
+     * Pointer: codegen-agr/config-red assignment: custom attestation label and unverifiable behavior.
+     */
+    it("emits a custom package verification attestation", async () => {
+        const output = await generateTerminology("publisher-signature");
+
+        expect(output).toContain('verification: "publisher-signature"');
+        expect(output).toContain("codes:");
+    });
+
     it("emits no concept content for an unverifiable package", async () => {
         const output = await generateTerminology("unverifiable");
 
@@ -825,7 +836,11 @@ describe("TypeScript terminology surface", () => {
         );
 
         const result = await new APIBuilder({ register, logger: mkErrorLogger() })
-            .typescript({ inMemoryOnly: true, terminology: { enabled: true, packageVerification } })
+            .typescript({
+                inMemoryOnly: true,
+                moduleSpecifierStyle: "node-esm",
+                terminology: { enabled: true, packageVerification },
+            })
             .generate();
         if (!result.success) throw new Error(result.errors.join(", "));
         const files = result.filesGenerated.typescript ?? {};

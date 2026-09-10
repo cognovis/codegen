@@ -22,7 +22,7 @@ const buildPublishedProjection = async (): Promise<string> => {
             path: FIXTURE_PATH,
             dependencies: [{ name: "hl7.fhir.r4.core", version: "4.0.1" }],
         })
-        .typescript({ generateProfile: true, withDebugComment: false })
+        .typescript({ generateProfile: true, withDebugComment: false, moduleSpecifierStyle: "node-esm" })
         .outputTo(dir)
         .generate();
 
