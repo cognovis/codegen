@@ -180,12 +180,13 @@ const TYPESCRIPT_KEYS = [
     "lineWidth",
     "openResourceTypeSet",
     "primitiveTypeExtension",
+    "moduleSpecifierStyle",
     "extensionGetterDefault",
     "sliceGetterDefault",
     "terminology",
 ] as const satisfies readonly (keyof TypeScriptOptions)[];
 
-const TERMINOLOGY_KEYS = ["enabled", "packageVerification"] as const;
+const TERMINOLOGY_KEYS = ["enabled", "packages", "packageVerification"] as const;
 const PYTHON_KEYS = [
     ...WRITER_KEYS,
     "allowExtraFields",
@@ -371,6 +372,14 @@ const readTypeScriptOptions = (ctx: Ctx, value: unknown, path: string): Partial<
     const record = readRecord(ctx, value, path);
     if (!record) return undefined;
     checkKnownKeys(ctx, record, TYPESCRIPT_KEYS, path);
+    const moduleSpecifierStylePath = childPath(path, "moduleSpecifierStyle");
+    const moduleSpecifierStyle =
+        record.moduleSpecifierStyle === undefined
+            ? undefined
+            : readString(ctx, record.moduleSpecifierStyle, moduleSpecifierStylePath);
+    if (moduleSpecifierStyle !== undefined && !["extensionless", "node-esm"].includes(moduleSpecifierStyle)) {
+        report(ctx, moduleSpecifierStylePath, "expected one of: extensionless, node-esm");
+    }
     if (record.terminology === undefined) return record as Partial<TypeScriptOptions>;
 
     const terminologyPath = childPath(path, "terminology");
@@ -381,11 +390,18 @@ const readTypeScriptOptions = (ctx: Ctx, value: unknown, path: string): Partial<
         terminology.enabled === undefined
             ? undefined
             : readBoolean(ctx, terminology.enabled, childPath(terminologyPath, "enabled"));
+    const packages =
+        terminology.packages === undefined
+            ? undefined
+            : readStringArray(ctx, terminology.packages, childPath(terminologyPath, "packages"));
     const packageVerification =
         terminology.packageVerification === undefined
             ? undefined
             : readStringMap(ctx, terminology.packageVerification, childPath(terminologyPath, "packageVerification"));
-    return { ...record, terminology: { enabled, packageVerification } } as Partial<TypeScriptOptions>;
+    return {
+        ...record,
+        terminology: { enabled, packages, packageVerification },
+    } as Partial<TypeScriptOptions>;
 };
 const readBuilder = (ctx: Ctx, value: unknown, path: string): GenerateConfigBuilder | undefined => {
     const record = readRecord(ctx, value, path);
