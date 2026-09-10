@@ -39,6 +39,34 @@ const deduplicateSchemas = (
     resolveCollisions?: ResolveCollisionsConf,
     logger?: CodegenLog,
 ): GenerateTypeSchemasResult => {
+    const canonicalPackages: Record<string, { canonical: CanonicalUrl; packageName: PkgName; versions: Set<string> }> =
+        {};
+    for (const { schema } of schemasWithSources) {
+        const { package: packageName, url, version } = schema.identifier;
+        const key = `${packageName}\u0000${url}`;
+        const entry = canonicalPackages[key] ?? { canonical: url, packageName, versions: new Set<string>() };
+        entry.versions.add(version);
+        canonicalPackages[key] = entry;
+    }
+    const versionConflicts = Object.values(canonicalPackages)
+        .filter(({ versions }) => versions.size > 1)
+        .sort(
+            (left, right) =>
+                left.packageName.localeCompare(right.packageName) || left.canonical.localeCompare(right.canonical),
+        );
+    if (versionConflicts.length > 0) {
+        const details = versionConflicts.map(({ canonical, packageName, versions }) => {
+            const identities = [...versions]
+                .sort()
+                .map((version) => `${packageName}@${version}`)
+                .join(", ");
+            return `${identities} define canonical ${JSON.stringify(canonical)}`;
+        });
+        throw new Error(
+            `Unsupported package version conflict: ${details.join("; ")}. Pin one version because TypeSchema cannot safely distinguish the same package canonical across versions.`,
+        );
+    }
+
     // key -> hash
     const groups: Record<string, Record<string, { typeSchema: TypeSchema; sources: SchemaWithSource[] }>> = {};
 

@@ -149,6 +149,75 @@ const cleanup = async (opts: APIBuilderOptions, logger: CodegenLogManager): Prom
     }
 };
 
+const PACKAGE_PATH_OR_URL_RE = /^(?:https?:\/\/|\.{0,2}\/)/;
+
+const packageVersionConflicts = (packages: PackageMeta[]): string[][] => {
+    const versionsByName: Record<string, Set<string>> = {};
+    for (const pkg of packages) {
+        if (pkg.version === "latest") continue;
+        const versions = versionsByName[pkg.name] ?? new Set<string>();
+        versions.add(pkg.version);
+        versionsByName[pkg.name] = versions;
+    }
+
+    return Object.entries(versionsByName)
+        .filter(([, versions]) => versions.size > 1)
+        .map(([name, versions]) => [...versions].sort().map((version) => packageMetaToNpm({ name, version })))
+        .sort(([left = ""], [right = ""]) => left.localeCompare(right));
+};
+
+const assertUnambiguousRootPackageVersions = (rootPackages: PackageMeta[]): void => {
+    const conflicts = packageVersionConflicts(rootPackages);
+    if (conflicts.length === 0) return;
+
+    throw new Error(
+        `Conflicting root package versions: ${conflicts.flat().join(", ")}. The canonical manager resolves one version per package name; select one version for each root package.`,
+    );
+};
+
+const packageMetaFromRef = (packageRef: string): PackageMeta | undefined => {
+    if (PACKAGE_PATH_OR_URL_RE.test(packageRef) || packageRef.endsWith(".tgz")) return undefined;
+    const separator = packageRef.lastIndexOf("@");
+    if (separator <= 0) return { name: packageRef, version: "latest" };
+    return { name: packageRef.slice(0, separator), version: packageRef.slice(separator + 1) || "latest" };
+};
+
+const assertUnambiguousDependencyClosure = async (
+    manager: ReturnType<typeof CanonicalManager>,
+    rootPackages: PackageMeta[],
+): Promise<void> => {
+    const packages = [...rootPackages].sort((left, right) =>
+        packageMetaToNpm(left).localeCompare(packageMetaToNpm(right)),
+    );
+    const visited = new Set<string>();
+    const requirements: PackageMeta[] = [...rootPackages];
+
+    for (let index = 0; index < packages.length; index += 1) {
+        const pkg = packages[index];
+        if (!pkg || visited.has(pkg.name)) continue;
+        visited.add(pkg.name);
+
+        const manifest = await manager.packageJson(pkg.name);
+        if (typeof manifest.name === "string" && typeof manifest.version === "string") {
+            requirements.push({ name: manifest.name, version: manifest.version });
+        }
+        for (const [name, version] of Object.entries(manifest.dependencies ?? {}).sort(([left], [right]) =>
+            left.localeCompare(right),
+        )) {
+            const dependency = { name, version };
+            requirements.push(dependency);
+            packages.push(dependency);
+        }
+    }
+
+    const conflicts = packageVersionConflicts(requirements);
+    if (conflicts.length === 0) return;
+
+    throw new Error(
+        `Conflicting transitive package versions: ${conflicts.flat().join(", ")}. The canonical manager resolves one version per package name; pin one version across the shared dependency closure.`,
+    );
+};
+
 /**
  * High-Level API Builder class
  *
@@ -166,6 +235,7 @@ export class APIBuilder {
     };
     private logger: CodegenLogManager;
     private generators: { name: string; writer: FileSystemWriter }[] = [];
+    private requestedPackages: PackageMeta[] = [];
 
     constructor(
         userOpts: Partial<APIBuilderOptions> & {
@@ -221,18 +291,22 @@ export class APIBuilder {
     }
 
     fromPackage(packageName: string, version?: string): APIBuilder {
-        const pkg = packageMetaToNpm({ name: packageName, version: version || "latest" });
-        this.managerInput.npmPackages.push(pkg);
+        const packageMeta = { name: packageName, version: version || "latest" };
+        this.requestedPackages.push(packageMeta);
+        this.managerInput.npmPackages.push(packageMetaToNpm(packageMeta));
         return this;
     }
 
     fromPackageRef(packageRef: string): APIBuilder {
+        const packageMeta = packageMetaFromRef(packageRef);
+        if (packageMeta) this.requestedPackages.push(packageMeta);
         this.managerInput.npmPackages.push(packageRef);
         return this;
     }
 
     localStructureDefinitions(config: LocalStructureDefinitionConfig): APIBuilder {
         this.logger.info(`Registering local StructureDefinitions for ${config.package.name}@${config.package.version}`);
+        this.requestedPackages.push(config.package);
         this.managerInput.localSDs.push({
             name: config.package.name,
             version: config.package.version,
@@ -447,6 +521,7 @@ export class APIBuilder {
 
         this.logger.debug(`Starting generation with ${this.generators.length} generators`);
         try {
+            assertUnambiguousRootPackageVersions(this.requestedPackages);
             if (this.options.cleanOutput) await cleanup(this.options, this.logger);
 
             let register: Register;
@@ -460,16 +535,20 @@ export class APIBuilder {
                     await this.manager.addPackages(...this.managerInput.npmPackages.sort());
                 }
                 // Add local packages and archives
+                const resolvedLocalPackages: PackageMeta[] = [];
                 for (const config of this.managerInput.localSDs) {
-                    await this.manager.addLocalPackage(config);
+                    resolvedLocalPackages.push(await this.manager.addLocalPackage(config));
                 }
                 for (const tgzArchive of this.managerInput.localTgzPackages) {
-                    await this.manager.addTgzPackage(tgzArchive);
+                    resolvedLocalPackages.push(await this.manager.addTgzPackage(tgzArchive));
                 }
                 // Initialize after all packages are registered
                 const ref2meta = await this.manager.init();
 
                 const packageMetas = Object.values(ref2meta);
+                const resolvedRoots = [...packageMetas, ...resolvedLocalPackages];
+                assertUnambiguousRootPackageVersions([...this.requestedPackages, ...resolvedRoots]);
+                await assertUnambiguousDependencyClosure(this.manager, resolvedRoots);
                 register = await registerFromManager(this.manager, {
                     logger: this.logger.fork("reg"),
                     focusedPackages: packageMetas,
