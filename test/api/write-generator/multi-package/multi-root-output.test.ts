@@ -50,6 +50,19 @@ const packageInventory = (files: Record<string, string>): string[] =>
         ),
     ].sort();
 
+const normalizedTypeScriptFileMap = (files: Record<string, string>): Record<string, string> =>
+    Object.fromEntries(
+        Object.entries(files)
+            .map(([path, content]) => {
+                const normalizedPath = path.replaceAll("\\", "/");
+                const typesMarker = "/types/";
+                const markerIndex = normalizedPath.lastIndexOf(typesMarker);
+                if (markerIndex < 0) throw new Error(`generated path has no types directory: ${path}`);
+                return [normalizedPath.slice(markerIndex + typesMarker.length), content] as const;
+            })
+            .sort(([left], [right]) => left.localeCompare(right)),
+    );
+
 /**
  * Worked example source: codegen-za2 Acceptance Criteria 1 and 2.
  * Pointer: codegen-za2/acceptance-criteria/1-2/shared-r4-diamond.
@@ -98,7 +111,7 @@ describe("flat TypeScript output for a local multi-root diamond", async () => {
         );
     });
 
-    it("produces the same package inventory through parsed JSON configuration", async () => {
+    it("produces the complete same generated file map through parsed JSON configuration", async () => {
         const raw = JSON.parse(
             JSON.stringify({
                 version: 1,
@@ -128,7 +141,9 @@ describe("flat TypeScript output for a local multi-root diamond", async () => {
 
         expect(result.success).toBeTrue();
         expect(report).toBeDefined();
-        expect(packageInventory(typeScriptFiles(report!))).toEqual(packageInventory(typeScriptFiles(forward)));
+        expect(normalizedTypeScriptFileMap(typeScriptFiles(report!))).toEqual(
+            normalizedTypeScriptFileMap(typeScriptFiles(forward)),
+        );
     });
 
     it("compiles the actual shared output under NodeNext and Bundler resolution", async () => {
