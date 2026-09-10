@@ -136,6 +136,53 @@ atomic-codegen generate --config ./codegen.json --dry-run  # print the plan with
 
 Relative paths resolve against the config file's directory, unknown keys are rejected with the full list of problems, and `outputTo` is removed before generation by default (set `"cleanOutput": false` to keep it). A config may hold several builders: each maps to one `APIBuilder` pipeline (`fromPackages`/`fromPackageRefs`/`localTgzPackages`/`localStructureDefinitions` inputs, `typeSchema` transformations, and `typescript`/`python`/`csharp`/`introspection` generators — see `GenerateConfigBuilder` in `src/api/generate-config.ts`). A failed builder does not stop the others, and the run exits non-zero if any failed.
 
+**Generate several package roots into one TypeScript tree.** Add every root to the same `APIBuilder` and run one TypeScript generator. Codegen resolves the combined transitive closure, emits every resolved package identity once, and writes relative imports between sibling package directories. Packages in this shared generation do not need an `externalPackages` mapping or a caller-defined generation order.
+
+```typescript
+const report = await new APIBuilder()
+    .fromPackage("example.fhir.root-a", "1.0.0")
+    .fromPackage("example.fhir.root-b", "2.0.0")
+    .typescript({ moduleSpecifierStyle: "node-esm" })
+    .outputTo("./generated/types")
+    .generate();
+```
+
+The equivalent JSON configuration also uses one builder. Unlike the API, every `fromPackages` entry in JSON requires a `version`.
+
+```json
+{
+    "version": 1,
+    "builders": [
+        {
+            "name": "shared-types",
+            "fromPackages": [
+                { "name": "example.fhir.root-a", "version": "1.0.0" },
+                { "name": "example.fhir.root-b", "version": "2.0.0" }
+            ],
+            "typescript": { "moduleSpecifierStyle": "node-esm" },
+            "outputTo": "./generated/types"
+        }
+    ]
+}
+```
+
+A typical output has this flat package layout; directory names are sanitized deterministically and remain collision-safe:
+
+```text
+generated/types/
+├── profile-helpers.ts
+├── terminology-types.ts
+├── example-fhir-root-a/
+├── example-fhir-root-b/
+└── shared-dependency/
+```
+
+The runtime helper files are shared at the generation root when the selected output needs them. Relative imports make the whole tree relocatable. `moduleSpecifierStyle` defaults to `"extensionless"`; select `"node-esm"` to emit explicit `.js` targets for direct Node ESM use.
+
+Repeated requests for the same resolved `name@version` are deduplicated. Calling `.fromPackage(name)` without a version requests `latest`, which the package manager resolves once before output; generated provenance and references use the concrete resolved version. The current canonical manager resolves one version per package name, so roots or transitive manifests that require conflicting concrete versions fail with a diagnostic naming the identities. TypeSchema also rejects the same package canonical appearing across versions because it cannot target that combination unambiguously. Dependency pins are optional: JSON `forceDependencies` may be set globally or for one builder to normalize versions that packages already declare, but Codegen does not require all differently named packages or FHIR releases to use one global version.
+
+Each independent builder retains its own output and overlapping builder output directories are rejected. For a FHIR Management release, FHIR Management selects and records the release roots and versions, optionally applies dependency pins, assembles exports, publishes the result, and migrates consumers. Codegen resolves the declared roots, emits the shared package tree and its imports, and reports unsupported ambiguity.
+
 ### Usage Examples
 
 See the [examples/](examples/) directory for working demonstrations:
