@@ -200,6 +200,52 @@ describe("treeShake inherited nested targets", () => {
             }),
         ).toThrowError("http://hl7.org/fhir/StructureDefinition/Questionnaire#item.enableWhen");
     });
+
+    /**
+     * source_kind: worked_example
+     * source: codegen-4ok accepted Reviewer 1 reproduction
+     * worked_example_pointer: valid core reference to http://r#n is visited before missing-package reference {url: http://r#n, package: absent}; current outcome accepted
+     * source_kind: oracle
+     * source: TypeSchemaIndex exact URL-plus-package nested identity contract at 75b07521
+     * oracle_ledger_id: atomic-codegen@75b07521:NestedIdentifier+TypeSchemaIndex.resolveType
+     * expected missing identity: {"kind":"nested","name":"n","url":"http://r#n","package":"absent","version":"1.0.0"}
+     */
+    it("rejects a visited nested URL when the requested package is missing", () => {
+        const nestedUrl = "http://r#n" as CanonicalUrl;
+        const coreNested: NestedIdentifier = {
+            kind: "nested",
+            name: "n" as Name,
+            url: nestedUrl,
+            package: "core",
+            version: "1.0.0",
+        };
+        const missingNested: NestedIdentifier = {
+            ...coreNested,
+            package: "absent",
+        };
+        const root: SpecializationTypeSchema = {
+            identifier: {
+                kind: "resource",
+                name: "Root" as Name,
+                url: "http://r" as CanonicalUrl,
+                package: "fixture",
+                version: "1.0.0",
+            },
+            fields: {
+                valid: { type: coreNested },
+                missing: { type: missingNested },
+            },
+            nested: [{ identifier: coreNested, fields: {} }],
+        };
+
+        expect(() =>
+            treeShake(mkTypeSchemaIndex([root], {}), {
+                fixture: { "http://r": {} },
+            }),
+        ).toThrowError(
+            'Nested schema {"kind":"nested","name":"n","url":"http://r#n","package":"absent","version":"1.0.0"}',
+        );
+    });
 });
 
 describe("treeShake specific TypeSchema", async () => {

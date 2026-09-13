@@ -223,16 +223,20 @@ const treeShakeTypeSchemaWithResolver = (
     }
 
     if (schema.nested) {
-        const usedTypes = new Set<CanonicalUrl>();
+        const nestedIdentity = (identifier: { package: PkgName; url: CanonicalUrl }) =>
+            JSON.stringify([identifier.package, identifier.url]);
+        const usedTypes = new Set<string>();
         const collectUsedNestedTypes = (s: { fields?: Record<string, Field> }) => {
             Object.values(s.fields ?? {})
                 .filter(isNotChoiceDeclarationField)
                 .filter((f) => isNestedIdentifier(f.type))
                 .forEach((f) => {
-                    const url = f.type.url;
-                    if (!usedTypes.has(url)) {
-                        usedTypes.add(url);
-                        const nestedTypeDef = schema.nested?.find((f) => f.identifier.url === url);
+                    const identity = nestedIdentity(f.type);
+                    if (!usedTypes.has(identity)) {
+                        usedTypes.add(identity);
+                        const nestedTypeDef = schema.nested?.find(
+                            (nested) => nestedIdentity(nested.identifier) === identity,
+                        );
                         if (nestedTypeDef) {
                             collectUsedNestedTypes(nestedTypeDef);
                         } else if (!resolveType || !isNestedTypeSchema(resolveType(f.type))) {
@@ -244,7 +248,7 @@ const treeShakeTypeSchemaWithResolver = (
                 });
         };
         collectUsedNestedTypes(schema);
-        schema.nested = schema.nested.filter((n) => usedTypes.has(n.identifier.url));
+        schema.nested = schema.nested.filter((nested) => usedTypes.has(nestedIdentity(nested.identifier)));
     }
 
     if (isProfileTypeSchema(schema)) {
