@@ -15,8 +15,10 @@ import {
     isNotChoiceDeclarationField,
     isPrimitiveTypeSchema,
     isProfileTypeSchema,
+    isResourceTypeSchema,
     isSnapshotProfileTypeSchema,
     isSpecializationTypeSchema,
+    isTypeDiscriminated,
     isValueSetTypeSchema,
     type PkgName,
     type ProfileTypeSchema,
@@ -279,6 +281,73 @@ const collectReferenceTargets = (schema: TypeSchema): Identifier[] => {
     );
 };
 
+const extractResourceTypeFromMatch = (match: Record<string, unknown>): string | undefined => {
+    for (const value of Object.values(match)) {
+        if (typeof value !== "object" || value === null) continue;
+        const nestedMatch = value as Record<string, unknown>;
+        if (typeof nestedMatch.resourceType === "string") return nestedMatch.resourceType;
+        const nestedResourceType = extractResourceTypeFromMatch(nestedMatch);
+        if (nestedResourceType) return nestedResourceType;
+    }
+    return undefined;
+};
+
+const collectSliceMatchResourceTargets = (schema: TypeSchema, tsIndex: TypeSchemaIndex): TypeSchema[] => {
+    if (!isSpecializationTypeSchema(schema) && !isProfileTypeSchema(schema)) return [];
+    return Object.values(schema.slicing ?? {})
+        .filter(isTypeDiscriminated)
+        .flatMap((slicing) => Object.values(slicing.slices ?? {}))
+        .flatMap((slice) => {
+            const resourceType = extractResourceTypeFromMatch(slice.match ?? {});
+            if (!resourceType) return [];
+            const candidates = tsIndex.collectResources().filter(({ identifier }) => identifier.name === resourceType);
+            if (candidates.length === 0)
+                throw new Error(
+                    `Slice match resource type ${resourceType} not found for ${JSON.stringify(schema.identifier)}`,
+                );
+
+            const candidateIds = new Set(candidates.map(({ identifier }) => JSON.stringify(identifier)));
+            const candidateUrls = [...new Set(candidates.map(({ identifier }) => identifier.url))];
+            const resolveInPackages = (packages: PkgName[]): TypeSchema[] => {
+                const resolved: Record<string, TypeSchema> = {};
+                const resolutionTree = tsIndex.register?.resolutionTree();
+                for (const pkgName of packages) {
+                    for (const url of candidateUrls) {
+                        const hasDirectCandidate = candidates.some(
+                            ({ identifier }) => identifier.package === pkgName && identifier.url === url,
+                        );
+                        if (!hasDirectCandidate && !resolutionTree?.[pkgName]?.[url]?.[0]) continue;
+                        const target = tsIndex.resolveByUrl(pkgName, url);
+                        if (!isResourceTypeSchema(target) || !candidateIds.has(JSON.stringify(target.identifier)))
+                            continue;
+                        resolved[JSON.stringify(target.identifier)] = target;
+                    }
+                }
+                return Object.values(resolved);
+            };
+
+            const ownerTargets = resolveInPackages([schema.identifier.package]);
+            if (ownerTargets.length === 1) return ownerTargets;
+
+            const dependencyPackages = [
+                ...new Set(
+                    (schema.dependencies ?? [])
+                        .filter((dependency) => !isNestedIdentifier(dependency))
+                        .map((dependency) => dependency.package)
+                        .filter((pkgName) => pkgName !== schema.identifier.package),
+                ),
+            ];
+            const dependencyTargets = resolveInPackages(dependencyPackages);
+            if (ownerTargets.length === 0 && dependencyTargets.length === 1) return dependencyTargets;
+            if (ownerTargets.length === 0 && dependencyTargets.length === 0 && candidates.length === 1)
+                return candidates;
+
+            throw new Error(
+                `Slice match resource type ${resourceType} is ambiguous for ${JSON.stringify(schema.identifier)}: ${candidates.map(({ identifier }) => JSON.stringify(identifier)).join(", ")}`,
+            );
+        });
+};
+
 export const treeShake = (
     tsIndex: TypeSchemaIndex,
     treeShake: TreeShakeConf,
@@ -318,8 +387,11 @@ export const treeShake = (
 
         for (const schema of schemas) {
             if (isSpecializationTypeSchema(schema) || isProfileTypeSchema(schema)) {
-                if (!schema.dependencies) continue;
-                schema.dependencies.forEach((dep) => {
+                const dependencies = [
+                    ...(schema.dependencies ?? []),
+                    ...collectSliceMatchResourceTargets(schema, tsIndex).map(({ identifier }) => identifier),
+                ];
+                dependencies.forEach((dep) => {
                     if (isNestedIdentifier(dep)) return;
                     const depSchema = tsIndex.resolve(dep);
                     if (!depSchema)

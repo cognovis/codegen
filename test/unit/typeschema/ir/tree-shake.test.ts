@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import assert from "node:assert";
+import { spawnSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { TypeScript } from "@root/api/writer-generator/typescript/writer";
 import { mkExtensionNameCandidates } from "@root/typeschema/core/name-candidates";
 import {
     packageTreeShakeReadme,
@@ -19,7 +24,15 @@ import type {
     TypeIdentifier,
 } from "@root/typeschema/types";
 import { mkTypeSchemaIndex } from "@root/typeschema/utils";
-import { mkIndex, mkR4Register, mkTestLogger, r4Package, r5Package, resolveTs } from "@typeschema-test/utils";
+import {
+    mkIndex,
+    mkR4Register,
+    mkSilentLogger,
+    mkTestLogger,
+    r4Package,
+    r5Package,
+    resolveTs,
+} from "@typeschema-test/utils";
 
 describe("treeShake specific TypeSchema", async () => {
     const manager = await registerFromPackageMetas([r4Package, r5Package], {});
@@ -244,6 +257,251 @@ describe("treeShake inherited nested targets", () => {
             }),
         ).toThrowError(
             'Nested schema {"kind":"nested","name":"n","url":"http://r#n","package":"absent","version":"1.0.0"}',
+        );
+    });
+});
+
+describe("treeShake inherited slice match targets", () => {
+    const corePackage = "hl7.fhir.r4.core";
+    const coreVersion = "4.0.1";
+    const resourceId = (name: string): ResourceIdentifier => ({
+        kind: "resource",
+        name: name as Name,
+        url: `http://hl7.org/fhir/StructureDefinition/${name}` as CanonicalUrl,
+        package: corePackage,
+        version: coreVersion,
+    });
+    const resourceBaseId = resourceId("Resource");
+    const bundleId = resourceId("Bundle");
+    const patientId = resourceId("Patient");
+    const practitionerId = resourceId("Practitioner");
+    const r5PatientId: ResourceIdentifier = {
+        ...patientId,
+        package: "hl7.fhir.r5.core",
+        version: "5.0.0",
+    };
+    const referenceId: TypeIdentifier = {
+        kind: "complex-type",
+        name: "Reference" as Name,
+        url: "http://hl7.org/fhir/StructureDefinition/Reference" as CanonicalUrl,
+        package: corePackage,
+        version: coreVersion,
+    };
+    const entryId: NestedIdentifier = {
+        kind: "nested",
+        name: "entry" as Name,
+        url: "http://hl7.org/fhir/StructureDefinition/Bundle#entry" as CanonicalUrl,
+        package: corePackage,
+        version: coreVersion,
+    };
+    const epsBundleId: ProfileIdentifier = {
+        kind: "profile",
+        name: "BundleEuEps" as Name,
+        url: "http://hl7.eu/fhir/eps/StructureDefinition/bundle-eu-eps" as CanonicalUrl,
+        package: "hl7.fhir.eu.eps",
+        version: "1.0.0-ballot",
+    };
+    const praxisBundleUrl =
+        "https://fhir.cognovis.de/praxis/StructureDefinition/patient-summary-bundle-praxis-de" as CanonicalUrl;
+    const praxisBundleId: ProfileIdentifier = {
+        kind: "profile",
+        name: "PraxisPatientSummaryBundle" as Name,
+        url: praxisBundleUrl,
+        package: "de.cognovis.fhir.praxis",
+        version: "0.101.6",
+    };
+
+    /**
+     * source_kind: ig_profile
+     * source: exact hl7.fhir.eu.eps@1.0.0-ballot Bundle profile
+     * ig_canonical: http://hl7.eu/fhir/eps/StructureDefinition/bundle-eu-eps
+     * element: differential Bundle.entry type discriminator path resource and Bundle.entry:patient.resource Patient
+     * source_kind: worked_example
+     * source: fmgt-qxn8 fifth Praxis candidate compiler transcript
+     * worked_example_pointer: /tmp/fmgt-qxn8-candidate-run.yPbGaF/output generated hl7-fhir-eu-eps/profiles/Bundle_BundleEuEps.ts with BundleEntry<Patient> but no hl7-fhir-r4-core/Patient.ts
+     * source_kind: worked_example
+     * source: accepted codegen-7al Reviewer 1 package-collision reproduction
+     * worked_example_pointer: an R4-owned Bundle profile slice targets Patient while an unrelated hl7.fhir.r5.core@5.0.0 Patient with the same canonical and identifier.name is present
+     * source_kind: oracle
+     * source: package-aware TypeSchemaIndex URL resolution contract
+     * oracle_ledger_id: atomic-codegen@bc240259:src/typeschema/utils.ts#TypeSchemaIndex.resolveByUrl
+     * expected package-resolved target: hl7.fhir.r4.core@4.0.1 Patient; hl7.fhir.r5.core@5.0.0 Patient remains omitted
+     * source_kind: oracle
+     * source: TypeScript type-discriminated slice writer contract
+     * oracle_ledger_id: atomic-codegen@bc240259:src/api/writer-generator/typescript/profile-slices.ts#collectTypesFromSlices
+     * expected retained target: hl7.fhir.r4.core@4.0.1 Patient, enabling import and rendering of BundleEntry<Patient>
+     * source_kind: oracle
+     * source: treeShake followReferences contract
+     * oracle_ledger_id: atomic-codegen@bc240259:src/typeschema/ir/types.ts#TreeShakeRule.followReferences
+     * expected omitted ordinary reference target with followReferences false: Practitioner
+     */
+    it("retains the package-resolved slice target and emits compilable inherited slice output", async () => {
+        const bundle: SpecializationTypeSchema = {
+            identifier: bundleId,
+            base: resourceBaseId,
+            fields: { entry: { type: entryId, array: true } },
+            nested: [{ identifier: entryId, fields: { resource: { type: resourceBaseId } } }],
+            dependencies: [resourceBaseId],
+        };
+        const epsBundle: ProfileTypeSchema = {
+            identifier: epsBundleId,
+            base: bundleId,
+            fields: {
+                entry: { type: entryId, array: true },
+                ordinaryReference: {
+                    type: referenceId,
+                    reference: { resource: [practitionerId] },
+                },
+            },
+            slicing: {
+                entry: {
+                    discriminator: [
+                        { type: "type", path: "resource" },
+                        { type: "profile", path: "resource" },
+                    ],
+                    rules: "open",
+                    slices: {
+                        patient: {
+                            min: 1,
+                            max: 1,
+                            match: { resource: { resourceType: "Patient" } },
+                            nameCandidates: { candidates: ["Patient"], recommended: "Patient" },
+                        },
+                    },
+                },
+            },
+            dependencies: [bundleId, entryId, referenceId],
+        };
+        const praxisBundle: ProfileTypeSchema = {
+            identifier: praxisBundleId,
+            base: epsBundleId,
+            dependencies: [epsBundleId],
+        };
+        const index = mkTypeSchemaIndex(
+            [
+                { identifier: resourceBaseId },
+                bundle,
+                { identifier: patientId, base: resourceBaseId, dependencies: [resourceBaseId] },
+                { identifier: practitionerId, base: resourceBaseId, dependencies: [resourceBaseId] },
+                { identifier: r5PatientId },
+                { identifier: referenceId },
+                epsBundle,
+                praxisBundle,
+            ],
+            {},
+        );
+
+        const shaked = treeShake(index, {
+            "de.cognovis.fhir.praxis": { [praxisBundleUrl]: { followReferences: false } },
+        });
+
+        expect(shaked.resolve(epsBundleId)?.slicing?.entry?.slices?.patient?.match).toEqual({
+            resource: { resourceType: "Patient" },
+        });
+        expect(shaked.resolve(practitionerId)).toBeUndefined();
+        expect(shaked.resolve(r5PatientId)).toBeUndefined();
+        expect(shaked.resolve(patientId)?.identifier).toEqual(patientId);
+
+        const writer = new TypeScript({
+            outputDir: "generated/types",
+            inMemoryOnly: true,
+            tabSize: 4,
+            commentLinePrefix: "//",
+            logger: mkSilentLogger(),
+            openResourceTypeSet: false,
+            primitiveTypeExtension: true,
+            generateProfile: true,
+            moduleSpecifierStyle: "node-esm",
+        });
+        await writer.generateAsync(shaked);
+        const files = Object.fromEntries(writer.writtenFiles().map(({ relPath, content }) => [relPath, content]));
+        const epsProfile = files["generated/types/hl7-fhir-eu-eps/profiles/Bundle_BundleEuEps.ts"];
+        expect(epsProfile).toContain('import type { Patient } from "../../hl7-fhir-r4-core/Patient.js"');
+        expect(epsProfile).toContain("BundleEntry<Patient>");
+        expect(files["generated/types/hl7-fhir-r4-core/Patient.ts"]).toBeDefined();
+        expect(files["generated/types/hl7-fhir-r5-core/Patient.ts"]).toBeUndefined();
+
+        const compileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "codegen-7al-slice-match-"));
+        try {
+            for (const [relativePath, content] of Object.entries(files)) {
+                const absolutePath = path.join(compileRoot, relativePath);
+                fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+                fs.writeFileSync(absolutePath, content);
+            }
+            fs.writeFileSync(
+                path.join(compileRoot, "tsconfig.json"),
+                JSON.stringify({
+                    compilerOptions: {
+                        strict: true,
+                        module: "NodeNext",
+                        moduleResolution: "NodeNext",
+                        target: "ES2022",
+                        skipLibCheck: true,
+                        noEmit: true,
+                    },
+                    include: ["generated/**/*.ts"],
+                }),
+            );
+            const tscPath = Bun.resolveSync("typescript/bin/tsc", import.meta.dir);
+            const compile = spawnSync(process.execPath, [tscPath, "--noEmit", "-p", "tsconfig.json"], {
+                cwd: compileRoot,
+                encoding: "utf8",
+                timeout: 20_000,
+            });
+            expect(compile.status, `${compile.error?.message ?? ""}${compile.stdout}${compile.stderr}`).toBe(0);
+        } finally {
+            fs.rmSync(compileRoot, { recursive: true, force: true });
+        }
+    });
+
+    /**
+     * source_kind: worked_example
+     * source: accepted codegen-7al Reviewer 1 diagnostic reproduction
+     * worked_example_pointer: a missing Patient names BundleEuEps as owner; an owner without a package-resolved Patient names both hl7.fhir.r4.core@4.0.1 and hl7.fhir.r5.core@5.0.0 candidates
+     * expected missing diagnostic tokens: Patient, BundleEuEps, hl7.fhir.eu.eps
+     * expected ambiguous diagnostic tokens: Patient, BundleEuEps, hl7.fhir.r4.core, hl7.fhir.r5.core
+     */
+    it("names the slice owner and candidates for genuinely unresolved targets", () => {
+        const owner = (base: ResourceIdentifier): ProfileTypeSchema => ({
+            identifier: epsBundleId,
+            base,
+            fields: { entry: { type: entryId, array: true } },
+            slicing: {
+                entry: {
+                    discriminator: [{ type: "type", path: "resource" }],
+                    slices: {
+                        patient: {
+                            match: { resource: { resourceType: "Patient" } },
+                            nameCandidates: { candidates: ["Patient"], recommended: "Patient" },
+                        },
+                    },
+                },
+            },
+            dependencies: [base, entryId],
+        });
+        const config = { "hl7.fhir.eu.eps": { [epsBundleId.url]: {} } };
+        const missingIndex = mkTypeSchemaIndex([{ identifier: bundleId }, owner(bundleId)], {});
+
+        expect(() => treeShake(missingIndex, config)).toThrowError(/Patient.*BundleEuEps.*hl7\.fhir\.eu\.eps/);
+
+        const contextlessBundleId: ResourceIdentifier = {
+            ...bundleId,
+            url: "https://example.test/StructureDefinition/Bundle" as CanonicalUrl,
+            package: "example.fhir.core",
+            version: "1.0.0",
+        };
+        const ambiguousIndex = mkTypeSchemaIndex(
+            [
+                { identifier: contextlessBundleId },
+                { identifier: patientId },
+                { identifier: r5PatientId },
+                owner(contextlessBundleId),
+            ],
+            {},
+        );
+
+        expect(() => treeShake(ambiguousIndex, config)).toThrowError(
+            /Patient.*BundleEuEps.*hl7\.fhir\.r4\.core.*hl7\.fhir\.r5\.core/,
         );
     });
 });
