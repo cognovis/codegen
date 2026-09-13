@@ -11,11 +11,14 @@ import { registerFromPackageMetas } from "@root/typeschema/register";
 import type {
     CanonicalUrl,
     Name,
+    NestedIdentifier,
     ProfileIdentifier,
     ProfileTypeSchema,
+    ResourceIdentifier,
     SpecializationTypeSchema,
     TypeIdentifier,
 } from "@root/typeschema/types";
+import { mkTypeSchemaIndex } from "@root/typeschema/utils";
 import { mkIndex, mkR4Register, mkTestLogger, r4Package, r5Package, resolveTs } from "@typeschema-test/utils";
 
 describe("treeShake specific TypeSchema", async () => {
@@ -118,6 +121,84 @@ describe("treeShake specific TypeSchema", async () => {
             );
             expect(account).toBeUndefined();
         });
+    });
+});
+
+describe("treeShake inherited nested targets", () => {
+    const questionnaireUrl = "http://hl7.org/fhir/StructureDefinition/Questionnaire" as CanonicalUrl;
+    const profileUrl = "https://fhir.cognovis.de/praxis/StructureDefinition/anamnese-questionnaire" as CanonicalUrl;
+    const questionnaireId: ResourceIdentifier = {
+        kind: "resource",
+        name: "Questionnaire" as Name,
+        url: questionnaireUrl,
+        package: "hl7.fhir.r4.core",
+        version: "4.0.1",
+    };
+    const itemId: NestedIdentifier = {
+        kind: "nested",
+        name: "item" as Name,
+        url: `${questionnaireUrl}#item` as CanonicalUrl,
+        package: "hl7.fhir.r4.core",
+        version: "4.0.1",
+    };
+    const enableWhenId: NestedIdentifier = {
+        kind: "nested",
+        name: "item.enableWhen" as Name,
+        url: `${questionnaireUrl}#item.enableWhen` as CanonicalUrl,
+        package: "hl7.fhir.r4.core",
+        version: "4.0.1",
+    };
+    const profileId: ProfileIdentifier = {
+        kind: "profile",
+        name: "AnamneseQuestionnaire" as Name,
+        url: profileUrl,
+        package: "de.cognovis.fhir.praxis",
+        version: "0.101.6",
+    };
+
+    const schemas = (includeEnableWhen: boolean): [SpecializationTypeSchema, ProfileTypeSchema] => {
+        const questionnaire: SpecializationTypeSchema = {
+            identifier: questionnaireId,
+            fields: { item: { type: itemId } },
+            nested: [
+                { identifier: itemId, fields: { enableWhen: { type: enableWhenId } } },
+                ...(includeEnableWhen ? [{ identifier: enableWhenId, fields: {} }] : []),
+            ],
+        };
+        const profile: ProfileTypeSchema = {
+            identifier: profileId,
+            base: questionnaireId,
+            fields: { item: { type: itemId } },
+            nested: [{ identifier: itemId, fields: { enableWhen: { type: enableWhenId } } }],
+        };
+        return [questionnaire, profile];
+    };
+
+    /**
+     * source_kind: worked_example
+     * source: fmgt-qxn8 exact Praxis 0.101.6 diagnostic
+     * worked_example_pointer: candidate sha256 400aa9e319d0fbda7c79fb883521680a4c8f62f0b8eb33e07832550cc9078658; normalized profile sha256 4e41dee3cad1c9e5f289c23da41af527ca4600ca66cd7c49463e798454bf2dd9
+     * source_kind: oracle
+     * source: current TypeSchema/index exact Identifier contract at 971a959a9050f8ce73ce1fc736225a99bd041d92
+     * oracle_ledger_id: atomic-codegen@971a959a9050f8ce73ce1fc736225a99bd041d92:NestedIdentifier+TypeSchemaIndex.resolveType
+     * expected local parent: http://hl7.org/fhir/StructureDefinition/Questionnaire#item
+     * expected base-owned target: hl7.fhir.r4.core@4.0.1 http://hl7.org/fhir/StructureDefinition/Questionnaire#item.enableWhen
+     */
+    it("retains a base-owned nested target used by a profile-local inherited parent", () => {
+        const shaked = treeShake(mkTypeSchemaIndex(schemas(true), {}), {
+            "de.cognovis.fhir.praxis": { [profileUrl]: {} },
+        });
+
+        expect(shaked.resolve(profileId)?.nested?.map(({ identifier }) => identifier)).toContainEqual(itemId);
+        expect(shaked.resolveType(enableWhenId)?.identifier).toEqual(enableWhenId);
+    });
+
+    it("names a genuinely missing inherited nested target", () => {
+        expect(() =>
+            treeShake(mkTypeSchemaIndex(schemas(false), {}), {
+                "de.cognovis.fhir.praxis": { [profileUrl]: {} },
+            }),
+        ).toThrowError("http://hl7.org/fhir/StructureDefinition/Questionnaire#item.enableWhen");
     });
 });
 

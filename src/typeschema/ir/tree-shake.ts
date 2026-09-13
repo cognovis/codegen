@@ -188,7 +188,11 @@ const mutableFillReport = (report: TreeShakeReport, tsIndex: TypeSchemaIndex, sh
     }
 };
 
-export const treeShakeTypeSchema = (schema: TypeSchema, rule: TreeShakeRule, _logger?: CodegenLog): TypeSchema => {
+const treeShakeTypeSchemaWithResolver = (
+    schema: TypeSchema,
+    rule: TreeShakeRule,
+    resolveType?: TypeSchemaIndex["resolveType"],
+): TypeSchema => {
     schema = JSON.parse(JSON.stringify(schema));
     if (
         isPrimitiveTypeSchema(schema) ||
@@ -229,8 +233,13 @@ export const treeShakeTypeSchema = (schema: TypeSchema, rule: TreeShakeRule, _lo
                     if (!usedTypes.has(url)) {
                         usedTypes.add(url);
                         const nestedTypeDef = schema.nested?.find((f) => f.identifier.url === url);
-                        assert(nestedTypeDef);
-                        collectUsedNestedTypes(nestedTypeDef);
+                        if (nestedTypeDef) {
+                            collectUsedNestedTypes(nestedTypeDef);
+                        } else if (!resolveType || !isNestedTypeSchema(resolveType(f.type))) {
+                            throw new Error(
+                                `Nested schema ${JSON.stringify(f.type)} not found for ${JSON.stringify(schema.identifier)}`,
+                            );
+                        }
                     }
                 });
         };
@@ -250,6 +259,9 @@ export const treeShakeTypeSchema = (schema: TypeSchema, rule: TreeShakeRule, _lo
     }
     return schema;
 };
+
+export const treeShakeTypeSchema = (schema: TypeSchema, rule: TreeShakeRule, _logger?: CodegenLog): TypeSchema =>
+    treeShakeTypeSchemaWithResolver(schema, rule);
 
 /** Reference target identifiers (base resources and target profiles) of a schema's fields, including nested types. */
 const collectReferenceTargets = (schema: TypeSchema): Identifier[] => {
@@ -274,7 +286,7 @@ export const treeShake = (
         for (const [url, rule] of Object.entries(requires)) {
             const schema = tsIndex.resolveByUrl(pkgId, url as CanonicalUrl);
             if (!schema || isNestedTypeSchema(schema)) throw new Error(`Schema not found for ${pkgId} ${url}`);
-            const shaked = treeShakeTypeSchema(schema, rule);
+            const shaked = treeShakeTypeSchemaWithResolver(schema, rule, tsIndex.resolveType);
             focusedSchemas.push(shaked);
             if (rule.followReferences ?? defaults?.followReferences) {
                 for (const refId of collectReferenceTargets(shaked)) {
