@@ -248,6 +248,131 @@ describe("treeShake inherited nested targets", () => {
     });
 });
 
+describe("treeShake inherited slice match targets", () => {
+    const corePackage = "hl7.fhir.r4.core";
+    const coreVersion = "4.0.1";
+    const resourceId = (name: string): ResourceIdentifier => ({
+        kind: "resource",
+        name: name as Name,
+        url: `http://hl7.org/fhir/StructureDefinition/${name}` as CanonicalUrl,
+        package: corePackage,
+        version: coreVersion,
+    });
+    const bundleId = resourceId("Bundle");
+    const patientId = resourceId("Patient");
+    const practitionerId = resourceId("Practitioner");
+    const referenceId: TypeIdentifier = {
+        kind: "complex-type",
+        name: "Reference" as Name,
+        url: "http://hl7.org/fhir/StructureDefinition/Reference" as CanonicalUrl,
+        package: corePackage,
+        version: coreVersion,
+    };
+    const entryId: NestedIdentifier = {
+        kind: "nested",
+        name: "entry" as Name,
+        url: "http://hl7.org/fhir/StructureDefinition/Bundle#entry" as CanonicalUrl,
+        package: corePackage,
+        version: coreVersion,
+    };
+    const epsBundleId: ProfileIdentifier = {
+        kind: "profile",
+        name: "BundleEuEps" as Name,
+        url: "http://hl7.eu/fhir/eps/StructureDefinition/bundle-eu-eps" as CanonicalUrl,
+        package: "hl7.fhir.eu.eps",
+        version: "1.0.0-ballot",
+    };
+    const praxisBundleUrl =
+        "https://fhir.cognovis.de/praxis/StructureDefinition/patient-summary-bundle-praxis-de" as CanonicalUrl;
+    const praxisBundleId: ProfileIdentifier = {
+        kind: "profile",
+        name: "PraxisPatientSummaryBundle" as Name,
+        url: praxisBundleUrl,
+        package: "de.cognovis.fhir.praxis",
+        version: "0.101.6",
+    };
+
+    /**
+     * source_kind: ig_profile
+     * source: exact hl7.fhir.eu.eps@1.0.0-ballot Bundle profile
+     * ig_canonical: http://hl7.eu/fhir/eps/StructureDefinition/bundle-eu-eps
+     * element: differential Bundle.entry type discriminator path resource and Bundle.entry:patient.resource Patient
+     * source_kind: worked_example
+     * source: fmgt-qxn8 fifth Praxis candidate compiler transcript
+     * worked_example_pointer: /tmp/fmgt-qxn8-candidate-run.yPbGaF/output generated hl7-fhir-eu-eps/profiles/Bundle_BundleEuEps.ts with BundleEntry<Patient> but no hl7-fhir-r4-core/Patient.ts
+     * source_kind: oracle
+     * source: TypeScript type-discriminated slice writer contract
+     * oracle_ledger_id: atomic-codegen@bc240259:src/api/writer-generator/typescript/profile-slices.ts#collectTypesFromSlices
+     * expected retained target: hl7.fhir.r4.core@4.0.1 Patient, enabling import and rendering of BundleEntry<Patient>
+     * source_kind: oracle
+     * source: treeShake followReferences contract
+     * oracle_ledger_id: atomic-codegen@bc240259:src/typeschema/ir/types.ts#TreeShakeRule.followReferences
+     * expected omitted ordinary reference target with followReferences false: Practitioner
+     */
+    it("retains a type-discriminated slice target inherited through a parent profile", () => {
+        const bundle: SpecializationTypeSchema = {
+            identifier: bundleId,
+            fields: { entry: { type: entryId, array: true } },
+            nested: [{ identifier: entryId, fields: {} }],
+        };
+        const epsBundle: ProfileTypeSchema = {
+            identifier: epsBundleId,
+            base: bundleId,
+            fields: {
+                entry: { type: entryId, array: true },
+                ordinaryReference: {
+                    type: referenceId,
+                    reference: { resource: [practitionerId] },
+                },
+            },
+            slicing: {
+                entry: {
+                    discriminator: [
+                        { type: "type", path: "resource" },
+                        { type: "profile", path: "resource" },
+                    ],
+                    rules: "open",
+                    slices: {
+                        patient: {
+                            min: 1,
+                            max: 1,
+                            match: { resource: { resourceType: "Patient" } },
+                            nameCandidates: { candidates: ["Patient"], recommended: "Patient" },
+                        },
+                    },
+                },
+            },
+            dependencies: [bundleId, entryId, referenceId],
+        };
+        const praxisBundle: ProfileTypeSchema = {
+            identifier: praxisBundleId,
+            base: epsBundleId,
+            dependencies: [epsBundleId],
+        };
+        const index = mkTypeSchemaIndex(
+            [
+                bundle,
+                { identifier: patientId },
+                { identifier: practitionerId },
+                { identifier: referenceId },
+                epsBundle,
+                praxisBundle,
+            ],
+            {},
+        );
+
+        const shaked = treeShake(index, {
+            "de.cognovis.fhir.praxis": { [praxisBundleUrl]: { followReferences: false } },
+        });
+
+        expect(shaked.resolve(epsBundleId)?.slicing?.entry?.slices?.patient?.match).toEqual({
+            resource: { resourceType: "Patient" },
+        });
+        expect(shaked.resolve(practitionerId)).toBeUndefined();
+        expect(shaked.resolve(patientId)?.identifier).toEqual(patientId);
+    });
+});
+
 describe("treeShake specific TypeSchema", async () => {
     const r4 = await mkR4Register();
     const logger = mkTestLogger();
