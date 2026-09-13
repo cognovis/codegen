@@ -15,6 +15,7 @@ import {
     isNotChoiceDeclarationField,
     isPrimitiveTypeSchema,
     isProfileTypeSchema,
+    isResourceTypeSchema,
     isSnapshotProfileTypeSchema,
     isSpecializationTypeSchema,
     isTypeDiscriminated,
@@ -304,11 +305,46 @@ const collectSliceMatchResourceTargets = (schema: TypeSchema, tsIndex: TypeSchem
                 throw new Error(
                     `Slice match resource type ${resourceType} not found for ${JSON.stringify(schema.identifier)}`,
                 );
-            if (candidates.length > 1)
-                throw new Error(
-                    `Slice match resource type ${resourceType} is ambiguous for ${JSON.stringify(schema.identifier)}: ${candidates.map(({ identifier }) => JSON.stringify(identifier)).join(", ")}`,
-                );
-            return candidates;
+
+            const candidateIds = new Set(candidates.map(({ identifier }) => JSON.stringify(identifier)));
+            const candidateUrls = [...new Set(candidates.map(({ identifier }) => identifier.url))];
+            const resolveInPackages = (packages: PkgName[]): TypeSchema[] => {
+                const resolved: Record<string, TypeSchema> = {};
+                const resolutionTree = tsIndex.register?.resolutionTree();
+                for (const pkgName of packages) {
+                    for (const url of candidateUrls) {
+                        const hasDirectCandidate = candidates.some(
+                            ({ identifier }) => identifier.package === pkgName && identifier.url === url,
+                        );
+                        if (!hasDirectCandidate && !resolutionTree?.[pkgName]?.[url]?.[0]) continue;
+                        const target = tsIndex.resolveByUrl(pkgName, url);
+                        if (!isResourceTypeSchema(target) || !candidateIds.has(JSON.stringify(target.identifier)))
+                            continue;
+                        resolved[JSON.stringify(target.identifier)] = target;
+                    }
+                }
+                return Object.values(resolved);
+            };
+
+            const ownerTargets = resolveInPackages([schema.identifier.package]);
+            if (ownerTargets.length === 1) return ownerTargets;
+
+            const dependencyPackages = [
+                ...new Set(
+                    (schema.dependencies ?? [])
+                        .filter((dependency) => !isNestedIdentifier(dependency))
+                        .map((dependency) => dependency.package)
+                        .filter((pkgName) => pkgName !== schema.identifier.package),
+                ),
+            ];
+            const dependencyTargets = resolveInPackages(dependencyPackages);
+            if (ownerTargets.length === 0 && dependencyTargets.length === 1) return dependencyTargets;
+            if (ownerTargets.length === 0 && dependencyTargets.length === 0 && candidates.length === 1)
+                return candidates;
+
+            throw new Error(
+                `Slice match resource type ${resourceType} is ambiguous for ${JSON.stringify(schema.identifier)}: ${candidates.map(({ identifier }) => JSON.stringify(identifier)).join(", ")}`,
+            );
         });
 };
 
