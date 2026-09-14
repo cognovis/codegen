@@ -1,0 +1,30 @@
+schema_version: 1
+repository: example/typescript-service
+visibility: private
+trusted_contributors: named-writers
+persistent_review:
+  identity: cognovis-pr-agent
+  repository_role: Admin
+  token_scopes: [read:user, write:repository, write:issue]
+  site_admin: false
+  webhook:
+    target: https://pr-agent.cognovis.de/api/v1/gitea_webhooks
+    signed: true
+    events: [pull_request, pull_request_sync, issue_comment]
+  automatic_commands: [/describe, /review]
+  review_on_synchronize: true
+  interactive_commands: [/review, /improve]
+reviewdog:
+  identity: example-typescript-reviewdog
+  repository_role: Write
+  token_scopes: [write:repository, write:issue]
+  secret_names: [REVIEWDOG_TOKEN, NPM_TOKEN]
+  runner: linuxmaint
+  workflow: .github/workflows/pr-lint.yml
+language_adapter:
+  kind: bun-typescript
+  lint_command: bun run lint
+  diagnostic_format: "file:line:column: error: message"
+disablement:
+  normal: remove repository webhook; restore full signed state and audit exact events
+  emergency: add anchored repository regex to CONFIG__IGNORE_REPOSITORIES
