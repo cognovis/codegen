@@ -6,7 +6,9 @@ import {
     isNestedIdentifier,
     isNotChoiceDeclarationField,
     isPrimitiveIdentifier,
+    isProfileIdentifier,
     isResourceIdentifier,
+    isSnapshotProfileIdentifier,
     packageMeta,
     packageMetaToFhir,
     type SnapshotProfileTypeSchema,
@@ -32,7 +34,6 @@ import {
     generateExtensionMethods,
     resolveExtensionProfile,
 } from "./profile-extensions";
-import { tryResolveProfileResourceType } from "./profile-resource-type";
 import {
     collectRequiredSliceNames,
     collectSliceDefs,
@@ -118,14 +119,6 @@ const tryPromoteChoice = (
     promotedChoices.add(choiceName);
 };
 
-export const mkIsFamilyType =
-    (tsIndex: TypeSchemaIndex) =>
-    (ref: TypeIdentifier): boolean => {
-        const schema = tsIndex.resolveType(ref);
-        if (!schema || !("typeFamily" in schema)) return false;
-        return (schema.typeFamily?.resources?.length ?? 0) > 0;
-    };
-
 export const collectProfileFactoryInfo = (
     tsIndex: TypeSchemaIndex,
     snapshot: SnapshotProfileTypeSchema,
@@ -138,7 +131,7 @@ export const collectProfileFactoryInfo = (
     const fields = snapshot.fields;
     const promotedChoices = new Set<string>();
     const resolveRef = tsIndex.findLastSpecializationByIdentifier;
-    const isFamilyType = mkIsFamilyType(tsIndex);
+    const isFamilyType = tsIndex.isFamilyType;
 
     if (isResourceIdentifier(snapshot.base)) {
         autoFields.push({ name: "resourceType", value: JSON.stringify(snapshot.base.name) });
@@ -861,15 +854,13 @@ export const generateProfileClass = (w: TypeScript, tsIndex: TypeSchemaIndex, sn
     w.comment("CanonicalURL:", canonicalUrl, `(pkg: ${packageMetaToFhir(packageMeta(snapshot))})`);
 
     w.curlyBlock(["export", "class", profileClassName], () => {
-        if (isResourceIdentifier(snapshot.base)) {
-            const resolved = tryResolveProfileResourceType(snapshot.base);
-            if ("resourceType" in resolved) {
-                w.lineSM(`static readonly resourceType = ${JSON.stringify(resolved.resourceType)}`);
-            } else {
-                w.logger()?.error(
-                    `Cannot emit static resourceType for profile '${profileClassName}': ${resolved.error}`,
-                );
-            }
+        const specializationBase = tsIndex.findLastSpecializationByIdentifier(snapshot.base);
+        if (isResourceIdentifier(specializationBase)) {
+            w.lineSM(`static readonly resourceType = ${JSON.stringify(specializationBase.name)}`);
+        } else if (isProfileIdentifier(specializationBase) || isSnapshotProfileIdentifier(specializationBase)) {
+            w.logger()?.error(
+                `Cannot emit static resourceType for profile '${profileClassName}': base '${snapshot.base.url}' does not resolve to a specialization`,
+            );
         }
         w.lineSM(`static readonly canonicalUrl = ${JSON.stringify(canonicalUrl)}`);
         w.line();

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import type { CanonicalManager, PreprocessContext } from "@atomic-ehr/fhir-canonical-manager";
+import type { CanonicalManager } from "@atomic-ehr/fhir-canonical-manager";
 import { APIBuilder } from "@root/api/builder";
-import { mkForceDependenciesPreprocessor } from "@root/api/generate-config";
+import { mkForceDependenciesPatch } from "@root/api/generate-config";
 import { TypeScript } from "@root/api/writer-generator/typescript/writer";
 import { generateTypeSchemas } from "@root/typeschema";
 import type { Register } from "@root/typeschema/register";
@@ -36,14 +36,15 @@ describe("APIBuilder multi-root package identities", () => {
             }),
             packageJson: async () => ({ name: "fixture.same", version: "8.0.1", dependencies: {} }),
             search: async () => [],
+            report: () => [],
         } as unknown as ReturnType<typeof CanonicalManager>;
 
         const report = await new APIBuilder({ manager, logger: mkSilentLogger() })
             .fromPackage("fixture.same", "^8.0.0")
             .generate();
 
-        expect(report.success).toBeTrue();
         expect(report.errors).toEqual([]);
+        expect(report.success).toBeTrue();
     });
 
     /**
@@ -59,6 +60,7 @@ describe("APIBuilder multi-root package identities", () => {
             }),
             packageJson: async () => ({ name: "fixture.same", version: "8.1.0-dev.4", dependencies: {} }),
             search: async () => [],
+            report: () => [],
         } as unknown as ReturnType<typeof CanonicalManager>;
 
         const report = await new APIBuilder({ manager, logger: mkSilentLogger() })
@@ -123,6 +125,7 @@ describe("APIBuilder multi-root package identities", () => {
             }),
             packageJson: async (packageName: string) => manifests[packageName] ?? {},
             search: async () => [],
+            report: () => [],
         } as unknown as ReturnType<typeof CanonicalManager>;
 
         const report = await new APIBuilder({ manager, logger: mkSilentLogger() })
@@ -155,6 +158,7 @@ describe("APIBuilder multi-root package identities", () => {
             init: async () => Object.fromEntries(resolvedPackages.map((pkg) => [`${pkg.name}@${pkg.version}`, pkg])),
             packageJson: async (packageName: string) => manifests[packageName] ?? {},
             search: async () => [],
+            report: () => [],
         } as unknown as ReturnType<typeof CanonicalManager>;
 
         const report = await new APIBuilder({ manager, logger: mkSilentLogger() })
@@ -183,6 +187,7 @@ describe("APIBuilder multi-root package identities", () => {
             init: async () => Object.fromEntries(resolvedPackages.map((pkg) => [`${pkg.name}@${pkg.version}`, pkg])),
             packageJson: async (packageName: string) => manifests[packageName] ?? {},
             search: async () => [],
+            report: () => [],
         } as unknown as ReturnType<typeof CanonicalManager>;
 
         const report = await new APIBuilder({ manager, logger: mkSilentLogger() })
@@ -201,18 +206,18 @@ describe("APIBuilder multi-root package identities", () => {
      * test/assets/multi-root-packages/manifest-shared-v2/package.json.
      * Pointer: codegen-za2/acceptance-criteria/3/force-dependencies-before-comparison.
      * Selector: root $.dependencies.fixture.manifest.shared is rewritten from 1.0.0 to 2.0.0
-     * by the public force-dependencies preprocessor before the manifest is compared.
+     * by the public force-dependencies package patch before the manifest is compared.
      */
     it("compares the force-processed manifest after its dependency pin is applied", async () => {
-        const preprocess = mkForceDependenciesPreprocessor({ "fixture.manifest.shared": "2.0.0" });
-        const processed = preprocess({
-            kind: "package",
-            package: { name: manifestRootA.name, version: manifestRootA.version },
-            packageJson: manifestRootA,
-        } as PreprocessContext);
-        if (processed.kind !== "package") throw new Error("package preprocessing returned a resource context");
+        const patch = mkForceDependenciesPatch({ "fixture.manifest.shared": "2.0.0" });
+        const processed = patch(
+            { name: manifestRootA.name, version: manifestRootA.version },
+            manifestRootA,
+            () => undefined,
+        );
+        if (!processed) throw new Error("package patch did not rewrite the dependency pin");
         const manifests: Record<string, Record<string, unknown>> = {
-            [manifestRootA.name]: processed.packageJson,
+            [manifestRootA.name]: processed,
             [manifestSharedV2.name]: manifestSharedV2,
         };
         const resolvedPackages = [manifestRootA, manifestSharedV2].map(({ name, version }) => ({ name, version }));
@@ -221,13 +226,14 @@ describe("APIBuilder multi-root package identities", () => {
             init: async () => Object.fromEntries(resolvedPackages.map((pkg) => [`${pkg.name}@${pkg.version}`, pkg])),
             packageJson: async (packageName: string) => manifests[packageName] ?? {},
             search: async () => [],
+            report: () => [],
         } as unknown as ReturnType<typeof CanonicalManager>;
 
         const report = await new APIBuilder({ manager, logger: mkSilentLogger() })
             .fromPackage(manifestRootA.name, manifestRootA.version)
             .generate();
 
-        expect(processed.packageJson.dependencies).toEqual({ "fixture.manifest.shared": "2.0.0" });
+        expect(processed.dependencies).toEqual({ "fixture.manifest.shared": "2.0.0" });
         expect(report.success).toBeTrue();
         expect(report.warnings).toEqual([]);
     });
