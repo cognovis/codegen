@@ -87,6 +87,7 @@ These paths differ between `upstream/main` and `main`, and each one is excluded 
 | `CLAUDE.md` | Documents the remaining profile constraints and the upstream extensionless/default versus explicit Node ESM configuration. |
 | `docs/design/profiles.md` | Carries fork profile examples and constraint documentation around the upstream descriptor surface. |
 | `docs/upstream-sync-2026-09-15.md` | Bounded evidence and residual-risk record for the local `debec324` integration candidate. |
+| `docs/standards/upstream-contributions.md` | Contribution guidance derived from maintainer feedback, proposed as documentation rather than generator or distribution behavior. |
 | `tsconfig.json` | `resolveJsonModule` exists to support the CLI version fix that reads `package.json` — pending upstream contribution, not distribution identity. |
 | `bun.lock` | Derived from `package.json`; regenerate with `bun install` after applying the overlay. |
 | `.library.lock` | Machine-local agent tooling state. Never part of a distribution. |
@@ -103,6 +104,7 @@ CLAUDE.md
 README.md
 docs/design/profiles.md
 docs/upstream-sync-2026-09-15.md
+docs/standards/upstream-contributions.md
 tsconfig.json
 bun.lock
 .library.lock

@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing to Atomic FHIR Codegen! This guide will help you get started with contributing to the project.
 
+For generator, TypeSchema, runtime, public configuration, and upstream PR changes, follow the [project contribution standard](docs/standards/upstream-contributions.md). It captures maintainer feedback on API contracts, architecture, regression evidence, and reviewable changes.
+
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)

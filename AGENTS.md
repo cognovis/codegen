@@ -2,6 +2,10 @@
 
 This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
+## Contribution Standard
+
+For generator, TypeSchema, runtime, public configuration, and upstream PR work, read and apply [Developing contributions for Atomic Codegen](docs/standards/upstream-contributions.md). It records project rules derived from maintainer feedback, including generated type contracts, shared semantic ownership, focused evidence, and upstream compatibility.
+
 ## Essential Commands
 
 ```bash
