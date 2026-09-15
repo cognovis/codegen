@@ -140,7 +140,7 @@ These remain real deltas from upstream in the candidate. They are generator cont
 
 | Subject | Candidate behavior |
 |---|---|
-| Dependency pins | `forceDependencies` remains isolated per builder and is applied through Canonical Manager package patches. One builder cannot leak its pins into another. |
+| Dependency pins | Each builder resolves its own `forceDependencies` map and receives a distinct Canonical Manager package-patch configuration. Canonical Manager's on-disk cache key does not include patches, so successive builders using identical roots and the same working directory can reuse the first patched manifest; use separate working directories or reset the cache when pin maps differ. |
 | Multi-root generation | A shared closure selects one version per package name. Competing exact root versions fail, exact declared dependency drift is reported, and duplicate canonicals from concrete package versions fail instead of silently collapsing. Collision-safe package directories remain a writer defense; the public builder does not promise simultaneous generation of several versions of one package. |
 | Tree shaking | Inherited nested dependencies and slice-match-only dependencies remain reachable with their declaring package identities. |
 | Virtual R4 `Base` | Nested logical fields can retain the virtual R4 `Base` shape without accepting unrelated unknown types. |
