@@ -1,6 +1,6 @@
 # Cognovis codegen fork
 
-`main` is the sole Cognovis integration branch. Canonical `main` currently points to `d2ae11cd`, based on the [atomic-ehr/codegen `main`](https://github.com/atomic-ehr/codegen/tree/main) baseline at `12658b04`. The local `chore/codegen-dru/upstream-sync` candidate merges upstream `debec3246a07ec3e942e9beb3a038180143b2b8e`; it has not landed on canonical `main`, been published, produced a release, or changed a consumer pin. This document records the candidate's disposition. The candidate carries exactly two kinds of change, which are kept strictly separate:
+`main` is the sole Cognovis integration branch. At the start of this synchronization, canonical `main` pointed to `d2ae11cd`, based on the [atomic-ehr/codegen `main`](https://github.com/atomic-ehr/codegen/tree/main) baseline at `12658b04`. The verified integration contains upstream `debec3246a07ec3e942e9beb3a038180143b2b8e`. An immutable canary was published from Codegen source `84da29b1786fccf09f2d53354e39dfd90044627a` as `@cognovis/codegen@0.2.4-canary.20260915075954.84da29b`; FHIR Management consumed those bytes with its Node ESM repair and runbook through `99e6949fcc0a3c3fd13aefaa350f5e502b494cc6`. The [synchronization report](docs/upstream-sync-2026-09-15.md) records the artifact identity and real cold/warm consumer evidence. The stable Codegen dist-tag and consumer pins remained unchanged. Main-landing state is recorded separately by the delivery journal. This document records the integration's disposition. The integration carries exactly two kinds of change, which are kept strictly separate:
 
 - a **distribution overlay** — package identity, publish registry, Bun shebang, and changelog tooling. These are permanent fork properties that will never be sent upstream.
 - **pending upstream contributions** — generator and CLI fixes that live on `main` only until atomic-ehr merges them. These are ordinary fork commits, never overlay paths.
@@ -86,7 +86,7 @@ These paths differ between `upstream/main` and `main`, and each one is excluded 
 | `README.md` | Documents retained multi-root package selection and diagnostics plus the upstream descriptor, terminology, and JSON TypeScript option surfaces. |
 | `CLAUDE.md` | Documents the remaining profile constraints and the upstream extensionless/default versus explicit Node ESM configuration. |
 | `docs/design/profiles.md` | Carries fork profile examples and constraint documentation around the upstream descriptor surface. |
-| `docs/upstream-sync-2026-09-15.md` | Bounded evidence and residual-risk record for the local `debec324` integration candidate. |
+| `docs/upstream-sync-2026-09-15.md` | Bounded evidence and residual-risk record for the verified `debec324` integration. |
 | `docs/standards/upstream-contributions.md` | Contribution guidance derived from maintainer feedback, proposed as documentation rather than generator or distribution behavior. |
 | `tsconfig.json` | `resolveJsonModule` exists to support the CLI version fix that reads `package.json` — pending upstream contribution, not distribution identity. |
 | `bun.lock` | Derived from `package.json`; regenerate with `bun install` after applying the overlay. |
@@ -120,25 +120,25 @@ examples/*
 
 ## Pending upstream contributions
 
-Fork changes in the integration candidate that carry generator or CLI behavior. They leave the fork delta when upstream merges equivalent behavior. None of them may be added to the overlay allowlist.
+Fork changes in the verified integration that carry generator or CLI behavior. They leave the fork delta when upstream merges equivalent behavior. None of them may be added to the overlay allowlist.
 
-### Integrated upstream contributions in the local candidate
+### Integrated upstream contributions
 
 | PR | Candidate disposition at upstream `debec324` |
 |---|---|
 | [#218](https://github.com/atomic-ehr/codegen/pull/218) | The normalized terminology surface, package filter, open verification labels, and special `unverifiable` handling are upstream. The fork carries no separate terminology writer or register implementation. |
 | [#219](https://github.com/atomic-ehr/codegen/pull/219) | `moduleSpecifierStyle` replaces the fork's unconditional `.js` rewrite. The upstream default is `extensionless`; Node ESM consumers and the checked-in Node regression/example opt into `node-esm`. The older [#213](https://github.com/atomic-ehr/codegen/pull/213) is closed and superseded. |
-| [#222](https://github.com/atomic-ehr/codegen/pull/222) | JSON configuration exposes and validates the TypeScript module-specifier and terminology options. The candidate uses upstream's implementation. |
+| [#222](https://github.com/atomic-ehr/codegen/pull/222) | JSON configuration exposes and validates the TypeScript module-specifier and terminology options. The integration uses upstream's implementation. |
 | [#223](https://github.com/atomic-ehr/codegen/pull/223), [#225](https://github.com/atomic-ehr/codegen/pull/225) | Generated resource-profile descriptors are upstream. #225 normalizes `resourceType` resolution through `TypeSchemaIndex` and removes the redundant helper retained by the older fork baseline. |
-| [#220](https://github.com/atomic-ehr/codegen/pull/220), [#227](https://github.com/atomic-ehr/codegen/pull/227) | #220 is closed and replaced by merged #227. The candidate uses upstream's explicit expansion of abstract resource-family reference targets. |
+| [#220](https://github.com/atomic-ehr/codegen/pull/220), [#227](https://github.com/atomic-ehr/codegen/pull/227) | #220 is closed and replaced by merged #227. The integration uses upstream's explicit expansion of abstract resource-family reference targets. |
 
-#208–#212 and #215–#219 remain in the ancestry. The local candidate additionally integrates #222, #223 as normalized by #225, #227, Canonical Manager patch handling, and upstream's in-memory generation and test-cache changes through `debec324`.
+#208–#212 and #215–#219 remain in the ancestry. The verified integration additionally includes #222, #223 as normalized by #225, #227, Canonical Manager patch handling, and upstream's in-memory generation and test-cache changes through `debec324`.
 
 Future pull request branches are built on a clean `upstream/main` rather than cherry-picked from the fork. They regenerate their own artifacts, and internal tracker IDs are stripped from the contributed code.
 
 ### Retained fork additions
 
-These remain real deltas from upstream in the candidate. They are generator contributions rather than overlay paths:
+These remain real deltas from upstream in the integration. They are generator contributions rather than overlay paths:
 
 | Subject | Candidate behavior |
 |---|---|
@@ -146,13 +146,13 @@ These remain real deltas from upstream in the candidate. They are generator cont
 | Multi-root generation | A shared closure selects one version per package name. Competing exact root versions fail, exact declared dependency drift is reported, and duplicate canonicals from concrete package versions fail instead of silently collapsing. Collision-safe package directories remain a writer defense; the public builder does not promise simultaneous generation of several versions of one package. |
 | Tree shaking | Inherited nested dependencies and slice-match-only dependencies remain reachable with their declaring package identities. |
 | Virtual R4 `Base` | Nested logical fields can retain the virtual R4 `Base` shape without accepting unrelated unknown types. |
-| Profile factories and constraints | The candidate retains the factory inputs, defaults, complex extension fields, slice accessors, and fixed/pattern constraint behavior already landed in the `d2ae11cd` fork baseline. |
+| Profile factories and constraints | The integration retains the factory inputs, defaults, complex extension fields, slice accessors, and fixed/pattern constraint behavior already landed in the `d2ae11cd` fork baseline. |
 
 ### Open upstream work not integrated
 
 | PR | Status and boundary |
 |---|---|
-| [#224](https://github.com/atomic-ehr/codegen/pull/224) (`25679426`) | Open. Its later collision repair is not in this candidate. |
+| [#224](https://github.com/atomic-ehr/codegen/pull/224) (`25679426`) | Open. Its later collision repair is not in this integration. |
 | [#228](https://github.com/atomic-ehr/codegen/pull/228) (`a58076f9`) | Open and tested separately. It replaces closed #221 as the upstream path for the repeating-value constraint repair; it is not integrated here. #221 was closed on 2026-09-15 in favor of #228. |
 | [#229](https://github.com/atomic-ehr/codegen/pull/229) (`755f5bca`) | Open maintainer replacement that includes the original factory behavior and intentional `Partial<Pick<...>>` getter extraction. Flat `set(get()!)` compatibility therefore breaks by design. It does not include #224's later collision fixes, defers raw/camelCase mapping, was tested separately, and is not integrated here. |
 
