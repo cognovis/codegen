@@ -37,6 +37,7 @@ export type USCoreProvenanceProfileRaw = {
     recorded: string;
     agent: ProvenanceAgent[];
 }
+
 // CanonicalURL: http://hl7.org/fhir/us/core/StructureDefinition/us-core-provenance (pkg: hl7.fhir.us.core#8.0.1)
 export class USCoreProvenanceProfile {
     static readonly resourceType = "Provenance";
@@ -181,3 +182,4 @@ export class USCoreProvenanceProfile {
     }
 
 }
+
