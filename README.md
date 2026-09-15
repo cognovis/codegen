@@ -185,6 +185,35 @@ Processed package manifests may declare an exact dependency version that differs
 
 Each independent builder retains its own output and overlapping builder output directories are rejected. For a FHIR Management release, FHIR Management selects and records the release roots and versions, optionally applies dependency pins, assembles exports, publishes the result, and migrates consumers. Codegen resolves the declared roots, emits the shared package tree and its imports, and reports unsupported ambiguity.
 
+The JSON `typescript` options also accept `moduleSpecifierStyle` (`"extensionless"` or `"node-esm"`) and `terminology`. For Node ESM imports and terminology output restricted to selected packages, replace `"typescript": {}` with:
+
+```json
+"typescript": {
+    "moduleSpecifierStyle": "node-esm",
+    "terminology": {
+        "enabled": true,
+        "packages": ["hl7.fhir.r4.core@4.0.1"],
+        "packageVerification": {
+            "hl7.fhir.r4.core@4.0.1": "registry-integrity"
+        }
+    }
+}
+```
+
+All terminology fields are optional. When supplied, `enabled` must be a boolean, `packages` must be an array of strings, and `packageVerification` must contain string values. Unknown nested keys and invalid values are reported with their full configuration paths.
+
+### Fixing defective packages
+
+Real FHIR packages ship defects — missing dependencies, typo'd names and canonicals, bindings to unavailable ValueSets, incomplete CodeSystems. Fixes are declared, not hand-coded:
+
+- **Canonical exclusions** — drop a known-broken canonical at the package index, before codegen sees it: `canonicalManager: { patches: { indexEntry: [excludeCanonical({ package, url, reason })] } }`. Codegen ships `builtinPatches` (`src/api/builtin-patches.ts` — generation-breaking content in HL7's own packages, e.g. `hl7.fhir.r5.core` profiles that break R4-compatible generation); they apply to every loader the builder constructs, on top of your own patches, and `builtinPatches: false` is the explicit opt-out. Index exclusion removes the canonical from resolution too, so exclude whole derivation chains together — and it is applied at scan time, so drop the loader cache after changing the list. A hand-built CanonicalManager owns its wiring: apply `builtinPatches.indexEntry` explicitly (see the ccda example).
+- **Custom patches** — per-phase handlers built from the helpers on the `@atomic-ehr/fhir-canonical-manager/patch` subpath (`ensureDependency`, `renamePackage`, `replaceText`, `ensureCodes`, scoped by `inPackage`/`inResource`), passed as `new APIBuilder({ canonicalManager: { patches: {...} } })`. In the CLI config, `"options": { "forceDependencies": {...} }` pins declared dependency versions across the closure.
+- **Broken package index** — `canonicalManager: { packageIndex: "recover" }` heals a corrupt `.index.json` by falling back to a directory scan (always with a warning); `"regenerate"` ignores the shipped index entirely.
+
+Loader settings (`registry`, `packageIndex`, `dropCache`, `patches`) live under the builder's `canonicalManager` option — they configure the CanonicalManager package loader, not the generator. The old flat options are deprecated and warn.
+
+Applied fixes surface in the generation report's "Input fixes" section.
+
 ### Usage Examples
 
 See the [examples/](examples/) directory for working demonstrations:
@@ -527,7 +556,7 @@ Templates enable flexible code generation for any language or format (Go, Rust, 
 
 When generating TypeScript with `generateProfile: true`, the generator creates profile wrapper classes that provide a fluent API for working with FHIR profiles. These classes handle complex profile constraints like slicing and extensions automatically.
 
-Each generated profile class exposes static readonly descriptor metadata — `resourceType` and `canonicalUrl` — alongside `from()` and `createResource()`. Callers can pass the class itself where a structural descriptor `{ resourceType, canonicalUrl, from, createResource }` is required, without importing a generator-specific type.
+Resource profile classes expose `static readonly resourceType` alongside `canonicalUrl`, `from()` and `createResource()`. A generic FHIR client can use the class itself as a structural descriptor without importing a generator-specific type. The resource type comes from the resolved snapshot base; Extension and datatype profile classes do not expose `resourceType`.
 
 ```typescript
 import { observation_bodyweightProfile } from "./profiles/Observation_observation_bodyweight";

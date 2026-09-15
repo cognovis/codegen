@@ -1,6 +1,6 @@
 # Cognovis codegen fork
 
-`main` is the sole Cognovis integration branch. It is based on the [atomic-ehr/codegen `main`](https://github.com/atomic-ehr/codegen/tree/main) baseline at `12658b04` (after #208–#212 and #215–#219, including the terminology surface and configurable TypeScript module specifiers) and carries exactly two kinds of change, which are kept strictly separate:
+`main` is the sole Cognovis integration branch. Canonical `main` currently points to `d2ae11cd`, based on the [atomic-ehr/codegen `main`](https://github.com/atomic-ehr/codegen/tree/main) baseline at `12658b04`. The local `chore/codegen-dru/upstream-sync` candidate merges upstream `debec3246a07ec3e942e9beb3a038180143b2b8e`; it has not landed on canonical `main`, been published, produced a release, or changed a consumer pin. This document records the candidate's disposition. The candidate carries exactly two kinds of change, which are kept strictly separate:
 
 - a **distribution overlay** — package identity, publish registry, Bun shebang, and changelog tooling. These are permanent fork properties that will never be sent upstream.
 - **pending upstream contributions** — generator and CLI fixes that live on `main` only until atomic-ehr merges them. These are ordinary fork commits, never overlay paths.
@@ -83,15 +83,17 @@ These paths differ between `upstream/main` and `main`, and each one is excluded 
 
 | Path | Why it is not overlay |
 |---|---|
-| `README.md` | Documents the remaining profile `resourceType` descriptor and JSON configuration integration, plus the upstream terminology and module-specifier behavior exposed by this baseline. |
+| `README.md` | Documents retained multi-root package selection and diagnostics plus the upstream descriptor, terminology, and JSON TypeScript option surfaces. |
 | `CLAUDE.md` | Documents the remaining profile constraints and the upstream extensionless/default versus explicit Node ESM configuration. |
-| `docs/design/profiles.md` | Documents generated profile `resourceType` descriptors — pending upstream contribution (codegen-dzn). |
+| `docs/design/profiles.md` | Carries fork profile examples and constraint documentation around the upstream descriptor surface. |
+| `docs/upstream-sync-2026-09-15.md` | Bounded evidence and residual-risk record for the local `debec324` integration candidate. |
 | `tsconfig.json` | `resolveJsonModule` exists to support the CLI version fix that reads `package.json` — pending upstream contribution, not distribution identity. |
 | `bun.lock` | Derived from `package.json`; regenerate with `bun install` after applying the overlay. |
 | `.library.lock` | Machine-local agent tooling state. Never part of a distribution. |
 | `.intake/` | Machine-local scratch directory; ignored, never committed. |
 | `src/typeschema/**`, `src/api/writer-generator/**` | Forbidden by contract decision 3. |
-| `src/api/generate-config.ts` | The generate command is upstream (#211, #217). The remaining delta is builder-scoped dependency pins and the JSON whitelist/validation for the upstream TypeScript terminology and module-specifier options. |
+| `src/api/builder.ts` | Retains the fork's one-version-per-package root-conflict and resolved-dependency drift diagnostics on top of the upstream Canonical Manager integration. |
+| `src/api/generate-config.ts` | The generate command and TypeScript JSON options are upstream (#211, #217, #222). The remaining delta is isolated builder-scoped dependency pins. |
 | `src/cli/commands/**`, `test/**`, `assets/**`, `examples/**` | Generator and CLI behavior plus its evidence — all pending upstream contributions. |
 
 The table above is prose for humans. The block below is its machine-readable form: glob patterns for every path that may legitimately differ from upstream without being overlay. `--audit` classifies the real fork diff against the allowlist and these patterns together, and fails on any path matching neither — that is what makes "no third category" an executable rule rather than an assertion.
@@ -100,11 +102,13 @@ The table above is prose for humans. The block below is its machine-readable for
 CLAUDE.md
 README.md
 docs/design/profiles.md
+docs/upstream-sync-2026-09-15.md
 tsconfig.json
 bun.lock
 .library.lock
 src/typeschema/*
 src/api/writer-generator/*
+src/api/builder.ts
 src/api/generate-config.ts
 src/cli/commands/*
 test/*
@@ -114,28 +118,41 @@ examples/*
 
 ## Pending upstream contributions
 
-Fork commits on `main` that carry generator or CLI behavior. They are temporary: each one leaves `main` when upstream merges it. None of them may be added to the overlay allowlist.
+Fork changes in the integration candidate that carry generator or CLI behavior. They leave the fork delta when upstream merges equivalent behavior. None of them may be added to the overlay allowlist.
 
-### Superseded upstream contributions
+### Integrated upstream contributions in the local candidate
 
-| PR | Result in the `12658b04` baseline |
+| PR | Candidate disposition at upstream `debec324` |
 |---|---|
 | [#218](https://github.com/atomic-ehr/codegen/pull/218) | The normalized terminology surface, package filter, open verification labels, and special `unverifiable` handling are upstream. The fork carries no separate terminology writer or register implementation. |
 | [#219](https://github.com/atomic-ehr/codegen/pull/219) | `moduleSpecifierStyle` replaces the fork's unconditional `.js` rewrite. The upstream default is `extensionless`; Node ESM consumers and the checked-in Node regression/example opt into `node-esm`. The older [#213](https://github.com/atomic-ehr/codegen/pull/213) is closed and superseded. |
+| [#222](https://github.com/atomic-ehr/codegen/pull/222) | JSON configuration exposes and validates the TypeScript module-specifier and terminology options. The candidate uses upstream's implementation. |
+| [#223](https://github.com/atomic-ehr/codegen/pull/223), [#225](https://github.com/atomic-ehr/codegen/pull/225) | Generated resource-profile descriptors are upstream. #225 normalizes `resourceType` resolution through `TypeSchemaIndex` and removes the redundant helper retained by the older fork baseline. |
+| [#220](https://github.com/atomic-ehr/codegen/pull/220), [#227](https://github.com/atomic-ehr/codegen/pull/227) | #220 is closed and replaced by merged #227. The candidate uses upstream's explicit expansion of abstract resource-family reference targets. |
 
-#208–#212 and #215–#219 are on `main` through the `12658b04` upstream merge.
+#208–#212 and #215–#219 remain in the ancestry. The local candidate additionally integrates #222, #223 as normalized by #225, #227, Canonical Manager patch handling, and upstream's in-memory generation and test-cache changes through `debec324`.
 
-Each pull request branch is built on a clean `upstream/main` rather than cherry-picked from `main`. The transplanted branches regenerate their own artifacts, and internal tracker IDs are stripped from the contributed code.
+Future pull request branches are built on a clean `upstream/main` rather than cherry-picked from the fork. They regenerate their own artifacts, and internal tracker IDs are stripped from the contributed code.
 
-### Not yet submitted
+### Retained fork additions
 
-| Subject | Notes |
+These remain real deltas from upstream in the candidate. They are generator contributions rather than overlay paths:
+
+| Subject | Candidate behavior |
 |---|---|
-| Profile class `resourceType` descriptor (codegen-dzn) | Static `resourceType` on generated profile classes. |
-| Profile input and validation corrections | Preserve optional and repeating fixed/pattern constraints, required complex extension inputs, slice defaults, and extension flat factory fields. |
-| Resource references and virtual logical `Base` | Accept concrete targets for abstract `Resource` references and represent unresolved virtual R4 `Base` shapes without inventing a concrete dependency. |
-| Package-smoke as plain JavaScript (codegen-hcr) | CI consumer smoke uses `generate.mjs` + `node`, not `tsx`. |
-| Generate-config follow-ups | Builder-scoped `forceDependencies` and JSON validation for `moduleSpecifierStyle`, `terminology.enabled`, `terminology.packages`, and open-string `packageVerification`. |
+| Dependency pins | `forceDependencies` remains isolated per builder and is applied through Canonical Manager package patches. One builder cannot leak its pins into another. |
+| Multi-root generation | A shared closure selects one version per package name. Competing exact root versions fail, exact declared dependency drift is reported, and duplicate canonicals from concrete package versions fail instead of silently collapsing. Collision-safe package directories remain a writer defense; the public builder does not promise simultaneous generation of several versions of one package. |
+| Tree shaking | Inherited nested dependencies and slice-match-only dependencies remain reachable with their declaring package identities. |
+| Virtual R4 `Base` | Nested logical fields can retain the virtual R4 `Base` shape without accepting unrelated unknown types. |
+| Profile factories and constraints | The candidate retains the factory inputs, defaults, complex extension fields, slice accessors, and fixed/pattern constraint behavior already landed in the `d2ae11cd` fork baseline. |
+
+### Open upstream work not integrated
+
+| PR | Status and boundary |
+|---|---|
+| [#224](https://github.com/atomic-ehr/codegen/pull/224) (`25679426`) | Open. Its later collision repair is not in this candidate. |
+| [#228](https://github.com/atomic-ehr/codegen/pull/228) (`a58076f9`) | Open and tested separately. It replaces closed #221 as the upstream path for the repeating-value constraint repair; it is not integrated here. #221 was closed on 2026-09-15 in favor of #228. |
+| [#229](https://github.com/atomic-ehr/codegen/pull/229) (`755f5bca`) | Open maintainer replacement that includes the original factory behavior and intentional `Partial<Pick<...>>` getter extraction. Flat `set(get()!)` compatibility therefore breaks by design. It does not include #224's later collision fixes, defers raw/camelCase mapping, was tested separately, and is not integrated here. |
 
 ## Applying the overlay
 

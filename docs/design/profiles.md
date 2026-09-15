@@ -127,6 +127,8 @@ export interface observation_bodyweight extends Observation {
 
 2. **Profile class** — wraps the resource with factory methods, typed getters/setters, slice accessors, extension accessors, and validation. The class itself is a structural descriptor `{ resourceType, canonicalUrl, from, createResource }`: callers can pass the generated class where those members are required, without a generated Cognovis-specific dependency.
 
+Resource profile classes also expose `static readonly resourceType`, resolved from the snapshot base. Together with `canonicalUrl`, `from()` and `createResource()`, this lets a generic FHIR client accept the class as a structural descriptor. Extension and datatype profile classes retain `canonicalUrl` without a `resourceType` member.
+
 ```typescript
 export class observation_bodyweightProfile {
     static readonly resourceType = "Observation"

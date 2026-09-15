@@ -161,6 +161,7 @@ Reference example: `examples/typescript-r4-us-core/profile-r4-bodyweight.test.ts
 - Handles profiles and extensions (US Core in development)
 - Caches parsed schemas for performance
 - Multi-package dependency resolution via Canonical Manager
+- Package defects are fixed declaratively at the loader: `canonicalManager.patches` repairs raw package data and `excludeCanonical` drops known-broken canonicals at the index (helpers from `@atomic-ehr/fhir-canonical-manager/patch`; shipped `builtinPatches` in `src/api/builtin-patches.ts` apply to every builder-constructed loader unless `builtinPatches: false`) — never add ad-hoc workarounds in transformer code
 
 ### TypeSchema Format
 - Intermediate representation between FHIR and target languages
@@ -286,7 +287,7 @@ Single-element slices (`max: 1`) keep the existing single-item API.
 
 When a reference target is a family type (e.g. `Resource`, `DomainResource`), the generated type uses `Reference<string /* Resource */>` instead of `Reference<"Resource">`. This makes narrower profile references like `Reference<"Patient">` assignable to the base type field.
 
-Detection uses `mkIsFamilyType(tsIndex)` which checks `schema.typeFamily.resources.length > 0`.
+Detection uses `tsIndex.isFamilyType` which checks `schema.typeFamily.resources.length > 0`.
 
 ### Slice Field Validation
 

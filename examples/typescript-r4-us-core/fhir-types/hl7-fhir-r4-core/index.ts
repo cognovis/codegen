@@ -36,6 +36,8 @@ export type { ParameterDefinition } from "./ParameterDefinition.js";
 export type { Patient, PatientCommunication, PatientContact, PatientLink } from "./Patient.js";
 export { isPatient } from "./Patient.js";
 export type { Period } from "./Period.js";
+export type { Provenance, ProvenanceAgent, ProvenanceEntity } from "./Provenance.js";
+export { isProvenance } from "./Provenance.js";
 export type { Quantity } from "./Quantity.js";
 export type { Range } from "./Range.js";
 export type { Ratio } from "./Ratio.js";
