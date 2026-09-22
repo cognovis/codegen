@@ -95,7 +95,7 @@ Three steps:
 
 The repository delivery owner handles steps 2 and 3 for any skill declaring
 `action_boundary` with `risk_class: external-side-effect` or `high-risk`. See
-the `action_boundary` block in `cognovis-core/skills/bead-execution-loop/SKILL.md`
+the `action_boundary` block in `cognovis-core/skills/implementation-loop/SKILL.md`
 for a declaring skill.
 
 ## How a Judge Agent Wires Into the Judge Layer
@@ -137,7 +137,7 @@ precedence.
 | Consumer | Repo path | What it judges |
 |----------|-----------|----------------|
 | Memory-Write Judge | `open-brain/python/src/open_brain/memory_write_judge.py` | OpenBrain `save_memory` calls with structured 7-field proposals |
-| Pre-action gate | `cognovis-core/skills/bead-execution-loop/SKILL.md` §`action_boundary` | Any side-effecting skill invoked during a repository delivery |
+| Pre-action gate | `cognovis-core/skills/implementation-loop/SKILL.md` §`action_boundary` | Any side-effecting skill invoked during a repository delivery |
 | (Future) Action-Proposal CLI | `cognovis-core/standards/judge-layer/scripts/validate_action_proposal.py` is the deterministic validator; downstream consumers wire it into their orchestrator path |
 
 ## What This Layer Is Not

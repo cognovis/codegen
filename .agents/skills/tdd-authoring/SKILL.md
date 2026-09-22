@@ -1,6 +1,6 @@
 ---
 name: tdd-authoring
-description: Author independent RED tests and tdd_evidence_v1 for one bead slice. Use tdd for method and bead-execution-loop for dispatch.
+description: Author independent RED tests and tdd_evidence_v1 for one bead slice. Use tdd for method and implementation-loop for dispatch.
 requires:
   - skill:tdd
 requires_standards: [workflow, workflow/etl-development, dev-tools/tdd-real-fixture]
@@ -48,7 +48,7 @@ Harness sandboxes are workspace-wide. The classifier is the write bound.
 ## Do NOT
 
 - Treat Pocock `tdd` as the evidence envelope or the test-tree classifier.
-- Hardcode `skills/bead-execution-loop/scripts/...` as the only install path.
+- Hardcode `skills/implementation-loop/scripts/...` as the only install path.
 
 ## Resources
 
@@ -56,6 +56,6 @@ Harness sandboxes are workspace-wide. The classifier is the write bound.
 |------|---------|
 | `references/tdd-evidence-v1.md` | Debrief envelope |
 | `skill:tdd` | Seams, tautology, vertical slices |
-| `bead-execution-loop` `verify_expected_sources.py` | Provenance VERIFY |
-| `bead-execution-loop` `tdd_loop_contract.py` | Test-tree classifier |
-| `bead-execution-loop` `resolve_loop_skill.py` | Installed skill-root probe |
+| `implementation-loop` `verify_expected_sources.py` | Provenance VERIFY |
+| `implementation-loop` `tdd_loop_contract.py` | Test-tree classifier |
+| `implementation-loop` `resolve_loop_skill.py` | Installed skill-root probe |

@@ -2,7 +2,9 @@
 
 For every auto-approved or explicitly approved candidate, draft the bead inline
 and create it with
-direct `bd create --body-file`. Do not spawn an agent. For each candidate:
+`ccore tracker create --body-file` when the repository registry entry
+declares a tracker. Use direct `bd create --body-file` only for the Beads
+archive (no `tracker` in the registry). Do not spawn an agent. For each candidate:
 
 1. **Normalize** the approved candidate into a complete factory-ready body,
    following `standards/workflow/bead-hygiene.md`:
@@ -40,7 +42,9 @@ direct `bd create --body-file`. Do not spawn an agent. For each candidate:
      constrain the draft to keys that exist.
 2. **Validate** the body with `bead-author-check.py` before mutation.
 3. If validation fails, revise the body and re-run the check.
-4. **Create** with `bd create --title <title> --type <type> --priority <priority> --body-file <file>` and record the returned ID.
+4. **Create** with `ccore tracker create --repo <prefix> --body-file <file>`
+   (declared tracker) or `bd create --title <title> --type <type> --priority <priority> --body-file <file>`
+   (Beads archive) and record the returned ID.
 5. **Stop after persistence and deterministic validation.** Do not dispatch
    `bead-spec-reviewer`, `bead-reviewer`, Council, or an author/reviewer loop. If the
    user explicitly requested a review, run that separate manual action after creation.

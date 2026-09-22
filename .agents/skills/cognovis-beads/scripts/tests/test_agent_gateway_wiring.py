@@ -41,7 +41,7 @@ def test_review_family_rule_lives_in_the_standard_not_the_caller() -> None:
 
     for source in (
         "skills/executive-pack/SKILL.md",
-        "skills/bead-execution-loop/SKILL.md",
+        "skills/implementation-loop/SKILL.md",
         "skills/cognovis-beads/SKILL.md",
     ):
         content = (_REPO_ROOT / source).read_text(encoding="utf-8")
@@ -118,9 +118,9 @@ def test_codex_relay_agent_is_retired() -> None:
     # with the rest of the single-bead loop's scripts: the per-bead reviewer now
     # returns a human-readable verdict. Neither side may grow it back.
     assert not (_DISPATCH_SKILL / "scripts" / "review_contract.py").exists()
-    loop_scripts = _REPO_ROOT / "skills" / "bead-execution-loop" / "scripts"
+    loop_scripts = _REPO_ROOT / "skills" / "implementation-loop" / "scripts"
     assert not (loop_scripts / "review_contract.py").exists()
     assert not (loop_scripts / "loop_state.py").exists()
     assert "review_gate_v1" not in (
-        _REPO_ROOT / "skills" / "bead-execution-loop" / "SKILL.md"
+        _REPO_ROOT / "skills" / "implementation-loop" / "SKILL.md"
     ).read_text(encoding="utf-8")

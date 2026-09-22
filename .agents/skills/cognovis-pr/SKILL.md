@@ -1,57 +1,51 @@
 ---
 name: cognovis-pr
-description: Author Cognovis PR descriptions or maintain the repository Forgejo review channel; ccore owns publication and merge.
-requires_standards: [judge-layer]
+description: Write the pull request title and body for a Cognovis delivery from the pr template plus evidence and residual sections; ccore owns publication and merge.
 compatibility: {}
-metadata:
-  library:
-    plane: dev
-    runtime_requirements:
-      binaries: [git, uv]
-    deterministic_script: bundled
-action_boundary:
-  risk_class: high-risk
-  effect_type: credential
-  proposal_schema: standard://judge-layer/proposals/action-proposal.v1
-  judge: agent://judge-default
-  requires_mandate: true
+metadata: {}
 ---
 
 # Cognovis Pull Requests
 
-Author clear pull requests and operate the complete repository review channel.
+Write one outcome-led pull request text that a reviewer can judge in a minute.
+This skill produces text only. `ccore pr ensure` publishes it and Ccore Session
+Close owns delivery choice, integration, merge, push, and cleanup. The Forgejo
+review channel is operated by `forgejo-review-channel`, not here.
 
 ## Inputs
 
-- Repository root, desired outcome, verified evidence, and known residuals.
-- For review-channel work, an approved administrator mandate and repository config.
+- Repository root, the delivered change, the work order or spec it answers.
+- Verified evidence: commands run with verdicts, screenshots for a user-visible
+  surface, and known residuals.
 
 ## Outputs
 
-- An outcome-led pull request body or a redacted audit, adoption, verification, or disablement record.
+- One Markdown file outside the worktree. Line one is the title, at most 120
+  characters; the sections follow in the order defined by
+  `references/authoring.md`.
 
 ## Workflow
 
-1. Select authoring, audit/adoption, live verification, operation, or disablement and load the matching reference below.
-2. For authoring, apply `references/authoring.md`; finish when every required section is evidence-backed and the Mermaid decision has been recorded.
-3. For channel changes, require the judge-approved administrator mandate before any credential, membership, secret, or webhook mutation; finish admission only when the exact repository, writes, and rollback are authorized.
-4. Resolve this skill local-first (`.agents`, `.claude`, Library source, then global installs), run `uv run --script <resolved-skill>/scripts/review_channel.py validate --config <path> --repo-root <root>`, and resolve every error before adoption or live verification. The script's PEP 723 metadata provisions PyYAML outside a project environment.
-5. Run the same resolved helper in `audit` mode and record only its redacted output plus live identifiers and verdicts described in `references/operations.md`. After webhook restoration, also run `restore-audit` on the allowlisted redacted hook-state projection; never accept an `active`-only restore.
-6. Delegate pull request creation to `ccore pr ensure` and all merge, terminal lifecycle, push, and cleanup actions to canonical Ccore Session Close.
+1. Read `references/authoring.md`. When the `pr` skill from the Matt Pocock
+   catalog is installed, its template is the same one; this reference adds the
+   Cognovis sections and the handoff.
+2. Write Summary, Evidence, Merge Danger and Known residuals. Pick the smallest
+   Summary view that makes the change legible; do not narrate files.
+3. For a user-visible surface, capture two to four walkthrough screenshots and
+   attach them after the pull request exists, per the reference.
+4. Run the unslop checklist in the reference over the text.
+5. Hand the file to Session Close as its `--summary` value. Do not add the
+   identity footer; ccore appends harness, session and work-order identity.
 
 ## Do NOT
 
-- Print or commit secret values, prompts, diffs, customer data, or portable pilot evidence identifiers.
-- Add a per-pull-request AI workflow beside the persistent webhook or claim automatic fixes or merges.
-- Treat an authoring diagram as mandatory when prose is clearer.
+- Print or commit secret values, prompts, customer data, or pilot identifiers.
+- Commit screenshots or other binary evidence into the repository.
+- Publish or merge from here, or create a second creation transport beside
+  `ccore pr ensure`.
 
 ## Resources
 
 | File | Purpose |
 |---|---|
-| `references/authoring.md` | Pull request title, body, evidence, and Mermaid contract. |
-| `references/review-channel.md` | Portable Bun/TypeScript and Python adoption contract. |
-| `references/operations.md` | Verification, operation, disablement, and evidence rules. |
-| `scripts/review_channel.py` | Deterministic repository validator and redacted auditor. |
-| `scripts/python_diagnostics.py` | Ruff JSON to reviewdog diagnostic adapter. |
-| `scripts/changed_line_filter.py` | Git-aware added-line filter for credential-free diagnostics jobs. |
+| `references/authoring.md` | Title, body sections, screenshots, diagram rule, unslop checklist, ccore handoff. |

@@ -72,7 +72,7 @@ persona wins for persona-specific guidance. These rules fill in where the person
 
 ## Codex / OpenAI Equivalent
 
-When this agent runs on an OpenAI model (e.g., `gpt-5.6-sol`, `gpt-5.5`), the Codex equivalent
+When this agent runs on an OpenAI model (e.g., `gpt-5.6-sol`, `gpt-5.6-luna`), the Codex equivalent
 of extended thinking is `model_reasoning_effort: high` or `xhigh`. The Library translator
 sets this field in the Codex TOML when it detects an Opus model-standard being applied.
 The behavioral guidance above remains valid for OpenAI reasoning models.

@@ -18,11 +18,42 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 from typing import Any, Callable, NamedTuple
 
 
 PROVIDER_CODEBASE_MEMORY = "codebase-memory"
 PROVIDER_FALLBACK = "fallback"
+
+
+def _issue_tracker_name(repo_root: str | Path | None = None) -> str | None:
+    override = os.environ.get("COGNOVIS_BEADS_REGISTRY")
+    registry = Path(override).expanduser() if override else (
+        Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
+        / "cognovis" / "beads-repos.toml"
+    )
+    try:
+        loaded = tomllib.loads(registry.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+    checkout = Path(repo_root or Path.cwd()).expanduser().resolve()
+    for entry in loaded.get("repository", []):
+        raw = entry.get("path")
+        if not raw:
+            continue
+        try:
+            entry_path = Path(str(raw)).expanduser().resolve()
+        except OSError:
+            continue
+        if entry_path != checkout:
+            continue
+        name = str(entry.get("tracker") or "").strip()
+        if name in {"github", "forgejo"}:
+            return name
+        return None
+    return None
+
+
 FOCUS_PRIMARY_LIMIT = 12
 FOCUS_TEST_LIMIT = 8
 FOCUS_TOTAL_LIMIT = 12
@@ -214,7 +245,12 @@ def load_bead(bead_id: str, bead_json: Path | None, timeout: int) -> dict[str, A
     if bead_json is not None:
         return normalize_bead(load_json_file(bead_json))
 
-    result = run_subprocess(["bd", "show", bead_id, "--json"], timeout)
+    tracker = _issue_tracker_name(Path.cwd())
+    if not tracker:
+        argv = ["bd", "show", bead_id, "--json"]
+    else:
+        argv = ["ccore", "tracker", "show", bead_id]
+    result = run_subprocess(argv, timeout)
     if result.returncode != 0:
         return {}
     try:

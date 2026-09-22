@@ -17,7 +17,8 @@ unchanged so a second implementation can never drift from loop admission.
 
 This skill never writes loop state and never opens or claims a Bead. It is
 purely read-only: no file is created, no `bd` mutation is issued beyond a
-read-only `bd show`.
+read-only `bd show`. When the registry entry declares a tracker, use `ccore tracker`
+instead of `bd`; with no tracker field, keep `bd` for the Beads archive.
 
 ## When to Use
 
@@ -197,5 +198,5 @@ only derivable metadata and must not change `applies_to` or record bodies.
   bound (`ADR_MANIFEST_LIMIT`) -- owned by `context_provider.py` /
   `adr-context.py`.
 - Bead claim, delivery admission, and any part of the single-bead lifecycle --
-  owned by `executive-pack` in `solo` mode over `bead-execution-loop`.
+  owned by `executive-pack` in `solo` mode over `implementation-loop`.
 - Introducing a subagent, a cache, or new ADR ranking/scoring.

@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Beads archive verification. When the registry entry declares a tracker, use
+# `ccore tracker` instead of `bd`; with no tracker field, keep `bd`.
+
+RUN_ID="sync-verify:$(date +%s):$$"
+
 RUN_ID="sync-verify:$(date +%s):$$"
 
 bd list --limit 1

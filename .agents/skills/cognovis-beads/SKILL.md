@@ -14,6 +14,9 @@ and recovery behavior layered on top. Repository delivery belongs to `executive-
 context, metrics, review, and worktree helpers belong to their delivery consumers.
 
 For new or changed work orders, read [authoring.md](references/authoring.md).
+Beads is archive-only for repositories whose registry entry declares a
+`tracker`. Live work orders use `ccore tracker`; `bd` remains for archive
+reads and for registry entries with no tracker.
 
 ## Cognovis Invariants
 
@@ -21,7 +24,8 @@ For new or changed work orders, read [authoring.md](references/authoring.md).
 - Keep Acceptance Criteria observable and preserve one Means of Compliance entry per AC.
 - A note never changes the work order. When a decision supersedes part of a bead,
   rewrite the body — Intent, Scope-In, Scope-Out, Acceptance Criteria, Pre-Mortem —
-  through `bd update <id> --body-file`, and use a note only to record why it changed
+  through `ccore tracker` (declared tracker) or `bd update <id> --body-file` (archive),
+  and use a note only to record why it changed
   and when. Notes carry context, evidence, and history; the body is the instruction,
   and whoever picks the bead up reads the body. A body contradicting its own note is
   worse than an uncorrected one, because it hands out the superseded instruction

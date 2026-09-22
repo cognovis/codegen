@@ -45,8 +45,11 @@ pack-wide gates succeed. A Sub-Pack never closes independently.
 ## Review Placement
 
 Simple Solo and High-Assurance Solo are presets over the same prompt-owned repository
-delivery contract. Simple uses one complete Reviewer 1 pass. High Assurance adds a
-fresh different-family Reviewer 2 plus applicable security and project perspectives.
+delivery contract. Simple, also called Light, is the default and uses one complete
+Reviewer 1 pass. High Assurance adds a fresh different-family Reviewer 2 plus
+applicable security and project perspectives. It is selected by an elevating
+landing-policy review risk (payment, PII, auth, compliance), by the caller's role
+paragraph, or by repository instructions, and the choice is frozen at admission.
 Accepted repairs return to the same implementation owner and proceed after focused
 verification without an immediate full repair-confirmation review.
 
@@ -130,12 +133,15 @@ outcomes; recorded route and infrastructure failures reuse the same product-atte
 ordinal. Security-focus and documentation checks remain read-only evidence providers;
 they never repair source.
 
-After acceptance, final review is agentic and perspective-based: one complete
-different-family adversarial review, one security review, and every applicable
-project-specific perspective. Each produces distinct evidence. Accepted Medium-or-
-higher findings converge through one implementation-owned repair lineage; its current
-session can rotate only through a validated compact committed handoff. No fixed repair
-count or repeated full-review choreography is imposed.
+After acceptance, final review is agentic and perspective-based. Under the Light
+preset it is one fresh whole-Pack Reviewer 1 pass plus applicable project-specific
+perspectives; under High Assurance it is one complete different-family adversarial
+review, one security review, and every applicable project-specific perspective. Each
+produces distinct evidence. Accepted findings pass through deterministic triage
+(Medium or higher, inside the Pack diff, bound to an admitted AC or the candidate's
+behaviour) before one implementation-owned repair lineage; its current session can
+rotate only through a validated compact committed handoff. One repair round is the
+default; deferred findings become pull request comments or follow-up work orders.
 `passed` is a completion outcome with no accepted substantive finding;
 `changes_requested` carries accepted Medium-or-higher findings into that repair loop.
 

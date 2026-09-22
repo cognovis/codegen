@@ -26,12 +26,41 @@ import json
 import os
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
 
 class ContextDiscoveryError(ValueError):
     """Raised when context discovery cannot proceed for a supplied request."""
+
+
+def _issue_tracker_name(repo_root: str | Path | None = None) -> str | None:
+    override = os.environ.get("COGNOVIS_BEADS_REGISTRY")
+    registry = Path(override).expanduser() if override else (
+        Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
+        / "cognovis" / "beads-repos.toml"
+    )
+    try:
+        loaded = tomllib.loads(registry.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+    checkout = Path(repo_root or Path.cwd()).expanduser().resolve()
+    for entry in loaded.get("repository", []):
+        raw = entry.get("path")
+        if not raw:
+            continue
+        try:
+            entry_path = Path(str(raw)).expanduser().resolve()
+        except OSError:
+            continue
+        if entry_path != checkout:
+            continue
+        name = str(entry.get("tracker") or "").strip()
+        if name in {"github", "forgejo"}:
+            return name
+        return None
+    return None
 
 
 def resolve_context_provider(repo_root: Path) -> Path:
@@ -146,8 +175,13 @@ def load_bead_for_discovery(
         raise ContextDiscoveryError("bead-scoped mode requires bead_id or --bead-json")
 
     try:
+        tracker = _issue_tracker_name(repo_root)
+        if not tracker:
+            argv = ["bd", "show", bead_id, "--json"]
+        else:
+            argv = ["ccore", "tracker", "show", bead_id]
         result = subprocess.run(
-            ["bd", "show", bead_id, "--json"],
+            argv,
             cwd=repo_root,
             check=False,
             capture_output=True,

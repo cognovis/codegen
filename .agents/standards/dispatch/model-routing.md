@@ -18,13 +18,111 @@ is named below, it is Claude Fable through the ccore `claude-fable` route (`fabl
 the native `claude` harness), not Opus. Opus stays a configured route for callers that
 name it explicitly; it is no longer a launcher default for review.
 
-For a Codex-owned delivery, use a distinct `gpt-5.6-sol` implementation sub-agent with
-medium reasoning, Fable as Reviewer 1, and Grok as Reviewer 2 on the grok harness.
+For a Codex-owned delivery, prefer `gpt-6-astra` with medium reasoning for the invoking
+delivery owner. This is an invoking-session model choice, not an assumption that ccore
+provides an Astra route. Use a distinct `gpt-5.6-sol` implementation sub-agent with high
+reasoning and a distinct `gpt-5.6-sol` RED author with high reasoning when TDD applies.
+Fable is Reviewer 1. Use Grok as Reviewer 2 on the grok harness only when the selected
+Solo preset or final Pack review requires that second review perspective.
 
 For a Claude-owned delivery, use a distinct Opus implementation sub-agent, a fresh
 `gpt-5.6-sol` Reviewer 1 with high reasoning, and Grok as Reviewer 2 on the grok
 harness. The implementation model is unchanged by the Fable preference above, which
 covers review roles only.
+
+Reviewer 2 and the security perspective belong to the High-Assurance preset. The Light
+preset is the default and names Reviewer 2 as `not required`; High Assurance is
+selected by an elevating landing-policy review risk, by the caller, or by repository
+instructions. A Light delivery still keeps its fresh Reviewer 1 in a different family
+from the implementation actor.
+
+### Admission session and coordinator
+
+Admission and delivery may run in different sessions. The admission session uses the
+most capable available model, Claude Fable or `gpt-6-astra`, and ends by writing the
+compact admission packet defined in the Executive Pack's `admission-packet.md`. The
+coordinator session then owns delivery from claim admission through Session Close; it
+uses a large-context, lower-cost model: Claude Sonnet 5 under the Claude provider or
+`gpt-5.6-luna` at medium reasoning under the Codex provider. Both are valid; the packet
+names the one used. The coordinator is the fixed repository delivery owner from that
+point and is never rotated. Implementation, RED authorship and review keep the actor
+rules above regardless of which coordinator runs.
+
+### Optional Luna coordination profile
+
+The Astra-medium Codex delivery owner remains the default. Before sending the
+initiating prompt, an operator may instead start the invoking delivery session with
+`gpt-5.6-luna` at medium reasoning and name the Luna coordination profile in the
+role paragraph. Prompt text cannot switch the invoking model. That already-running
+Luna session is the repository delivery owner; it does not spawn a new owner, replace
+an admitted owner, transfer ownership later in the delivery, or rotate through the
+compact implementation-handoff contract. The selection freezes with the rest of the
+delivery contract at admission.
+
+The profile changes only coordination and optional decision support. It retains a
+distinct `gpt-5.6-sol` high implementation owner, a distinct `gpt-5.6-sol` high RED
+author when TDD applies, and the selected Solo or Pack preset's foreign-family review,
+acceptance, security, repair and Session Close responsibilities. A fresh read-only
+`gpt-6-astra` advisor at xhigh reasoning may answer one bounded planning question or one
+concrete unresolved blocker after repository lookup. It returns advice to the Luna
+owner and receives no source, claim, finding-disposition or completion authority. Read
+the Executive Pack's optional Luna coordination reference for the activation rules,
+compact packet and initiating prompt.
+
+## Delivery work kinds
+
+A work kind names a responsibility and its expected result. It is neither a Bead issue
+type nor a model identity, and this table is not a required fan-out checklist. Required
+roles and evidence come from the selected delivery preset and the live Bead; optional
+work runs only when it helps that delivery.
+
+The [setup-pstack role mapping](https://github.com/cursor/plugins/blob/889ec4b68fa5aab0e867dad71ec3fdf386ae48f3/pstack/skills/setup-pstack/SKILL.md)
+motivates the useful separation here: work responsibility and model choice stay
+distinct and overrideable. Its configured role lists, setup flow and panel fan-out are
+not part of this delivery contract.
+
+| Work kind | Applies when | Existing actor and expected result |
+|---|---|---|
+| Delivery coordination | Every repository delivery | The invoking delivery owner returns admission, sequencing and finding decisions, callbacks, usage evidence and one Session Close result. For Codex, prefer Astra with medium reasoning; the optional Luna profile above must be selected before admission. |
+| Bounded context or documentation lookup | A concrete repository question can be answered independently | `bead-context` for admitted context, or a compatible native generic/explorer actor, returns concise file or document pointers, evidence and open uncertainty. For Codex, prefer Luna with medium reasoning. |
+| Bounded decision support | Difficult uncertainty remains after concrete lookup | `plan-reviewer` uses its declared configuration for an admitted implementation plan and returns evidence, options and the unresolved decision. For Codex, a compatible native generic advisory actor may use Astra with xhigh reasoning for this bounded analysis when its spawn surface advertises that exact choice. |
+| Multi-source research | The work needs broad source discovery and synthesis | `researcher` returns a sourced research summary. Its Sol high configuration reflects that broader job and is not a narrow-lookup default. |
+| Implementation | Each admitted Bead | `implementer` remains the stable logical source owner and returns the candidate diff plus focused verification. For Codex, use Sol with high reasoning. |
+| Independent RED authorship | TDD applies to an implementation slice | `tdd-test-author` returns independently sourced RED evidence. For Codex, use Sol with high reasoning in a session distinct from the implementer. |
+| Pack repair convergence | Final Pack review leaves accepted findings on an existing candidate | One current repair implementer receives every remaining finding at once in the shared Pack worktree and owns the cumulative repair diff, its tests and focused verification. Normal serial Codex execution rotates once through the compact handoff to a fresh Sol session with high reasoning; a Sub-Pack keeps its fixed parent repair session. This is a closing bugfix phase: no `implementation-loop` re-entry, no separate RED author, no member-sequence replay. |
+| Documentation | The implementation changes a material user-visible, API, configuration, deployment, operator or developer workflow | `doc-changelog-updater` updates affected documentation before final review; otherwise the implementation owner keeps scoped documentation aligned with its source change. The result states the changed behavior and verification. |
+| Review | The selected Solo or Pack preset requires the perspective | Reviewer 1 and, when required, Reviewer 2 return candidate-bound findings from fresh different-family contexts. Keep the Fable, Grok and fallback rules below. |
+| Acceptance, security or project evidence | Claims, risk or repository policy make the perspective applicable | The existing specialist actor returns its own candidate-bound evidence and never repairs source. Its declared configuration remains authoritative. |
+
+For optional lookup or research, give the actor one bounded concrete question, relevant
+paths and constraints, the required evidence shape, and the uncertainty it must report.
+Delegate only when the delivery owner has useful independent work to continue while the
+answer is produced. Start with a compact fresh context without inherited delivery
+history. Use Luna high only for a named difficult lookup, such as cross-subsystem
+ambiguity, and record why medium was insufficient. A native generic actor may escalate
+that difficult lookup to Luna max only when its current spawn surface explicitly
+offers that exact model and effort.
+Use Astra xhigh only for bounded decision support after lookup and only when the target
+native surface advertises that exact choice. Validate every model and effort against the
+actual target surface; a ccore route and a native spawn catalog do not imply support for
+each other. Escalation does not transfer source ownership or replace any required
+foreign-family review or evidence perspective.
+
+Under the optional Luna profile only, a decision-support advisor may activate for an
+explicit plan challenge or when one concrete unresolved blocker prevents the delivery
+owner from continuing independently. The owner may wait for that single terminal
+answer and then either decide or report the remaining blocker. One Astra advisor
+handles one question and stops after its answer. A later, materially different blocker
+may use another fresh advisor. Do not keep an advisor attached as a watchdog, forward
+the delivery transcript, or ask it to monitor progress, review the candidate, repair
+source, or approve progression.
+
+In Codex, a custom agent's native configuration wins over a model requested at spawn
+time. Do not instruct callers to override a hard-pinned custom agent. Select an already
+compatible actor, use a generic actor whose model can be set explicitly, or retain the
+custom agent's declared model and state the reason.
+
+## Review families and fallbacks
 
 Different-family is measured against the implementation actor. The invariant every
 reviewer must satisfy is that its model family differs from the family that produced the

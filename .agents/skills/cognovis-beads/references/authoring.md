@@ -1,7 +1,8 @@
 ### Creating and editing beads
 
 Read and mutate bead state with direct, non-interactive `bd` commands (`--json`
-where available). For a new bead or a body-changing update, write the factory-ready
+where available). When the registry entry declares a tracker, use `ccore tracker`
+instead of `bd`; with no tracker field, keep `bd` for the Beads archive. For a new bead or a body-changing update, write the factory-ready
 payload to a temp file, validate it with the bead-author-check validator, then run
 `bd create --body-file <file>` or `bd update <id> --body-file <file>`. This keeps
 bead hygiene enforced (Intent, Acceptance Criteria, MoC, dependency links).

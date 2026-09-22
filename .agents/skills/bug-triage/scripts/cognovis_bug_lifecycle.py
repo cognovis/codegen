@@ -10,8 +10,37 @@ import re
 import shlex
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any, Sequence
+
+
+def _issue_tracker_name(repo_root: str | Path | None = None) -> str | None:
+    override = os.environ.get("COGNOVIS_BEADS_REGISTRY")
+    registry = Path(override).expanduser() if override else (
+        Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
+        / "cognovis" / "beads-repos.toml"
+    )
+    try:
+        loaded = tomllib.loads(registry.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+    checkout = Path(repo_root or Path.cwd()).expanduser().resolve()
+    for entry in loaded.get("repository", []):
+        raw = entry.get("path")
+        if not raw:
+            continue
+        try:
+            entry_path = Path(str(raw)).expanduser().resolve()
+        except OSError:
+            continue
+        if entry_path != checkout:
+            continue
+        name = str(entry.get("tracker") or "").strip()
+        if name in {"github", "forgejo"}:
+            return name
+        return None
+    return None
 
 
 class LifecycleError(RuntimeError):
@@ -378,21 +407,25 @@ def close_bead(args: argparse.Namespace) -> int:
     repo = resolve_repo(args.repo)
     if state_path(repo, args.bead_id).exists():
         raise LifecycleError("Refusing to close while lifecycle state still exists")
-    run(["bd", "close", args.bead_id, "--reason", args.reason], cwd=repo, capture=False)
-    if args.push_beads:
-        run(
-            [
-                "ccore",
-                "beads",
-                "sync",
-                "--repo",
-                str(repo),
-                "--operation-id",
-                f"gascity-close:{args.bead_id}",
-            ],
-            cwd=repo,
-            capture=False,
-        )
+    tracker = _issue_tracker_name(repo)
+    if not tracker:
+        run(["bd", "close", args.bead_id, "--reason", args.reason], cwd=repo, capture=False)
+        if args.push_beads:
+            run(
+                [
+                    "ccore",
+                    "beads",
+                    "sync",
+                    "--repo",
+                    str(repo),
+                    "--operation-id",
+                    f"gascity-close:{args.bead_id}",
+                ],
+                cwd=repo,
+                capture=False,
+            )
+    else:
+        run(["ccore", "tracker", "close", args.bead_id], cwd=repo, capture=False)
     return emit("Closed bead after integration and cleanup", {"bead_id": args.bead_id})
 
 

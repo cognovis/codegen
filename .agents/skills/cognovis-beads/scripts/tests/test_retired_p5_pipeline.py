@@ -2,7 +2,7 @@
 
 The pipeline below was removed in clc-7qhr after its only entry point
 (skills/beads/scripts/codex-impl.py) was deleted in 42daa716 and the live
-implementation path moved to bead-execution-loop -> bead-implementer over a
+implementation path moved to implementation-loop -> implementer over a
 persistent ACPX session (ADR-0009). No skill, agent, wrapper, hook, or MCP
 registry entry called these modules any more.
 

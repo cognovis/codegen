@@ -11,7 +11,7 @@ description: The shared development workflow — bead specification and hygiene,
 
 The orchestration itself is not described here. Authoring lives in the `intake`
 skill, execution in the `executive-pack` Repository Delivery contract over
-`bead-execution-loop`, and closeout in `session-close`. This bundle holds the
+`implementation-loop`, and closeout in `session-close`. This bundle holds the
 standards those skills apply.
 
 ## Specification and Backlog

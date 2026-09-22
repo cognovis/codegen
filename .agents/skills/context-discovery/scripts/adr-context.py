@@ -25,9 +25,11 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import os
 import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +40,34 @@ import yaml
 # ---------------------------------------------------------------------------
 
 _PRODUCER = "adr-context.py"
+
+
+def _issue_tracker_name(repo_root: str | Path | None = None) -> str | None:
+    override = os.environ.get("COGNOVIS_BEADS_REGISTRY")
+    registry = Path(override).expanduser() if override else (
+        Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
+        / "cognovis" / "beads-repos.toml"
+    )
+    try:
+        loaded = tomllib.loads(registry.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+    checkout = Path(repo_root or Path.cwd()).expanduser().resolve()
+    for entry in loaded.get("repository", []):
+        raw = entry.get("path")
+        if not raw:
+            continue
+        try:
+            entry_path = Path(str(raw)).expanduser().resolve()
+        except OSError:
+            continue
+        if entry_path != checkout:
+            continue
+        name = str(entry.get("tracker") or "").strip()
+        if name in {"github", "forgejo"}:
+            return name
+        return None
+    return None
 _CONTRACT_VERSION = "1"
 _SCHEMA_PATH = "core/contracts/execution-result.schema.json"
 _MAX_ADR_BLOCK_CHARS = 2048
@@ -315,8 +345,13 @@ def _fetch_bead_description(bead_id: str) -> str | None:
     Returns the output string, or None on any failure.
     """
     try:
+        tracker = _issue_tracker_name(Path.cwd())
+        if not tracker:
+            argv = ["bd", "show", bead_id]
+        else:
+            argv = ["ccore", "tracker", "show", bead_id]
         result = subprocess.run(
-            ["bd", "show", bead_id],
+            argv,
             capture_output=True,
             text=True,
             timeout=15,
