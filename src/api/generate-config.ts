@@ -192,6 +192,7 @@ const TYPESCRIPT_KEYS = [
 ] as const satisfies readonly (keyof TypeScriptOptions)[];
 
 const TERMINOLOGY_KEYS = ["enabled", "packages", "packageVerification"] as const;
+
 const PYTHON_KEYS = [
     ...WRITER_KEYS,
     "allowExtraFields",
@@ -227,6 +228,7 @@ const outputOverlap = (a: string, b: string): string | undefined => {
     if (a.startsWith(b + Path.sep)) return "contains";
     return undefined;
 };
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -408,6 +410,7 @@ const readTypeScriptOptions = (ctx: Ctx, value: unknown, path: string): Partial<
         terminology: { enabled, packages, packageVerification },
     } as Partial<TypeScriptOptions>;
 };
+
 const readBuilder = (ctx: Ctx, value: unknown, path: string): GenerateConfigBuilder | undefined => {
     const record = readRecord(ctx, value, path);
     if (!record) return undefined;

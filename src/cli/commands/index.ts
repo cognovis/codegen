@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 /**
  * Atomic Codegen CLI - New Command Structure
  *
