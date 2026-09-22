@@ -139,7 +139,7 @@ describe("treeShake specific TypeSchema", async () => {
 
 describe("treeShake inherited nested targets", () => {
     const questionnaireUrl = "http://hl7.org/fhir/StructureDefinition/Questionnaire" as CanonicalUrl;
-    const profileUrl = "https://fhir.cognovis.de/praxis/StructureDefinition/anamnese-questionnaire" as CanonicalUrl;
+    const profileUrl = "http://example.test/StructureDefinition/anamnese-questionnaire" as CanonicalUrl;
     const questionnaireId: ResourceIdentifier = {
         kind: "resource",
         name: "Questionnaire" as Name,
@@ -165,7 +165,7 @@ describe("treeShake inherited nested targets", () => {
         kind: "profile",
         name: "AnamneseQuestionnaire" as Name,
         url: profileUrl,
-        package: "de.cognovis.fhir.praxis",
+        package: "example.test.praxis",
         version: "0.101.6",
     };
 
@@ -174,32 +174,28 @@ describe("treeShake inherited nested targets", () => {
             identifier: questionnaireId,
             fields: { item: { type: itemId } },
             nested: [
-                { identifier: itemId, fields: { enableWhen: { type: enableWhenId } } },
-                ...(includeEnableWhen ? [{ identifier: enableWhenId, fields: {} }] : []),
+                { identifier: itemId, base: questionnaireId, fields: { enableWhen: { type: enableWhenId } } },
+                ...(includeEnableWhen ? [{ identifier: enableWhenId, base: questionnaireId, fields: {} }] : []),
             ],
         };
         const profile: ProfileTypeSchema = {
             identifier: profileId,
             base: questionnaireId,
             fields: { item: { type: itemId } },
-            nested: [{ identifier: itemId, fields: { enableWhen: { type: enableWhenId } } }],
+            nested: [{ identifier: itemId, base: questionnaireId, fields: { enableWhen: { type: enableWhenId } } }],
         };
         return [questionnaire, profile];
     };
 
     /**
-     * source_kind: worked_example
-     * source: fmgt-qxn8 exact Praxis 0.101.6 diagnostic
-     * worked_example_pointer: candidate sha256 400aa9e319d0fbda7c79fb883521680a4c8f62f0b8eb33e07832550cc9078658; normalized profile sha256 4e41dee3cad1c9e5f289c23da41af527ca4600ca66cd7c49463e798454bf2dd9
-     * source_kind: oracle
-     * source: current TypeSchema/index exact Identifier contract at 971a959a9050f8ce73ce1fc736225a99bd041d92
-     * oracle_ledger_id: atomic-codegen@971a959a9050f8ce73ce1fc736225a99bd041d92:NestedIdentifier+TypeSchemaIndex.resolveType
-     * expected local parent: http://hl7.org/fhir/StructureDefinition/Questionnaire#item
-     * expected base-owned target: hl7.fhir.r4.core@4.0.1 http://hl7.org/fhir/StructureDefinition/Questionnaire#item.enableWhen
+     * A profile can inherit a field whose nested type is owned by the
+     * specialization, and that nested type can own a further nested type. Tree
+     * shaking the profile must retain the base-owned target with its exact
+     * package-qualified identity.
      */
     it("retains a base-owned nested target used by a profile-local inherited parent", () => {
         const shaked = treeShake(mkTypeSchemaIndex(schemas(true), {}), {
-            "de.cognovis.fhir.praxis": { [profileUrl]: {} },
+            "example.test.praxis": { [profileUrl]: {} },
         });
 
         expect(shaked.resolve(profileId)?.nested?.map(({ identifier }) => identifier)).toContainEqual(itemId);
@@ -209,19 +205,15 @@ describe("treeShake inherited nested targets", () => {
     it("names a genuinely missing inherited nested target", () => {
         expect(() =>
             treeShake(mkTypeSchemaIndex(schemas(false), {}), {
-                "de.cognovis.fhir.praxis": { [profileUrl]: {} },
+                "example.test.praxis": { [profileUrl]: {} },
             }),
         ).toThrowError("http://hl7.org/fhir/StructureDefinition/Questionnaire#item.enableWhen");
     });
 
     /**
-     * source_kind: worked_example
-     * source: codegen-4ok accepted Reviewer 1 reproduction
-     * worked_example_pointer: valid core reference to http://r#n is visited before missing-package reference {url: http://r#n, package: absent}; current outcome accepted
-     * source_kind: oracle
-     * source: TypeSchemaIndex exact URL-plus-package nested identity contract at 75b07521
-     * oracle_ledger_id: atomic-codegen@75b07521:NestedIdentifier+TypeSchemaIndex.resolveType
-     * expected missing identity: {"kind":"nested","name":"n","url":"http://r#n","package":"absent","version":"1.0.0"}
+     * The nested identity is the URL plus the declaring package, so a visited
+     * nested URL under one package must not satisfy a reference to the same URL
+     * under a package that is absent from the index.
      */
     it("rejects a visited nested URL when the requested package is missing", () => {
         const nestedUrl = "http://r#n" as CanonicalUrl;
@@ -236,19 +228,20 @@ describe("treeShake inherited nested targets", () => {
             ...coreNested,
             package: "absent",
         };
+        const rootId: ResourceIdentifier = {
+            kind: "resource",
+            name: "Root" as Name,
+            url: "http://r" as CanonicalUrl,
+            package: "fixture",
+            version: "1.0.0",
+        };
         const root: SpecializationTypeSchema = {
-            identifier: {
-                kind: "resource",
-                name: "Root" as Name,
-                url: "http://r" as CanonicalUrl,
-                package: "fixture",
-                version: "1.0.0",
-            },
+            identifier: rootId,
             fields: {
                 valid: { type: coreNested },
                 missing: { type: missingNested },
             },
-            nested: [{ identifier: coreNested, fields: {} }],
+            nested: [{ identifier: coreNested, base: rootId, fields: {} }],
         };
 
         expect(() =>
@@ -301,46 +294,28 @@ describe("treeShake inherited slice match targets", () => {
         package: "hl7.fhir.eu.eps",
         version: "1.0.0-ballot",
     };
-    const praxisBundleUrl =
-        "https://fhir.cognovis.de/praxis/StructureDefinition/patient-summary-bundle-praxis-de" as CanonicalUrl;
-    const praxisBundleId: ProfileIdentifier = {
+    const summaryBundleUrl = "http://example.test/StructureDefinition/patient-summary-bundle" as CanonicalUrl;
+    const summaryBundleId: ProfileIdentifier = {
         kind: "profile",
-        name: "PraxisPatientSummaryBundle" as Name,
-        url: praxisBundleUrl,
-        package: "de.cognovis.fhir.praxis",
+        name: "PatientSummaryBundle" as Name,
+        url: summaryBundleUrl,
+        package: "example.test.praxis",
         version: "0.101.6",
     };
 
     /**
-     * source_kind: ig_profile
-     * source: exact hl7.fhir.eu.eps@1.0.0-ballot Bundle profile
-     * ig_canonical: http://hl7.eu/fhir/eps/StructureDefinition/bundle-eu-eps
-     * element: differential Bundle.entry type discriminator path resource and Bundle.entry:patient.resource Patient
-     * source_kind: worked_example
-     * source: fmgt-qxn8 fifth Praxis candidate compiler transcript
-     * worked_example_pointer: /tmp/fmgt-qxn8-candidate-run.yPbGaF/output generated hl7-fhir-eu-eps/profiles/Bundle_BundleEuEps.ts with BundleEntry<Patient> but no hl7-fhir-r4-core/Patient.ts
-     * source_kind: worked_example
-     * source: accepted codegen-7al Reviewer 1 package-collision reproduction
-     * worked_example_pointer: an R4-owned Bundle profile slice targets Patient while an unrelated hl7.fhir.r5.core@5.0.0 Patient with the same canonical and identifier.name is present
-     * source_kind: oracle
-     * source: package-aware TypeSchemaIndex URL resolution contract
-     * oracle_ledger_id: atomic-codegen@bc240259:src/typeschema/utils.ts#TypeSchemaIndex.resolveByUrl
-     * expected package-resolved target: hl7.fhir.r4.core@4.0.1 Patient; hl7.fhir.r5.core@5.0.0 Patient remains omitted
-     * source_kind: oracle
-     * source: TypeScript type-discriminated slice writer contract
-     * oracle_ledger_id: atomic-codegen@bc240259:src/api/writer-generator/typescript/profile-slices.ts#collectTypesFromSlices
-     * expected retained target: hl7.fhir.r4.core@4.0.1 Patient, enabling import and rendering of BundleEntry<Patient>
-     * source_kind: oracle
-     * source: treeShake followReferences contract
-     * oracle_ledger_id: atomic-codegen@bc240259:src/typeschema/ir/types.ts#TreeShakeRule.followReferences
-     * expected omitted ordinary reference target with followReferences false: Practitioner
+     * An hl7.fhir.eu.eps@1.0.0-ballot Bundle profile discriminates its entry
+     * slices on the resource type and requires Patient. The reference must
+     * resolve in the declaring R4 package even when an unrelated R5 package
+     * ships a Patient with the same canonical, so the shaken output keeps the
+     * R4 Patient and can import it.
      */
     it("retains the package-resolved slice target and emits compilable inherited slice output", async () => {
         const bundle: SpecializationTypeSchema = {
             identifier: bundleId,
             base: resourceBaseId,
             fields: { entry: { type: entryId, array: true } },
-            nested: [{ identifier: entryId, fields: { resource: { type: resourceBaseId } } }],
+            nested: [{ identifier: entryId, base: bundleId, fields: { resource: { type: resourceBaseId } } }],
             dependencies: [resourceBaseId],
         };
         const epsBundle: ProfileTypeSchema = {
@@ -372,8 +347,8 @@ describe("treeShake inherited slice match targets", () => {
             },
             dependencies: [bundleId, entryId, referenceId],
         };
-        const praxisBundle: ProfileTypeSchema = {
-            identifier: praxisBundleId,
+        const summaryBundle: ProfileTypeSchema = {
+            identifier: summaryBundleId,
             base: epsBundleId,
             dependencies: [epsBundleId],
         };
@@ -386,13 +361,13 @@ describe("treeShake inherited slice match targets", () => {
                 { identifier: r5PatientId },
                 { identifier: referenceId },
                 epsBundle,
-                praxisBundle,
+                summaryBundle,
             ],
             {},
         );
 
         const shaked = treeShake(index, {
-            "de.cognovis.fhir.praxis": { [praxisBundleUrl]: { followReferences: false } },
+            "example.test.praxis": { [summaryBundleUrl]: { followReferences: false } },
         });
 
         expect(shaked.resolve(epsBundleId)?.slicing?.entry?.slices?.patient?.match).toEqual({
@@ -421,7 +396,7 @@ describe("treeShake inherited slice match targets", () => {
         expect(files["generated/types/hl7-fhir-r4-core/Patient.ts"]).toBeDefined();
         expect(files["generated/types/hl7-fhir-r5-core/Patient.ts"]).toBeUndefined();
 
-        const compileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "codegen-7al-slice-match-"));
+        const compileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tree-shake-slice-match-"));
         try {
             for (const [relativePath, content] of Object.entries(files)) {
                 const absolutePath = path.join(compileRoot, relativePath);
@@ -455,11 +430,9 @@ describe("treeShake inherited slice match targets", () => {
     });
 
     /**
-     * source_kind: worked_example
-     * source: accepted codegen-7al Reviewer 1 diagnostic reproduction
-     * worked_example_pointer: a missing Patient names BundleEuEps as owner; an owner without a package-resolved Patient names both hl7.fhir.r4.core@4.0.1 and hl7.fhir.r5.core@5.0.0 candidates
-     * expected missing diagnostic tokens: Patient, BundleEuEps, hl7.fhir.eu.eps
-     * expected ambiguous diagnostic tokens: Patient, BundleEuEps, hl7.fhir.r4.core, hl7.fhir.r5.core
+     * When a slice target is genuinely unresolved, the diagnostic names the
+     * slice owner and the candidate package identities instead of silently
+     * dropping the slice.
      */
     it("names the slice owner and candidates for genuinely unresolved targets", () => {
         const owner = (base: ResourceIdentifier): ProfileTypeSchema => ({
