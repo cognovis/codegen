@@ -37,7 +37,7 @@ cat >"$config_path" <<EOF
           "dependencies": [{ "name": "hl7.fhir.r4.core", "version": "4.0.1" }]
         }
       ],
-      "typescript": { "generateProfile": true, "withDebugComment": false },
+      "typescript": { "generateProfile": true, "withDebugComment": false, "moduleSpecifierStyle": "node-esm" },
       "outputTo": "${generated_root}",
       "cleanOutput": true
     }
