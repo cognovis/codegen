@@ -155,6 +155,7 @@ These remain real deltas from upstream in the integration. They are generator co
 | Dependency pins | Each builder resolves its own `forceDependencies` map and receives a distinct Canonical Manager package-patch configuration. Canonical Manager's on-disk cache key does not include patches, so successive builders using identical roots and the same working directory can reuse the first patched manifest; use separate working directories or reset the cache when pin maps differ. |
 | Multi-root generation | A shared closure selects one version per package name. Competing exact root versions fail, exact declared dependency drift is reported, and duplicate canonicals from concrete package versions fail instead of silently collapsing. Collision-safe package directories remain a writer defense; the public builder does not promise simultaneous generation of several versions of one package. Aligned with the maintainer's one-version-per-package decision ([#151](https://github.com/atomic-ehr/codegen/pull/151)); no resolver fallbacks are used. |
 | Tree shaking | Inherited nested dependencies and slice-match-only dependencies remain reachable with their declaring package identities. Contributed upstream as [#234](https://github.com/atomic-ehr/codegen/pull/234); drop this delta when it merges. |
+| Virtual R4 `Base` (nested elements) | A logical model whose element type is the virtual R4 `Base` must not fail `resolveFsGenealogy`; nested fields stay representable and unrelated unknown types still fail. Real trigger: `de.cognovis.fhir.dental@0.53.0` (`Failed to resolve FHIR Schema: ...Base`). The cognovis-fhir consumer build needs it, so it is retained and is a candidate upstream contribution. |
 | Profile factories and constraints | The integration retains the factory inputs, defaults, complex extension fields, slice accessors, and fixed/pattern constraint behavior already landed in the `d2ae11cd` fork baseline. |
 
 ### Open upstream work not integrated
@@ -163,6 +164,7 @@ These remain real deltas from upstream in the integration. They are generator co
 |---|---|
 | [#207](https://github.com/atomic-ehr/codegen/pull/207) | Open maintainer slice-fact refactor. It does not touch `tree-shake.ts`, so it is independent of the fork contribution in #234. |
 | [#234](https://github.com/atomic-ehr/codegen/pull/234) | Open fork contribution built on `upstream/main` `2cd28e09`: keep tree-shaken nested and slice-match reference targets. Retires the retained tree-shake delta when merged. |
+| Virtual R4 `Base` (nested) | Not yet submitted. Upstream #209/#215 cover the schema base only; a nested element typed `Base` still fails. Real consumer trigger (`de.cognovis.fhir.dental@0.53.0`); candidate upstream contribution built on the current baseline. |
 | [#224](https://github.com/atomic-ehr/codegen/pull/224) | Closed; its factory behavior is covered by merged #229 and its later collision repair by the merged follow-up. |
 
 ## Applying the overlay
