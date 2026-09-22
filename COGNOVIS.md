@@ -1,6 +1,6 @@
 # Cognovis codegen fork
 
-`main` is the sole Cognovis integration branch. At the start of this synchronization, canonical `main` pointed to `d2ae11cd`, based on the [atomic-ehr/codegen `main`](https://github.com/atomic-ehr/codegen/tree/main) baseline at `12658b04`. The verified integration contains upstream `debec3246a07ec3e942e9beb3a038180143b2b8e`. An immutable canary was published from Codegen source `84da29b1786fccf09f2d53354e39dfd90044627a` as `@cognovis/codegen@0.2.4-canary.20260915075954.84da29b`; FHIR Management consumed those bytes with its Node ESM repair and runbook through `99e6949fcc0a3c3fd13aefaa350f5e502b494cc6`. The [synchronization report](docs/upstream-sync-2026-09-15.md) records the artifact identity and real cold/warm consumer evidence. The stable Codegen dist-tag and consumer pins remained unchanged. Main-landing state is recorded separately by the delivery journal. This document records the integration's disposition. The integration carries exactly two kinds of change, which are kept strictly separate:
+`main` is the sole Cognovis integration branch. The current synchronization moved the integration onto the [atomic-ehr/codegen `main`](https://github.com/atomic-ehr/codegen/tree/main) baseline at `2cd28e09` (v0.0.20); the merge is `471e1a41`. The prior verified integration contained upstream `debec3246a07ec3e942e9beb3a038180143b2b8e`; the [synchronization report](docs/upstream-sync-2026-09-15.md) records that artifact identity and the real cold/warm consumer evidence for the `@cognovis/codegen@0.2.4-canary.20260915075954.84da29b` canary published from source `84da29b1786fccf09f2d53354e39dfd90044627a`. The stable Codegen dist-tag and consumer pins remain unchanged. Main-landing state is recorded separately by the delivery journal. This document records the integration's disposition. The integration carries exactly two kinds of change, which are kept strictly separate:
 
 - a **distribution overlay** — package identity, publish registry, Bun shebang, and changelog tooling. These are permanent fork properties that will never be sent upstream.
 - **pending upstream contributions** — generator and CLI fixes that live on `main` only until atomic-ehr merges them. These are ordinary fork commits, never overlay paths.
@@ -138,8 +138,11 @@ Fork changes in the verified integration that carry generator or CLI behavior. T
 | [#222](https://github.com/atomic-ehr/codegen/pull/222) | JSON configuration exposes and validates the TypeScript module-specifier and terminology options. The integration uses upstream's implementation. |
 | [#223](https://github.com/atomic-ehr/codegen/pull/223), [#225](https://github.com/atomic-ehr/codegen/pull/225) | Generated resource-profile descriptors are upstream. #225 normalizes `resourceType` resolution through `TypeSchemaIndex` and removes the redundant helper retained by the older fork baseline. |
 | [#220](https://github.com/atomic-ehr/codegen/pull/220), [#227](https://github.com/atomic-ehr/codegen/pull/227) | #220 is closed and replaced by merged #227. The integration uses upstream's explicit expansion of abstract resource-family reference targets. |
+| [#228](https://github.com/atomic-ehr/codegen/pull/228) | Merged. Replaces the fork's optional/repeating profile-constraint handling: declare arity, validate every repetition, and keep fixed equality apart from containment. The fork carries no separate implementation. |
+| [#229](https://github.com/atomic-ehr/codegen/pull/229), [#231](https://github.com/atomic-ehr/codegen/pull/231) | Merged. Complex-extension factory inputs and the flat/`vflat` getter contract are upstream; the fork's factory and flat-input overrides are dropped. |
+| [#230](https://github.com/atomic-ehr/codegen/pull/230), [#233](https://github.com/atomic-ehr/codegen/pull/233) | Merged. `outputTo` is independent of generator configuration order, and the R4 extension redirect is upstream. |
 
-#208–#212 and #215–#219 remain in the ancestry. The verified integration additionally includes #222, #223 as normalized by #225, #227, Canonical Manager patch handling, and upstream's in-memory generation and test-cache changes through `debec324`.
+#208–#212 and #215–#219 remain in the ancestry. The integration additionally includes #222, #223 as normalized by #225, #227, #228, #229, #231, #233, Canonical Manager patch handling, and upstream's in-memory generation and test-cache changes through `2cd28e09`.
 
 Future pull request branches are built on a clean `upstream/main` rather than cherry-picked from the fork. They regenerate their own artifacts, and internal tracker IDs are stripped from the contributed code.
 
@@ -150,18 +153,17 @@ These remain real deltas from upstream in the integration. They are generator co
 | Subject | Candidate behavior |
 |---|---|
 | Dependency pins | Each builder resolves its own `forceDependencies` map and receives a distinct Canonical Manager package-patch configuration. Canonical Manager's on-disk cache key does not include patches, so successive builders using identical roots and the same working directory can reuse the first patched manifest; use separate working directories or reset the cache when pin maps differ. |
-| Multi-root generation | A shared closure selects one version per package name. Competing exact root versions fail, exact declared dependency drift is reported, and duplicate canonicals from concrete package versions fail instead of silently collapsing. Collision-safe package directories remain a writer defense; the public builder does not promise simultaneous generation of several versions of one package. |
-| Tree shaking | Inherited nested dependencies and slice-match-only dependencies remain reachable with their declaring package identities. |
-| Virtual R4 `Base` | Nested logical fields can retain the virtual R4 `Base` shape without accepting unrelated unknown types. |
+| Multi-root generation | A shared closure selects one version per package name. Competing exact root versions fail, exact declared dependency drift is reported, and duplicate canonicals from concrete package versions fail instead of silently collapsing. Collision-safe package directories remain a writer defense; the public builder does not promise simultaneous generation of several versions of one package. Aligned with the maintainer's one-version-per-package decision ([#151](https://github.com/atomic-ehr/codegen/pull/151)); no resolver fallbacks are used. |
+| Tree shaking | Inherited nested dependencies and slice-match-only dependencies remain reachable with their declaring package identities. Contributed upstream as [#234](https://github.com/atomic-ehr/codegen/pull/234); drop this delta when it merges. |
 | Profile factories and constraints | The integration retains the factory inputs, defaults, complex extension fields, slice accessors, and fixed/pattern constraint behavior already landed in the `d2ae11cd` fork baseline. |
 
 ### Open upstream work not integrated
 
 | PR | Status and boundary |
 |---|---|
-| [#224](https://github.com/atomic-ehr/codegen/pull/224) (`25679426`) | Open. Its later collision repair is not in this integration. |
-| [#228](https://github.com/atomic-ehr/codegen/pull/228) (`a58076f9`) | Open and tested separately. It replaces closed #221 as the upstream path for the repeating-value constraint repair; it is not integrated here. #221 was closed on 2026-09-15 in favor of #228. |
-| [#229](https://github.com/atomic-ehr/codegen/pull/229) (`755f5bca`) | Open maintainer replacement that includes the original factory behavior and intentional `Partial<Pick<...>>` getter extraction. Flat `set(get()!)` compatibility therefore breaks by design. It does not include #224's later collision fixes, defers raw/camelCase mapping, was tested separately, and is not integrated here. |
+| [#207](https://github.com/atomic-ehr/codegen/pull/207) | Open maintainer slice-fact refactor. It does not touch `tree-shake.ts`, so it is independent of the fork contribution in #234. |
+| [#234](https://github.com/atomic-ehr/codegen/pull/234) | Open fork contribution built on `upstream/main` `2cd28e09`: keep tree-shaken nested and slice-match reference targets. Retires the retained tree-shake delta when merged. |
+| [#224](https://github.com/atomic-ehr/codegen/pull/224) | Closed; its factory behavior is covered by merged #229 and its later collision repair by the merged follow-up. |
 
 ## Applying the overlay
 
