@@ -92,7 +92,9 @@ These paths differ between `upstream/main` and `main`, and each one is excluded 
 | `bun.lock` | Derived from `package.json`; regenerate with `bun install` after applying the overlay. |
 | `.library.lock` | Machine-local agent tooling state. Never part of a distribution. |
 | `.intake/` | Machine-local scratch directory; ignored, never committed. |
+| `.agents/**`, `.claude/**`, `.codex/**`, `AGENTS.md` | Project-local Library/agent tooling, managed in place. Never part of a distribution and never sent upstream. |
 | `src/typeschema/**`, `src/api/writer-generator/**` | Forbidden by contract decision 3. |
+| `src/utils/log.ts` | Adds the `#packageVersionMismatch` log tag used by the retained multi-root dependency-drift diagnostic — pending upstream contribution. |
 | `src/api/builder.ts` | Retains the fork's one-version-per-package root-conflict and resolved-dependency drift diagnostics on top of the upstream Canonical Manager integration. |
 | `src/api/generate-config.ts` | The generate command and TypeScript JSON options are upstream (#211, #217, #222). The remaining delta is isolated builder-scoped dependency pins. |
 | `src/cli/commands/**`, `test/**`, `assets/**`, `examples/**` | Generator and CLI behavior plus its evidence — all pending upstream contributions. |
@@ -100,8 +102,12 @@ These paths differ between `upstream/main` and `main`, and each one is excluded 
 The table above is prose for humans. The block below is its machine-readable form: glob patterns for every path that may legitimately differ from upstream without being overlay. `--audit` classifies the real fork diff against the allowlist and these patterns together, and fails on any path matching neither — that is what makes "no third category" an executable rule rather than an assertion.
 
 ```non-overlay-patterns
+AGENTS.md
 CLAUDE.md
 README.md
+.agents/*
+.claude/*
+.codex/*
 docs/design/profiles.md
 docs/upstream-sync-2026-09-15.md
 docs/standards/upstream-contributions.md
@@ -113,6 +119,7 @@ src/api/writer-generator/*
 src/api/builder.ts
 src/api/generate-config.ts
 src/cli/commands/*
+src/utils/log.ts
 test/*
 assets/*
 examples/*
