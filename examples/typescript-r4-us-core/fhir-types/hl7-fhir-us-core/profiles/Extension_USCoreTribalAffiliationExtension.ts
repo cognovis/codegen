@@ -5,14 +5,6 @@
 import type { CodeableConcept } from "../../hl7-fhir-r4-core/CodeableConcept.js";
 import type { Extension } from "../../hl7-fhir-r4-core/Extension.js";
 
-export type USCoreTribalAffiliationExtension_Extension_TribalAffiliationSliceFlat = Omit<Extension, "url" | "value" | "valueBase64Binary" | "valueBoolean" | "valueCanonical" | "valueCode" | "valueDate" | "valueDateTime" | "valueDecimal" | "valueId" | "valueInstant" | "valueInteger" | "valueMarkdown" | "valueOid" | "valuePositiveInt" | "valueString" | "valueTime" | "valueUnsignedInt" | "valueUri" | "valueUrl" | "valueUuid" | "valueAddress" | "valueAge" | "valueAnnotation" | "valueAttachment" | "valueCodeableConcept" | "valueCoding" | "valueContactPoint" | "valueCount" | "valueDistance" | "valueDuration" | "valueHumanName" | "valueIdentifier" | "valueMoney" | "valuePeriod" | "valueQuantity" | "valueRange" | "valueRatio" | "valueReference" | "valueSampledData" | "valueSignature" | "valueTiming" | "valueContactDetail" | "valueContributor" | "valueDataRequirement" | "valueExpression" | "valueParameterDefinition" | "valueRelatedArtifact" | "valueTriggerDefinition" | "valueUsageContext" | "valueDosage" | "valueMeta"> & CodeableConcept;
-export type USCoreTribalAffiliationExtension_Extension_TribalAffiliationSliceFlatAll = USCoreTribalAffiliationExtension_Extension_TribalAffiliationSliceFlat;
-
-export type USCoreTribalAffiliationExtension_Extension_IsEnrolledSliceFlat = Omit<Extension, "url">;
-export type USCoreTribalAffiliationExtension_Extension_IsEnrolledSliceFlatAll = USCoreTribalAffiliationExtension_Extension_IsEnrolledSliceFlat & {
-    readonly url: "isEnrolled";
-}
-
 import {
     isRawExtensionInput,
     applyFixedValue,
@@ -38,6 +30,14 @@ import {
     validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers.js";
+
+export type USCoreTribalAffiliationExtension_Extension_TribalAffiliationSliceFlat = Omit<Extension, "url" | "value" | "valueBase64Binary" | "valueBoolean" | "valueCanonical" | "valueCode" | "valueDate" | "valueDateTime" | "valueDecimal" | "valueId" | "valueInstant" | "valueInteger" | "valueMarkdown" | "valueOid" | "valuePositiveInt" | "valueString" | "valueTime" | "valueUnsignedInt" | "valueUri" | "valueUrl" | "valueUuid" | "valueAddress" | "valueAge" | "valueAnnotation" | "valueAttachment" | "valueCodeableConcept" | "valueCoding" | "valueContactPoint" | "valueCount" | "valueDistance" | "valueDuration" | "valueHumanName" | "valueIdentifier" | "valueMoney" | "valuePeriod" | "valueQuantity" | "valueRange" | "valueRatio" | "valueReference" | "valueSampledData" | "valueSignature" | "valueTiming" | "valueContactDetail" | "valueContributor" | "valueDataRequirement" | "valueExpression" | "valueParameterDefinition" | "valueRelatedArtifact" | "valueTriggerDefinition" | "valueUsageContext" | "valueDosage" | "valueMeta"> & CodeableConcept;
+export type USCoreTribalAffiliationExtension_Extension_TribalAffiliationSliceFlatAll = USCoreTribalAffiliationExtension_Extension_TribalAffiliationSliceFlat;
+
+export type USCoreTribalAffiliationExtension_Extension_IsEnrolledSliceFlat = Omit<Extension, "url">;
+export type USCoreTribalAffiliationExtension_Extension_IsEnrolledSliceFlatAll = USCoreTribalAffiliationExtension_Extension_IsEnrolledSliceFlat & {
+    readonly url: "isEnrolled";
+}
 
 export type USCoreTribalAffiliationExtensionProfileRaw = {
     extension: Extension[];
@@ -75,7 +75,7 @@ export class USCoreTribalAffiliationExtensionProfile {
 
     static apply (resource: Extension) : USCoreTribalAffiliationExtensionProfile {
         resource.url = USCoreTribalAffiliationExtensionProfile.canonicalUrl;
-        applyFixedValue(resource, "url", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation");
+        applyFixedValue(resource, "url", USCoreTribalAffiliationExtensionProfile.canonicalUrl);
         return new USCoreTribalAffiliationExtensionProfile(resource);
     }
 
@@ -98,7 +98,7 @@ export class USCoreTribalAffiliationExtensionProfile {
         const resolvedExtensions = USCoreTribalAffiliationExtensionProfile.resolveInput(args);
 
         const resource: Extension = {
-            url: "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation",
+            url: USCoreTribalAffiliationExtensionProfile.canonicalUrl,
             extension: resolvedExtensions,
         }
         return resource;

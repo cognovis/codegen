@@ -5,17 +5,6 @@
 import type { Coding } from "../../hl7-fhir-r4-core/Coding.js";
 import type { Extension } from "../../hl7-fhir-r4-core/Extension.js";
 
-export type USCoreRaceExtension_Extension_OmbCategorySliceFlat = Omit<Extension, "url" | "value" | "valueBase64Binary" | "valueBoolean" | "valueCanonical" | "valueCode" | "valueDate" | "valueDateTime" | "valueDecimal" | "valueId" | "valueInstant" | "valueInteger" | "valueMarkdown" | "valueOid" | "valuePositiveInt" | "valueString" | "valueTime" | "valueUnsignedInt" | "valueUri" | "valueUrl" | "valueUuid" | "valueAddress" | "valueAge" | "valueAnnotation" | "valueAttachment" | "valueCodeableConcept" | "valueCoding" | "valueContactPoint" | "valueCount" | "valueDistance" | "valueDuration" | "valueHumanName" | "valueIdentifier" | "valueMoney" | "valuePeriod" | "valueQuantity" | "valueRange" | "valueRatio" | "valueReference" | "valueSampledData" | "valueSignature" | "valueTiming" | "valueContactDetail" | "valueContributor" | "valueDataRequirement" | "valueExpression" | "valueParameterDefinition" | "valueRelatedArtifact" | "valueTriggerDefinition" | "valueUsageContext" | "valueDosage" | "valueMeta"> & Coding;
-export type USCoreRaceExtension_Extension_OmbCategorySliceFlatAll = USCoreRaceExtension_Extension_OmbCategorySliceFlat;
-
-export type USCoreRaceExtension_Extension_DetailedSliceFlat = Omit<Extension, "url" | "value" | "valueBase64Binary" | "valueBoolean" | "valueCanonical" | "valueCode" | "valueDate" | "valueDateTime" | "valueDecimal" | "valueId" | "valueInstant" | "valueInteger" | "valueMarkdown" | "valueOid" | "valuePositiveInt" | "valueString" | "valueTime" | "valueUnsignedInt" | "valueUri" | "valueUrl" | "valueUuid" | "valueAddress" | "valueAge" | "valueAnnotation" | "valueAttachment" | "valueCodeableConcept" | "valueCoding" | "valueContactPoint" | "valueCount" | "valueDistance" | "valueDuration" | "valueHumanName" | "valueIdentifier" | "valueMoney" | "valuePeriod" | "valueQuantity" | "valueRange" | "valueRatio" | "valueReference" | "valueSampledData" | "valueSignature" | "valueTiming" | "valueContactDetail" | "valueContributor" | "valueDataRequirement" | "valueExpression" | "valueParameterDefinition" | "valueRelatedArtifact" | "valueTriggerDefinition" | "valueUsageContext" | "valueDosage" | "valueMeta"> & Coding;
-export type USCoreRaceExtension_Extension_DetailedSliceFlatAll = USCoreRaceExtension_Extension_DetailedSliceFlat;
-
-export type USCoreRaceExtension_Extension_TextSliceFlat = Omit<Extension, "url">;
-export type USCoreRaceExtension_Extension_TextSliceFlatAll = USCoreRaceExtension_Extension_TextSliceFlat & {
-    readonly url: "text";
-}
-
 import {
     isRawExtensionInput,
     applyFixedValue,
@@ -43,6 +32,17 @@ import {
     validateChoiceProhibited,
     validateMustSupport,
 } from "../../profile-helpers.js";
+
+export type USCoreRaceExtension_Extension_OmbCategorySliceFlat = Omit<Extension, "url" | "value" | "valueBase64Binary" | "valueBoolean" | "valueCanonical" | "valueCode" | "valueDate" | "valueDateTime" | "valueDecimal" | "valueId" | "valueInstant" | "valueInteger" | "valueMarkdown" | "valueOid" | "valuePositiveInt" | "valueString" | "valueTime" | "valueUnsignedInt" | "valueUri" | "valueUrl" | "valueUuid" | "valueAddress" | "valueAge" | "valueAnnotation" | "valueAttachment" | "valueCodeableConcept" | "valueCoding" | "valueContactPoint" | "valueCount" | "valueDistance" | "valueDuration" | "valueHumanName" | "valueIdentifier" | "valueMoney" | "valuePeriod" | "valueQuantity" | "valueRange" | "valueRatio" | "valueReference" | "valueSampledData" | "valueSignature" | "valueTiming" | "valueContactDetail" | "valueContributor" | "valueDataRequirement" | "valueExpression" | "valueParameterDefinition" | "valueRelatedArtifact" | "valueTriggerDefinition" | "valueUsageContext" | "valueDosage" | "valueMeta"> & Coding;
+export type USCoreRaceExtension_Extension_OmbCategorySliceFlatAll = USCoreRaceExtension_Extension_OmbCategorySliceFlat;
+
+export type USCoreRaceExtension_Extension_DetailedSliceFlat = Omit<Extension, "url" | "value" | "valueBase64Binary" | "valueBoolean" | "valueCanonical" | "valueCode" | "valueDate" | "valueDateTime" | "valueDecimal" | "valueId" | "valueInstant" | "valueInteger" | "valueMarkdown" | "valueOid" | "valuePositiveInt" | "valueString" | "valueTime" | "valueUnsignedInt" | "valueUri" | "valueUrl" | "valueUuid" | "valueAddress" | "valueAge" | "valueAnnotation" | "valueAttachment" | "valueCodeableConcept" | "valueCoding" | "valueContactPoint" | "valueCount" | "valueDistance" | "valueDuration" | "valueHumanName" | "valueIdentifier" | "valueMoney" | "valuePeriod" | "valueQuantity" | "valueRange" | "valueRatio" | "valueReference" | "valueSampledData" | "valueSignature" | "valueTiming" | "valueContactDetail" | "valueContributor" | "valueDataRequirement" | "valueExpression" | "valueParameterDefinition" | "valueRelatedArtifact" | "valueTriggerDefinition" | "valueUsageContext" | "valueDosage" | "valueMeta"> & Coding;
+export type USCoreRaceExtension_Extension_DetailedSliceFlatAll = USCoreRaceExtension_Extension_DetailedSliceFlat;
+
+export type USCoreRaceExtension_Extension_TextSliceFlat = Omit<Extension, "url">;
+export type USCoreRaceExtension_Extension_TextSliceFlatAll = USCoreRaceExtension_Extension_TextSliceFlat & {
+    readonly url: "text";
+}
 
 export type USCoreRaceExtensionProfileRaw = {
     extension: Extension[];
@@ -82,7 +82,7 @@ export class USCoreRaceExtensionProfile {
 
     static apply (resource: Extension) : USCoreRaceExtensionProfile {
         resource.url = USCoreRaceExtensionProfile.canonicalUrl;
-        applyFixedValue(resource, "url", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race");
+        applyFixedValue(resource, "url", USCoreRaceExtensionProfile.canonicalUrl);
         return new USCoreRaceExtensionProfile(resource);
     }
 
@@ -110,7 +110,7 @@ export class USCoreRaceExtensionProfile {
         const resolvedExtensions = USCoreRaceExtensionProfile.resolveInput(args);
 
         const resource: Extension = {
-            url: "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race",
+            url: USCoreRaceExtensionProfile.canonicalUrl,
             extension: resolvedExtensions,
         }
         return resource;

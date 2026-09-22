@@ -5,7 +5,7 @@ import * as Path from "node:path";
 import { APIBuilder } from "@root/api/builder";
 import { mkSilentLogger } from "@typeschema-test/utils";
 
-describe("Optional constrained profile fields (codegen-fw1)", async () => {
+describe("Optional constrained profile fields", async () => {
     const result = await new APIBuilder({ logger: mkSilentLogger() })
         .localStructureDefinitions({
             package: { name: "example.test.optionalconstraint", version: "0.1.0" },
@@ -19,7 +19,7 @@ describe("Optional constrained profile fields (codegen-fw1)", async () => {
     const profilePath = Object.keys(files).find((key) => key.includes("ServiceRequest_OptionalCategoryServiceRequest"));
     if (!profilePath) throw new Error("Generated ServiceRequest profile is missing");
 
-    const directory = await fs.mkdtemp(Path.join(os.tmpdir(), "codegen-fw1-"));
+    const directory = await fs.mkdtemp(Path.join(os.tmpdir(), "optional-profile-constraint-"));
     afterAll(() => fs.rm(directory, { recursive: true, force: true }));
     for (const [relativePath, content] of Object.entries(files)) {
         const destination = Path.join(directory, relativePath);
@@ -39,6 +39,16 @@ describe("Optional constrained profile fields (codegen-fw1)", async () => {
         expect(() => profile.from(resource)).not.toThrow();
     });
 
+    it("accepts a present matching optional fixed value", () => {
+        expect(() => profile.from({ ...resource, doNotPerform: false })).not.toThrow();
+    });
+
+    it("rejects a present mismatching optional fixed value", () => {
+        expect(() => profile.from({ ...resource, doNotPerform: true })).toThrow(
+            "field 'doNotPerform' does not match expected fixed value",
+        );
+    });
+
     it("accepts a present matching repeating pattern", () => {
         const category = [{ coding: [{ system: "http://example.test/category", code: "example" }] }];
         expect(() => profile.from({ ...resource, category })).not.toThrow();
@@ -55,7 +65,7 @@ describe("Optional constrained profile fields (codegen-fw1)", async () => {
         expect(() => profile.from(withoutIntent)).toThrow("required field 'intent' is missing");
     });
 
-    it.each([null, false, 0, "", [{ coding: [{ system: "http://example.test/category", code: "other" }] }]])(
+    it.each([false, 0, "", [{ coding: [{ system: "http://example.test/category", code: "other" }] }]])(
         "rejects a present mismatching optional pattern: %j",
         (category) => {
             expect(() => profile.from({ ...resource, category })).toThrow(
@@ -63,6 +73,12 @@ describe("Optional constrained profile fields (codegen-fw1)", async () => {
             );
         },
     );
+
+    // A null value is treated as absent, matching validatePatternValue and
+    // validateRequired: absence of an optional element is not a mismatch.
+    it("accepts a null optional pattern", () => {
+        expect(() => profile.from({ ...resource, category: null })).not.toThrow();
+    });
 
     it("rejects a present mismatching required fixed value", () => {
         expect(() => profile.from({ ...resource, intent: "plan" })).toThrow(

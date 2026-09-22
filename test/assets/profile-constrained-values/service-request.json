@@ -1,9 +1,9 @@
 {
   "resourceType": "StructureDefinition",
-  "id": "optional-category-service-request",
-  "url": "http://example.test/StructureDefinition/optional-category-service-request",
+  "id": "constrained-values-service-request",
+  "url": "http://example.test/StructureDefinition/constrained-values-service-request",
   "version": "0.1.0",
-  "name": "OptionalCategoryServiceRequest",
+  "name": "ConstrainedValuesServiceRequest",
   "status": "active",
   "fhirVersion": "4.0.1",
   "kind": "resource",
