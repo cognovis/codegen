@@ -177,8 +177,13 @@ export const collectSliceDefs = (tsIndex: TypeSchemaIndex, snapshot: SnapshotPro
     });
 };
 
-export const generateSliceSetters = (w: TypeScript, sliceDefs: SliceDef[], snapshot: SnapshotProfileTypeSchema) => {
-    const profileClassName = tsProfileClassName(snapshot);
+export const generateSliceSetters = (
+    w: TypeScript,
+    tsIndex: TypeSchemaIndex,
+    sliceDefs: SliceDef[],
+    snapshot: SnapshotProfileTypeSchema,
+) => {
+    const profileClassName = tsProfileClassName(tsIndex, snapshot);
     const tsProfileName = tsResourceName(snapshot.identifier);
     for (const sliceDef of sliceDefs) {
         const baseName = sliceDef.baseName;
@@ -245,8 +250,13 @@ export const generateSliceSetters = (w: TypeScript, sliceDefs: SliceDef[], snaps
     }
 };
 
-export const generateSliceGetters = (w: TypeScript, sliceDefs: SliceDef[], snapshot: SnapshotProfileTypeSchema) => {
-    const profileClassName = tsProfileClassName(snapshot);
+export const generateSliceGetters = (
+    w: TypeScript,
+    tsIndex: TypeSchemaIndex,
+    sliceDefs: SliceDef[],
+    snapshot: SnapshotProfileTypeSchema,
+) => {
+    const profileClassName = tsProfileClassName(tsIndex, snapshot);
     const tsProfileName = tsResourceName(snapshot.identifier);
     const defaultMode = w.opts.sliceGetterDefault ?? "flat";
     for (const sliceDef of sliceDefs) {

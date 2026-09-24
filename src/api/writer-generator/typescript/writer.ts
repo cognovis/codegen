@@ -40,6 +40,8 @@ import {
     tsObjectKey,
     tsPackageDir,
     tsProfileModuleFileName,
+    tsProfileNameCollisionReport,
+    tsProfileNames,
     tsResourceName,
 } from "./name";
 import { generateProfileClass, generateProfileImports, generateProfileIndexFile } from "./profile";
@@ -820,6 +822,10 @@ export class TypeScript extends Writer<TypeScriptOptions> {
         );
 
         const hasProfiles = this.opts.generateProfile && typesToGenerate.some(isSnapshotProfileTypeSchema);
+        if (hasProfiles) {
+            for (const collision of tsProfileNames(tsIndex).collisions)
+                this.logger()?.warn(tsProfileNameCollisionReport(collision));
+        }
 
         this.prepareTerminology(generationUnits);
 

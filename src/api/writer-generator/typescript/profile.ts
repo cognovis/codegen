@@ -154,7 +154,7 @@ export const collectProfileFactoryInfo = (
             // class, so reference it instead of repeating the literal.
             const value =
                 field.valueConstraint.value === snapshot.identifier.url
-                    ? `${tsProfileClassName(snapshot)}.canonicalUrl`
+                    ? `${tsProfileClassName(tsIndex, snapshot)}.canonicalUrl`
                     : JSON.stringify(field.valueConstraint.value);
             autoFields.push({ name, value: field.array ? `[${value}]` : value });
             fixedFields.add(name);
@@ -241,7 +241,7 @@ export const generateProfileIndexFile = (
         w.cat("index.ts", () => {
             const exports: Map<string, string> = new Map();
             for (const snapshot of snapshots) {
-                const className = tsProfileClassName(snapshot);
+                const className = tsProfileClassName(tsIndex, snapshot);
                 if (!exports.has(className)) {
                     exports.set(className, tsProfileModuleName(tsIndex, snapshot));
                 }
@@ -417,7 +417,7 @@ const generateFactoryMethods = (
     snapshot: SnapshotProfileTypeSchema,
     factoryInfo: ProfileFactoryInfo,
 ) => {
-    const profileClassName = tsProfileClassName(snapshot);
+    const profileClassName = tsProfileClassName(tsIndex, snapshot);
     const tsBaseResourceName = tsTypeFromIdentifier(snapshot.base);
     const hasMeta = tsIndex.isWithMetaField(snapshot);
     const hasParams = factoryInfo.params.length > 0 || factoryInfo.sliceAutoFields.length > 0;
@@ -813,12 +813,17 @@ const generateSliceInputTypes = (w: TypeScript, snapshot: SnapshotProfileTypeSch
     }
 };
 
-const generateRawType = (w: TypeScript, snapshot: SnapshotProfileTypeSchema, factoryInfo: ProfileFactoryInfo) => {
+const generateRawType = (
+    w: TypeScript,
+    tsIndex: TypeSchemaIndex,
+    snapshot: SnapshotProfileTypeSchema,
+    factoryInfo: ProfileFactoryInfo,
+) => {
     const hasParams = factoryInfo.params.length > 0 || factoryInfo.sliceAutoFields.length > 0;
     const subSlices = snapshot.base.name === "Extension" ? collectSubExtensionSlices(snapshot) : [];
     if (!hasParams && subSlices.length === 0) return;
 
-    const createArgsTypeName = `${tsProfileClassName(snapshot)}Raw`;
+    const createArgsTypeName = `${tsProfileClassName(tsIndex, snapshot)}Raw`;
     w.curlyBlock(["export", "type", createArgsTypeName, "="], () => {
         for (const p of factoryInfo.params) {
             w.lineSM(`${p.name}: ${p.tsType}`);
@@ -836,11 +841,16 @@ const generateRawType = (w: TypeScript, snapshot: SnapshotProfileTypeSchema, fac
     w.line();
 };
 
-const generateFlatInputType = (w: TypeScript, snapshot: SnapshotProfileTypeSchema, factoryInfo: ProfileFactoryInfo) => {
+const generateFlatInputType = (
+    w: TypeScript,
+    tsIndex: TypeSchemaIndex,
+    snapshot: SnapshotProfileTypeSchema,
+    factoryInfo: ProfileFactoryInfo,
+) => {
     const subSlices = snapshot.base.name === "Extension" ? collectSubExtensionSlices(snapshot) : [];
     if (subSlices.length === 0) return;
 
-    const flatInputTypeName = `${tsProfileClassName(snapshot)}Flat`;
+    const flatInputTypeName = `${tsProfileClassName(tsIndex, snapshot)}Flat`;
     const flatFields = [
         ...factoryInfo.params
             .filter((param) => param.name !== "extension")
@@ -871,7 +881,7 @@ const generateFlatInputType = (w: TypeScript, snapshot: SnapshotProfileTypeSchem
 
 export const generateProfileClass = (w: TypeScript, tsIndex: TypeSchemaIndex, snapshot: SnapshotProfileTypeSchema) => {
     const tsBaseResourceName = tsTypeFromIdentifier(snapshot.base);
-    const profileClassName = tsProfileClassName(snapshot);
+    const profileClassName = tsProfileClassName(tsIndex, snapshot);
     const sliceDefs = collectSliceDefs(tsIndex, snapshot);
     const factoryInfo = collectProfileFactoryInfo(tsIndex, snapshot);
 
@@ -881,8 +891,8 @@ export const generateProfileClass = (w: TypeScript, tsIndex: TypeSchemaIndex, sn
     generateExtensionExtractedTypes(w, tsIndex, snapshot);
     generateSliceInputTypes(w, snapshot, sliceDefs);
 
-    generateRawType(w, snapshot, factoryInfo);
-    generateFlatInputType(w, snapshot, factoryInfo);
+    generateRawType(w, tsIndex, snapshot, factoryInfo);
+    generateFlatInputType(w, tsIndex, snapshot, factoryInfo);
 
     const canonicalUrl = snapshot.identifier.url;
     w.comment("CanonicalURL:", canonicalUrl, `(pkg: ${packageMetaToFhir(packageMeta(snapshot))})`);
@@ -908,8 +918,8 @@ export const generateProfileClass = (w: TypeScript, tsIndex: TypeSchemaIndex, sn
         generateExtensionMethods(w, tsIndex, snapshot);
 
         w.line("// Slices");
-        generateSliceSetters(w, sliceDefs, snapshot);
-        generateSliceGetters(w, sliceDefs, snapshot);
+        generateSliceSetters(w, tsIndex, sliceDefs, snapshot);
+        generateSliceGetters(w, tsIndex, sliceDefs, snapshot);
 
         w.line("// Validation");
         generateValidateMethod(w, tsIndex, snapshot);
