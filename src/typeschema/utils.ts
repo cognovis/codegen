@@ -2,6 +2,7 @@ import * as afs from "node:fs/promises";
 import * as Path from "node:path";
 import type { CodegenLog } from "@root/utils/log";
 import * as YAML from "yaml";
+import { compareCollisionSources } from "./collision-order";
 import type { IrReport } from "./ir/types";
 import type { Register } from "./register";
 import {
@@ -487,9 +488,14 @@ export const mkTypeSchemaIndex = (
         if (!current) return true;
         const rankDiff = nestedOwnerRank(candidate, nurl) - nestedOwnerRank(current, nurl);
         if (rankDiff !== 0) return rankDiff < 0;
-        // Equal rank: choose independently of schema order. The same owner URL
-        // (a re-appended "shared" schema) replaces its entry, like the main index.
-        return candidate.identifier.url.localeCompare(current.identifier.url) <= 0;
+        // Equal rank: choose independently of schema order and locale, by code-unit
+        // order of owner package and canonical. The same owner (a re-appended
+        // "shared" schema) replaces its entry, like the main index.
+        const ownerSource = (owner: TypeSchema) => ({
+            sourcePackage: owner.identifier.package,
+            sourceCanonical: owner.identifier.url,
+        });
+        return compareCollisionSources(ownerSource(candidate), ownerSource(current)) <= 0;
     };
     const append = (schema: TypeSchema) => {
         const url = schema.identifier.url;
