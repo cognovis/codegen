@@ -28,9 +28,10 @@ describe("TypeScript Writer Generator", async () => {
         .generate();
     const files = result.filesGenerated.typescript!;
 
-    it("generates 608 files successfully", () => {
+    it("generates 638 files including all R4 core colliding profiles", () => {
+        // Previous 608 files + 53 definitions in 23 shared-name groups - 23 existing files (cognovis/codegen#18).
         expect(result.success).toBeTrue();
-        expect(Object.keys(files).length).toEqual(608);
+        expect(Object.keys(files).length).toEqual(638);
     });
 
     it("generates Patient resource in inMemoryOnly mode with snapshot", async () => {
