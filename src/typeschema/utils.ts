@@ -2,6 +2,7 @@ import * as afs from "node:fs/promises";
 import * as Path from "node:path";
 import type { CodegenLog } from "@root/utils/log";
 import * as YAML from "yaml";
+import { compareCollisionSources } from "./collision-order";
 import type { IrReport } from "./ir/types";
 import type { Register } from "./register";
 import {
@@ -473,6 +474,29 @@ export const mkTypeSchemaIndex = (
     const index: Record<CanonicalUrl, Record<PkgName, TypeSchema>> = {};
     const nestedIndex: Record<CanonicalUrl, Record<PkgName, NestedTypeSchema>> = {};
     const snapshotIndex: Record<CanonicalUrl, Record<PkgName, SnapshotProfileTypeSchema>> = {};
+    // The schema that contributed each nestedIndex entry, used to pick a stable owner.
+    const nestedOwner: Record<CanonicalUrl, Record<PkgName, TypeSchema>> = {};
+    /** Owner rank of a nested entry (lower wins): the specialization that defines the
+     *  nested URL, then any other specialization, then a constraint profile. Profiles
+     *  reuse the specialization's nested URL (see mkNestedIdentifier) for their
+     *  constrained copy, which must never replace the specialization's own nested type. */
+    const nestedOwnerRank = (owner: TypeSchema, nurl: CanonicalUrl): number => {
+        if (isProfileTypeSchema(owner)) return 2;
+        return nurl.split("#")[0] === owner.identifier.url ? 0 : 1;
+    };
+    const ownsNestedEntry = (candidate: TypeSchema, current: TypeSchema | undefined, nurl: CanonicalUrl): boolean => {
+        if (!current) return true;
+        const rankDiff = nestedOwnerRank(candidate, nurl) - nestedOwnerRank(current, nurl);
+        if (rankDiff !== 0) return rankDiff < 0;
+        // Equal rank: choose independently of schema order and locale, by code-unit
+        // order of owner package and canonical. The same owner (a re-appended
+        // "shared" schema) replaces its entry, like the main index.
+        const ownerSource = (owner: TypeSchema) => ({
+            sourcePackage: owner.identifier.package,
+            sourceCanonical: owner.identifier.url,
+        });
+        return compareCollisionSources(ownerSource(candidate), ownerSource(current)) <= 0;
+    };
     const append = (schema: TypeSchema) => {
         const url = schema.identifier.url;
         const pkg = schema.identifier.package;
@@ -492,7 +516,10 @@ export const mkTypeSchemaIndex = (
                     const nurl = nschema.identifier.url;
                     const npkg = nschema.identifier.package;
                     nestedIndex[nurl] ??= {};
+                    nestedOwner[nurl] ??= {};
+                    if (!ownsNestedEntry(schema, nestedOwner[nurl][npkg], nurl)) return;
                     nestedIndex[nurl][npkg] = nschema;
+                    nestedOwner[nurl][npkg] = schema;
                 });
             }
         }
