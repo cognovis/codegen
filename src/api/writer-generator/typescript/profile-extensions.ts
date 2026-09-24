@@ -118,7 +118,7 @@ export const resolveExtensionProfile = (
     if (schema.identifier.package !== pkgName) return undefined;
     const snapshot = tsIndex.resolve(snapshotIdentifier(schema.identifier));
     if (!snapshot) return undefined;
-    const className = tsProfileClassName(snapshot);
+    const className = tsProfileClassName(tsIndex, snapshot);
     const modulePath = `./${tsProfileModuleName(tsIndex, snapshot)}`;
     return { className, modulePath, snapshot };
 };

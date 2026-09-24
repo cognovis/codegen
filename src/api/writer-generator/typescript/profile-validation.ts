@@ -139,7 +139,7 @@ export const generateValidateMethod = (
     const profileName = snapshot.identifier.name;
     const canonicalUrl = snapshot.identifier.url;
     const canonicalUrlExpr = canonicalUrl
-        ? { url: canonicalUrl, expr: `${tsProfileClassName(snapshot)}.canonicalUrl` }
+        ? { url: canonicalUrl, expr: `${tsProfileClassName(tsIndex, snapshot)}.canonicalUrl` }
         : undefined;
     const enumLinks = w.enumTerminologyLinks(tsIndex, snapshot);
     w.curlyBlock(["validate(): { errors: string[]; warnings: string[] }"], () => {
