@@ -28,9 +28,10 @@ describe("TypeScript Writer Generator", async () => {
         .generate();
     const files = result.filesGenerated.typescript!;
 
-    it("generates 608 files successfully", () => {
+    it("generates 638 files including all R4 core colliding profiles", () => {
+        // Previous 608 files + 53 definitions in 23 shared-name groups - 23 existing files (cognovis/codegen#18).
         expect(result.success).toBeTrue();
-        expect(Object.keys(files).length).toEqual(608);
+        expect(Object.keys(files).length).toEqual(638);
     });
 
     it("generates Patient resource in inMemoryOnly mode with snapshot", async () => {
@@ -225,17 +226,83 @@ describe("TypeScript R4 Example (with generateProfile)", async () => {
         expect(result.success).toBeTrue();
     });
 
-    it("file rewrite warnings", () => {
-        const rewriteWarnings = logger
-            .buffer()
-            .filter((e) => e.level === "WARN" && e.message.includes("File will be rewritten"))
-            .map((e) => e.message);
-        expect(rewriteWarnings).toMatchSnapshot();
+    const files = result.filesGenerated.typescript!;
+    const profileDir = "generated/types/hl7-fhir-r4-core/profiles/";
+
+    it("keeps valueset-label at the shared name and exports codesystem-label by canonical name", () => {
+        // FHIR R4 core StructureDefinitions: /codesystem-label and /valueset-label; issue cognovis/codegen#18.
+        const shared = files[`${profileDir}Extension_label.ts`];
+        const additional = files[`${profileDir}Extension_codesystem_label.ts`];
+        const profileIndex = files[`${profileDir}index.ts`];
+        const packageIndex = files["generated/types/hl7-fhir-r4-core/index.ts"];
+        expect(shared).toContain(
+            'static readonly canonicalUrl = "http://hl7.org/fhir/StructureDefinition/valueset-label"',
+        );
+        expect(additional).toBeDefined();
+        expect(additional).toContain(
+            'static readonly canonicalUrl = "http://hl7.org/fhir/StructureDefinition/codesystem-label"',
+        );
+        expect(additional).toContain("export class codesystem_labelProfile");
+        expect(profileIndex).toContain("Extension_codesystem_label");
+        expect(packageIndex).toContain('export * from "./profiles/index.js"');
     });
 
-    const files = result.filesGenerated.typescript!;
+    it("retains all 53 definitions in 23 R4 core collision groups and reports their canonicals", async () => {
+        // Independent oracle: hl7.fhir.r4.core@4.0.1 StructureDefinition URLs and names in the package register.
+        const core = (await r4Manager())
+            .allFs()
+            .filter(
+                (fs) =>
+                    fs.package_meta.name === "hl7.fhir.r4.core" &&
+                    fs.derivation === "constraint" &&
+                    (fs.kind === "complex-type" || fs.kind === "resource") &&
+                    fs.type &&
+                    fs.name &&
+                    fs.url,
+            );
+        const groups = new Map<string, typeof core>();
+        for (const fs of core) {
+            const name = `${fs.type}_${fs.name.replace(/[- :.]/g, "_")}`;
+            const group = groups.get(name) ?? [];
+            group.push(fs);
+            groups.set(name, group);
+        }
+        const collisions = [...groups].filter(([, group]) => group.length > 1);
+        expect(collisions).toHaveLength(23);
+        expect(collisions.reduce((count, [, group]) => count + group.length, 0)).toBe(53);
+        const report = logger.buffer().map((entry) => entry.message);
+        const index = files[`${profileDir}index.ts`];
+        for (const [name, group] of collisions) {
+            const winner = [...group]
+                .sort((a, b) => {
+                    if (a.url! < b.url!) return -1;
+                    if (a.url! > b.url!) return 1;
+                    return 0;
+                })
+                .at(-1)!;
+            expect(files[`${profileDir}${name}.ts`]).toContain(`static readonly canonicalUrl = "${winner.url}"`);
+            for (const fs of group) {
+                const matching = Object.entries(files).filter(
+                    ([path, source]) =>
+                        path.startsWith(profileDir) &&
+                        path.endsWith(".ts") &&
+                        !path.endsWith("index.ts") &&
+                        source.includes(`static readonly canonicalUrl = "${fs.url}"`),
+                );
+                expect(matching).toHaveLength(1);
+                expect(index).toContain(matching[0]![0].slice(profileDir.length, -3));
+            }
+            expect(
+                report.some((message) => message.includes(name) && group.every((fs) => message.includes(fs.url!))),
+            ).toBeTrue();
+        }
+        expect(
+            report.filter((message) => message.includes("File will be rewritten") && message.includes("/profiles/")),
+        ).toEqual([]);
+    });
 
     it("generates bodyweight profile with validate()", () => {
+        // Non-colliding R4 core observation-bodyweight profile; pinned in test/api/write-generator/__snapshots__/typescript.test.ts.snap.
         const src = files["generated/types/hl7-fhir-r4-core/profiles/Observation_observation_bodyweight.ts"];
         expect(src).toContain('static readonly resourceType = "Observation"');
         expect(src).toMatchSnapshot();
@@ -245,6 +312,129 @@ describe("TypeScript R4 Example (with generateProfile)", async () => {
         const src = files["generated/types/hl7-fhir-r4-core/profiles/Observation_observation_bp.ts"];
         expect(src).toContain('static readonly resourceType = "Observation"');
         expect(src).toMatchSnapshot();
+    });
+});
+
+describe("TypeScript profile collision input order", () => {
+    it("generates identical profile files and indexes when colliding definitions arrive in reverse order", async () => {
+        // Worked example: cognovis/codegen#18 canonical code-unit rule, two Extension profiles in one package.
+        const pkg = { name: "example.collision", version: "1.0.0" };
+        const profiles: PFS[] = ["alpha", "zeta"].map((suffix) => ({
+            description: `Order probe ${suffix}`,
+            derivation: "constraint",
+            kind: "complex-type",
+            type: "Extension",
+            name: "OrderProbe",
+            url: `http://example.org/StructureDefinition/${suffix}`,
+            base: "http://hl7.org/fhir/StructureDefinition/Extension",
+            package_meta: pkg,
+            elements: {},
+        }));
+        const generate = async (ordered: PFS[]) => {
+            const register = await mkR4Register();
+            for (const profile of ordered) registerFs(register, profile);
+            const result = await new APIBuilder({ register, logger: mkErrorLogger() })
+                .typescript({ inMemoryOnly: true, generateProfile: true, withDebugComment: false })
+                .generate();
+            expect(result.success).toBeTrue();
+            return Object.fromEntries(
+                Object.entries(result.filesGenerated.typescript!).filter(
+                    ([path]) =>
+                        path.startsWith("generated/types/example-collision/profiles/") ||
+                        path === "generated/types/example-collision/index.ts",
+                ),
+            );
+        };
+        const forward = await generate(profiles);
+        const reversed = await generate([...profiles].reverse());
+        expect(forward).toEqual(reversed);
+        const shared = forward["generated/types/example-collision/profiles/Extension_OrderProbe.ts"];
+        expect(shared).toContain('static readonly canonicalUrl = "http://example.org/StructureDefinition/zeta"');
+        expect(forward["generated/types/example-collision/profiles/Extension_alpha.ts"]).toContain(
+            'static readonly canonicalUrl = "http://example.org/StructureDefinition/alpha"',
+        );
+    });
+});
+
+describe("TypeScript profile module-name collisions", () => {
+    it("keeps both different-class profiles when their base and name compose to the same module", async () => {
+        // Worked example: cognovis/codegen#18 highest-canonical rule; A_B + C and A + B_C both name A_B_C.
+        const pkg = { name: "example.module-collision", version: "1.0.0" };
+        const baseUrl = (name: string) => `http://example.org/StructureDefinition/${name}`;
+        const bases: PFS[] = ["A_B", "A"].map((name) => ({
+            description: `Synthetic base ${name}`,
+            derivation: "specialization",
+            kind: "complex-type",
+            type: name,
+            name,
+            url: baseUrl(name),
+            base: "http://hl7.org/fhir/StructureDefinition/Element",
+            package_meta: pkg,
+            elements: {},
+        }));
+        const profiles: PFS[] = [
+            { name: "B_C", type: "A", base: baseUrl("A"), url: baseUrl("alpha") },
+            { name: "C", type: "A_B", base: baseUrl("A_B"), url: baseUrl("zeta") },
+        ].map((profile) => ({
+            ...profile,
+            description: `Profile ${profile.name}`,
+            derivation: "constraint",
+            kind: "complex-type",
+            package_meta: pkg,
+            elements: {},
+        }));
+        const generate = async (ordered: PFS[]) => {
+            const register = await mkR4Register();
+            for (const schema of [...bases, ...ordered]) registerFs(register, schema);
+            const logger = mkErrorLogger();
+            const result = await new APIBuilder({ register, logger })
+                .typescript({ inMemoryOnly: true, generateProfile: true, withDebugComment: false })
+                .generate();
+            expect(result.success).toBeTrue();
+            return {
+                files: Object.fromEntries(
+                    Object.entries(result.filesGenerated.typescript!).filter(
+                        ([path]) =>
+                            path.startsWith("generated/types/example-module-collision/profiles/") ||
+                            path === "generated/types/example-module-collision/index.ts",
+                    ),
+                ),
+                reports: logger
+                    .buffer()
+                    .map(({ message }) => message)
+                    .filter((message) => message.includes("A_B_C")),
+            };
+        };
+        const forward = await generate(profiles);
+        const reversed = await generate([...profiles].reverse());
+        expect(forward.files).toEqual(reversed.files);
+        const profileDir = "generated/types/example-module-collision/profiles/";
+        const shared = forward.files[`${profileDir}A_B_C.ts`];
+        const additional = forward.files[`${profileDir}A_alpha.ts`];
+        expect(shared).toContain('static readonly canonicalUrl = "http://example.org/StructureDefinition/zeta"');
+        expect(additional).toBeDefined();
+        expect(additional).toContain('static readonly canonicalUrl = "http://example.org/StructureDefinition/alpha"');
+        const modules = Object.entries(forward.files).filter(
+            ([path]) => path.startsWith(profileDir) && !path.endsWith("index.ts"),
+        );
+        for (const canonical of [baseUrl("alpha"), baseUrl("zeta")]) {
+            expect(
+                modules.filter(([, source]) => source.includes(`static readonly canonicalUrl = "${canonical}"`)),
+            ).toHaveLength(1);
+        }
+        expect(forward.files[`${profileDir}index.ts`]).toContain("A_B_C");
+        expect(forward.files[`${profileDir}index.ts`]).toContain("A_alpha");
+        expect(forward.files["generated/types/example-module-collision/index.ts"]).toContain("./profiles");
+        expect(
+            forward.reports.filter(
+                (message) => message.includes(baseUrl("alpha")) && message.includes(baseUrl("zeta")),
+            ),
+        ).toHaveLength(1);
+        expect(
+            reversed.reports.filter(
+                (message) => message.includes(baseUrl("alpha")) && message.includes(baseUrl("zeta")),
+            ),
+        ).toHaveLength(1);
     });
 });
 
