@@ -356,6 +356,88 @@ describe("TypeScript profile collision input order", () => {
     });
 });
 
+describe("TypeScript profile module-name collisions", () => {
+    it("keeps both different-class profiles when their base and name compose to the same module", async () => {
+        // Worked example: cognovis/codegen#18 highest-canonical rule; A_B + C and A + B_C both name A_B_C.
+        const pkg = { name: "example.module-collision", version: "1.0.0" };
+        const baseUrl = (name: string) => `http://example.org/StructureDefinition/${name}`;
+        const bases: PFS[] = ["A_B", "A"].map((name) => ({
+            description: `Synthetic base ${name}`,
+            derivation: "specialization",
+            kind: "complex-type",
+            type: name,
+            name,
+            url: baseUrl(name),
+            base: "http://hl7.org/fhir/StructureDefinition/Element",
+            package_meta: pkg,
+            elements: {},
+        }));
+        const profiles: PFS[] = [
+            { name: "B_C", type: "A", base: baseUrl("A"), url: baseUrl("alpha") },
+            { name: "C", type: "A_B", base: baseUrl("A_B"), url: baseUrl("zeta") },
+        ].map((profile) => ({
+            ...profile,
+            description: `Profile ${profile.name}`,
+            derivation: "constraint",
+            kind: "complex-type",
+            package_meta: pkg,
+            elements: {},
+        }));
+        const generate = async (ordered: PFS[]) => {
+            const register = await mkR4Register();
+            for (const schema of [...bases, ...ordered]) registerFs(register, schema);
+            const logger = mkErrorLogger();
+            const result = await new APIBuilder({ register, logger })
+                .typescript({ inMemoryOnly: true, generateProfile: true, withDebugComment: false })
+                .generate();
+            expect(result.success).toBeTrue();
+            return {
+                files: Object.fromEntries(
+                    Object.entries(result.filesGenerated.typescript!).filter(
+                        ([path]) =>
+                            path.startsWith("generated/types/example-module-collision/profiles/") ||
+                            path === "generated/types/example-module-collision/index.ts",
+                    ),
+                ),
+                reports: logger
+                    .buffer()
+                    .map(({ message }) => message)
+                    .filter((message) => message.includes("A_B_C")),
+            };
+        };
+        const forward = await generate(profiles);
+        const reversed = await generate([...profiles].reverse());
+        expect(forward.files).toEqual(reversed.files);
+        const profileDir = "generated/types/example-module-collision/profiles/";
+        const shared = forward.files[`${profileDir}A_B_C.ts`];
+        const additional = forward.files[`${profileDir}A_alpha.ts`];
+        expect(shared).toContain('static readonly canonicalUrl = "http://example.org/StructureDefinition/zeta"');
+        expect(additional).toBeDefined();
+        expect(additional).toContain('static readonly canonicalUrl = "http://example.org/StructureDefinition/alpha"');
+        const modules = Object.entries(forward.files).filter(
+            ([path]) => path.startsWith(profileDir) && !path.endsWith("index.ts"),
+        );
+        for (const canonical of [baseUrl("alpha"), baseUrl("zeta")]) {
+            expect(
+                modules.filter(([, source]) => source.includes(`static readonly canonicalUrl = "${canonical}"`)),
+            ).toHaveLength(1);
+        }
+        expect(forward.files[`${profileDir}index.ts`]).toContain("A_B_C");
+        expect(forward.files[`${profileDir}index.ts`]).toContain("A_alpha");
+        expect(forward.files["generated/types/example-module-collision/index.ts"]).toContain("./profiles");
+        expect(
+            forward.reports.filter(
+                (message) => message.includes(baseUrl("alpha")) && message.includes(baseUrl("zeta")),
+            ),
+        ).toHaveLength(1);
+        expect(
+            reversed.reports.filter(
+                (message) => message.includes(baseUrl("alpha")) && message.includes(baseUrl("zeta")),
+            ),
+        ).toHaveLength(1);
+    });
+});
+
 describe("TypeScript US Core Example", async () => {
     const logger = mkErrorLogger();
     const result = await new APIBuilder({ logger })
