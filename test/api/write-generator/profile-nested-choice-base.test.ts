@@ -41,12 +41,22 @@ const slicingProfile: PFS = {
                     quantity: {
                         max: 1,
                         match: { code: { coding: [{ system: "http://loinc.org", code: "8480-6" }] } },
-                        schema: { elements: { value: { choices: ["valueQuantity"] }, valueQuantity: { type: "Quantity", choiceOf: "value" } } },
+                        schema: {
+                            elements: {
+                                value: { choices: ["valueQuantity"] },
+                                valueQuantity: { type: "Quantity", choiceOf: "value" },
+                            },
+                        },
                     },
                     ratio: {
                         max: 1,
                         match: { code: { coding: [{ system: "http://loinc.org", code: "1234-5" }] } },
-                        schema: { elements: { value: { choices: ["valueRatio"] }, valueRatio: { type: "Ratio", choiceOf: "value" } } },
+                        schema: {
+                            elements: {
+                                value: { choices: ["valueRatio"] },
+                                valueRatio: { type: "Ratio", choiceOf: "value" },
+                            },
+                        },
                     },
                 },
             },
@@ -60,10 +70,12 @@ registerFs(register, slicingProfile);
 const { schemas } = await generateTypeSchemas(register, undefined, mkSilentLogger());
 
 const indexForOrder = (lastProfile: PFS) => {
-    const profileSchemas = schemas.filter((schema) =>
-        schema.identifier.url === restrictingProfile.url || schema.identifier.url === slicingProfile.url,
+    const profileSchemas = schemas.filter(
+        (schema) => schema.identifier.url === restrictingProfile.url || schema.identifier.url === slicingProfile.url,
     );
-    expect(profileSchemas).toHaveLength(2);
+    if (profileSchemas.length !== 2) {
+        throw new Error(`Expected both Observation test profiles; found ${profileSchemas.length}`);
+    }
     const orderedSchemas = [
         ...schemas.filter((schema) => !profileSchemas.includes(schema)),
         ...profileSchemas.filter((schema) => schema.identifier.url !== lastProfile.url),
@@ -85,11 +97,11 @@ const generate = async (lastProfile: PFS): Promise<string> => {
         withDebugComment: false,
     });
     await writer.generateAsync(indexForOrder(lastProfile));
-    const file = writer.writtenFiles().find(({ relPath }) =>
-        relPath.endsWith("profiles/Observation_SlicedComponentObservation.ts"),
-    );
-    expect(file).toBeDefined();
-    return file!.content;
+    const file = writer
+        .writtenFiles()
+        .find(({ relPath }) => relPath.endsWith("profiles/Observation_SlicedComponentObservation.ts"));
+    if (!file) throw new Error("TypeScript Observation slicing profile was not generated");
+    return file.content;
 };
 
 const generatePython = async (lastProfile: PFS): Promise<string> => {
@@ -106,11 +118,11 @@ const generatePython = async (lastProfile: PFS): Promise<string> => {
         client: "none",
     });
     await writer.generateAsync(indexForOrder(lastProfile));
-    const file = writer.writtenFiles().find(({ relPath }) =>
-        relPath.endsWith("profiles/observation_sliced_component_observation.py"),
-    );
-    expect(file).toBeDefined();
-    return file!.content;
+    const file = writer
+        .writtenFiles()
+        .find(({ relPath }) => relPath.endsWith("profiles/observation_sliced_component_observation.py"));
+    if (!file) throw new Error("Python Observation slicing profile was not generated");
+    return file.content;
 };
 
 // FHIR R4 Observation.component.value[x]: http://hl7.org/fhir/StructureDefinition/Observation#Observation.component.value[x].
