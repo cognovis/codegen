@@ -81,8 +81,8 @@ type TsProfileName = { moduleName: string; className: string };
 export type TsProfileNameCollision = {
     /** Package whose `profiles/` directory holds the colliding modules (`name@version`). */
     package: string;
-    /** The class name every definition of the group derives from its `StructureDefinition.name`. */
-    sharedClassName: string;
+    /** Name-derived module and class names the group's definitions share (each shared by at least two). */
+    sharedNames: string[];
     /** The definition that keeps its name-derived module and class: the highest canonical in code-unit order. */
     winner: TsProfileName & { canonical: string };
     /** The other definitions in canonical order, emitted under canonical-derived names. */
@@ -106,49 +106,82 @@ const nameDerivedProfileName = (tsIndex: TypeSchemaIndex, schema: SnapshotProfil
 
 const profileNamesByIndex = new WeakMap<TypeSchemaIndex, TsProfileNames>();
 
+/** Indexes of profiles connected by a shared module or class name, ordered by the smallest class name. */
+const connectedProfileGroups = (names: TsProfileName[]): number[][] => {
+    const parent = names.map((_, index) => index);
+    const find = (index: number): number => {
+        while (parent[index] !== index) index = parent[index] as number;
+        return index;
+    };
+    const firstByName: Record<string, number> = {};
+    names.forEach(({ moduleName, className }, index) => {
+        for (const key of [`module:${moduleName}`, `class:${className}`]) {
+            const first = firstByName[key];
+            if (first === undefined) firstByName[key] = index;
+            else parent[find(index)] = find(first);
+        }
+    });
+    const groups: Record<number, number[]> = {};
+    names.forEach((_, index) => {
+        (groups[find(index)] ??= []).push(index);
+    });
+    const keyed = Object.values(groups).map(
+        (group) => [group.map((index) => names[index]?.className ?? "").sort()[0] ?? "", group] as const,
+    );
+    return keyed.sort(([left], [right]) => (left < right ? -1 : Number(left > right))).map(([, group]) => group);
+};
+
+/** Module and class names that at least two members of a group derive. */
+const sharedProfileNames = (names: TsProfileName[]): string[] => {
+    const shared = (values: string[]) => values.filter((value, index) => values.indexOf(value) !== index);
+    const moduleNames = shared(names.map((name) => name.moduleName));
+    const classNames = shared(names.map((name) => name.className));
+    return [...new Set([...moduleNames, ...classNames])].sort();
+};
+
 /**
  * Resolve the module and class name of every snapshot profile once per index.
  *
- * Profiles of one package whose `StructureDefinition.name` derives the same class name (and
- * so possibly the same module file) form a collision group. The definition with the highest
- * canonical (code-unit order, as in `collision-order.ts`) keeps its name-derived names; every
- * other definition is emitted under `${Base}_${tsNameFromCanonical(url)}`, numbered when that
- * name is taken as well. The result does not depend on the order in which the package set
- * supplies the definitions.
+ * Profiles of one package form a collision group when they are connected by a shared
+ * name-derived module name or class name: `A_B` + `C` and `A` + `B_C` share the module `A_B_C`
+ * with different classes, `Foo` and `FooProfile` share a class in different modules. The
+ * definition with the highest canonical (code-unit order, as in `collision-order.ts`) keeps its
+ * name-derived names; every other definition is emitted under
+ * `${Base}_${tsNameFromCanonical(url)}`, numbered while that module or class name is taken. The
+ * result does not depend on the order in which the package set supplies the definitions.
  */
 export const tsProfileNames = (tsIndex: TypeSchemaIndex): TsProfileNames => {
     const cached = profileNamesByIndex.get(tsIndex);
     if (cached) return cached;
 
-    const groupsByPackage: Record<string, Record<string, SnapshotProfileTypeSchema[]>> = {};
-    for (const schema of tsIndex.collectSnapshotProfiles()) {
-        const groups = (groupsByPackage[packageMetaToNpm(packageMeta(schema))] ??= {});
-        (groups[nameDerivedProfileName(tsIndex, schema).className] ??= []).push(schema);
-    }
+    const profilesByPackage: Record<string, SnapshotProfileTypeSchema[]> = {};
+    for (const schema of tsIndex.collectSnapshotProfiles())
+        (profilesByPackage[packageMetaToNpm(packageMeta(schema))] ??= []).push(schema);
 
     const byProfile: Record<string, TsProfileName> = {};
     const collisions: TsProfileNameCollision[] = [];
-    for (const pkg of Object.keys(groupsByPackage).sort()) {
-        const groups = groupsByPackage[pkg] ?? {};
-        const usedClassNames = new Set(Object.keys(groups));
-        const usedModuleNames = new Set(
-            Object.values(groups).flatMap((group) => group.map((s) => nameDerivedProfileName(tsIndex, s).moduleName)),
-        );
-        for (const sharedClassName of Object.keys(groups).sort()) {
-            const group = [...(groups[sharedClassName] ?? [])].sort((left, right) =>
+    for (const pkg of Object.keys(profilesByPackage).sort()) {
+        const profiles = profilesByPackage[pkg] ?? [];
+        const derived = profiles.map((schema) => nameDerivedProfileName(tsIndex, schema));
+        const usedModuleNames = new Set(derived.map((name) => name.moduleName));
+        const usedClassNames = new Set(derived.map((name) => name.className));
+        for (const group of connectedProfileGroups(derived)) {
+            const sharedNames = sharedProfileNames(group.map((index) => derived[index] as TsProfileName));
+            const members = group.map((index) => profiles[index] as SnapshotProfileTypeSchema);
+            const sorted = members.sort((left, right) =>
                 compareCollisionSources(
                     { sourcePackage: pkg, sourceCanonical: left.identifier.url },
                     { sourcePackage: pkg, sourceCanonical: right.identifier.url },
                 ),
             );
-            const winner = group.pop();
+            const winner = sorted.pop();
             if (!winner) continue;
             const winnerName = nameDerivedProfileName(tsIndex, winner);
             byProfile[profileNameKey(winner)] = winnerName;
-            if (group.length === 0) continue;
+            if (sorted.length === 0) continue;
 
             const additional: TsProfileNameCollision["additional"] = [];
-            for (const schema of group) {
+            for (const schema of sorted) {
                 const base = profileBaseName(tsIndex, schema);
                 const derivedLocal =
                     tsNameFromCanonical(schema.identifier.url) ?? normalizeTsName(schema.identifier.name);
@@ -171,7 +204,7 @@ export const tsProfileNames = (tsIndex: TypeSchemaIndex): TsProfileNames => {
             }
             collisions.push({
                 package: pkg,
-                sharedClassName,
+                sharedNames,
                 winner: { ...winnerName, canonical: winner.identifier.url },
                 additional,
             });
@@ -184,7 +217,12 @@ export const tsProfileNames = (tsIndex: TypeSchemaIndex): TsProfileNames => {
 };
 
 /** One report line for a collision group: the shared name, the winning canonical and each additional name. */
-export const tsProfileNameCollisionReport = ({ package: pkg, winner, additional }: TsProfileNameCollision): string => {
+export const tsProfileNameCollisionReport = ({
+    package: pkg,
+    sharedNames,
+    winner,
+    additional,
+}: TsProfileNameCollision): string => {
     const entries = additional.map((entry) => {
         const notes = [
             entry.nameDerivedModuleName !== winner.moduleName && `name-derived module '${entry.nameDerivedModuleName}'`,
@@ -193,7 +231,7 @@ export const tsProfileNameCollisionReport = ({ package: pkg, winner, additional 
         ].filter(Boolean);
         return `'${entry.moduleName}' (class '${entry.className}') for ${entry.canonical}${notes.length > 0 ? ` (${notes.join("; ")})` : ""}`;
     });
-    return `Profile name collision in ${pkg}: '${winner.moduleName}' (class '${winner.className}') keeps ${winner.canonical} (highest canonical); additionally generated ${entries.join(", ")}`;
+    return `Profile name collision in ${pkg} on ${sharedNames.map((name) => `'${name}'`).join(", ")}: '${winner.moduleName}' (class '${winner.className}') keeps ${winner.canonical} (highest canonical); additionally generated ${entries.join(", ")}`;
 };
 
 const tsProfileName = (tsIndex: TypeSchemaIndex, schema: SnapshotProfileTypeSchema): TsProfileName =>
