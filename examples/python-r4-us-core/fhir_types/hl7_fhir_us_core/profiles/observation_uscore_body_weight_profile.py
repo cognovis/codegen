@@ -23,6 +23,7 @@ class UscoreBodyWeightProfile:
     CanonicalURL: http://hl7.org/fhir/us/core/StructureDefinition/us-core-body-weight
     """
 
+    resource_type: str = "Observation"
     canonical_url: str = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-body-weight"
 
     _vscat_slice_match: dict[str, Any] = {"coding":[{"code":"vital-signs","system":"http://terminology.hl7.org/CodeSystem/observation-category"}]}
@@ -238,15 +239,15 @@ class UscoreBodyWeightProfile:
         ]))
         errors.extend(
             validate_reference(self._resource, profile_name, "hasMember", [
-                "MolecularSequence","QuestionnaireResponse","Observation"
+                "MolecularSequence","Observation","QuestionnaireResponse"
         ]))
         errors.extend(
             validate_reference(self._resource, profile_name, "derivedFrom", [
-                "DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"
+                "DocumentReference","ImagingStudy","Media","MolecularSequence","Observation","QuestionnaireResponse"
         ]))
         errors.extend(
             validate_reference(self._resource, profile_name, "performer", [
-                "PractitionerRole","CareTeam","Organization","Patient","Practitioner","RelatedPerson"
+                "CareTeam","Organization","Patient","Practitioner","PractitionerRole","RelatedPerson"
         ]))
         errors.extend(
             validate_choice_prohibited(self._resource, profile_name, [
