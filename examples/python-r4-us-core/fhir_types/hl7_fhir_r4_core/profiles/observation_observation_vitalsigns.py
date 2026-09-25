@@ -21,6 +21,7 @@ class ObservationVitalsignsProfile:
     CanonicalURL: http://hl7.org/fhir/StructureDefinition/vitalsigns
     """
 
+    resource_type: str = "Observation"
     canonical_url: str = "http://hl7.org/fhir/StructureDefinition/vitalsigns"
 
     _vscat_slice_match: dict[str, Any] = {"coding":[{"code":"vital-signs","system":"http://terminology.hl7.org/CodeSystem/observation-category"}]}
@@ -158,11 +159,11 @@ class ObservationVitalsignsProfile:
         ]))
         errors.extend(
             validate_reference(self._resource, profile_name, "hasMember", [
-                "MolecularSequence","QuestionnaireResponse","Observation"
+                "MolecularSequence","Observation","QuestionnaireResponse"
         ]))
         errors.extend(
             validate_reference(self._resource, profile_name, "derivedFrom", [
-                "DocumentReference","ImagingStudy","Media","MolecularSequence","QuestionnaireResponse","Observation"
+                "DocumentReference","ImagingStudy","Media","MolecularSequence","Observation","QuestionnaireResponse"
         ]))
         warnings.extend(
             validate_enum(self._resource, profile_name, "category", [

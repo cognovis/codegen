@@ -24,6 +24,7 @@ them into a single errors / warnings list.
 from __future__ import annotations
 
 import copy
+import re
 from typing import Any, Iterable, Mapping, MutableMapping, MutableSequence, Sequence, TypeVar
 
 from typing_extensions import TypeGuard
@@ -407,26 +408,62 @@ def validate_excluded(res: object, profile_name: str, field: str) -> list[str]:
     )
 
 
-def validate_fixed_value(res: object, profile_name: str, field: str, expected: object) -> list[str]:
-    """Checks that ``field`` structurally contains the expected fixed value."""
-    actual = _get_field(res, field)
-    return (
-        []
-        if matches_value(actual, expected)
-        else [f"{profile_name}: field '{field}' does not match expected fixed value"]
-    )
+def _matches_constrained_value(value: object, expected: object, repeating: bool) -> bool:
+    """Arity-aware containment check for a ``fixed[x]`` / ``pattern[x]`` value.
+
+    - Across repetitions: a constraint declared on a repeating element applies
+      to all repetitions, so every one of them must match and the element must
+      actually be a list.
+    - Inside one value: lists nested in the constraint keep ``matches_value``'s
+      "each constraint entry matches at least one instance entry" rule.
+    """
+    if repeating:
+        return (
+            isinstance(value, list)
+            and len(value) > 0
+            and all(matches_value(item, expected) for item in value)
+        )
+    return not isinstance(value, list) and matches_value(value, expected)
 
 
-def validate_pattern_value(res: object, profile_name: str, field: str, expected: object) -> list[str]:
-    """Containment constraint for a field that may be absent: absence is
-    ``validate_required``'s concern, so an absent field passes; a present one
-    must structurally contain ``expected``."""
+def validate_fixed_value(
+    res: object,
+    profile_name: str,
+    field: str,
+    expected: object,
+    repeating: bool = False,
+) -> list[str]:
+    """Checks that a present ``field`` structurally contains the expected fixed
+    value. Absence passes — ``fixed[x]`` applies "if present", so a missing
+    element is ``validate_required``'s concern. Pass ``repeating`` for an
+    element with max > 1."""
     actual = _get_field(res, field)
     if actual is None:
         return []
     return (
         []
-        if matches_value(actual, expected)
+        if _matches_constrained_value(actual, expected, repeating)
+        else [f"{profile_name}: field '{field}' does not match expected fixed value"]
+    )
+
+
+def validate_pattern_value(
+    res: object,
+    profile_name: str,
+    field: str,
+    expected: object,
+    repeating: bool = False,
+) -> list[str]:
+    """Containment constraint for a field that may be absent: absence is
+    ``validate_required``'s concern, so an absent field passes; a present one
+    must structurally contain ``expected`` — every repetition, when
+    ``repeating``."""
+    actual = _get_field(res, field)
+    if actual is None:
+        return []
+    return (
+        []
+        if _matches_constrained_value(actual, expected, repeating)
         else [f"{profile_name}: field '{field}' does not match expected pattern"]
     )
 
@@ -545,21 +582,37 @@ def validate_enum(res: object, profile_name: str, field: str, allowed: Sequence[
     return []
 
 
+_REFERENCE_TYPE_RE = re.compile(r"(?:^|/)([A-Za-z]+)/[A-Za-z0-9\-.]{1,64}(?:/_history/[A-Za-z0-9\-.]{1,64})?$")
+
+
+def referenced_resource_type(reference: str) -> str | None:
+    """The resource type a literal reference points at, or ``None`` when the
+    string carries none.
+
+    A literal reference is a relative or absolute URL ending in ``<Type>/<id>``,
+    optionally followed by ``/_history/<vid>`` — so the type is the segment
+    before the id, not the first segment. Reading it as the first segment makes
+    every absolute URL look like the scheme (``http:``).
+
+    A ``urn:uuid:`` / ``urn:oid:`` reference and a ``#contained`` one name no
+    type at all, and neither does a reference made only by ``identifier``; those
+    are not something to report, so they yield ``None`` and the check is skipped.
+    """
+    match = _REFERENCE_TYPE_RE.search(reference)
+    return match.group(1) if match else None
+
+
 def validate_reference(res: object, profile_name: str, field: str, allowed: Sequence[str]) -> list[str]:
     """Checks that a Reference field points to one of the ``allowed`` resource
-    types. Extracts the type from the ``reference`` string (the part before
-    the first ``/``)."""
+    types."""
     value = _get_field(res, field)
     if value is None:
         return []
     ref = _get_field(value, "reference")
     if not isinstance(ref, str):
         return []
-    slash = ref.find("/")
-    if slash == -1:
-        return []
-    ref_type = ref[:slash]
-    if ref_type in allowed:
+    ref_type = referenced_resource_type(ref)
+    if ref_type is None or ref_type in allowed:
         return []
     return [
         f"{profile_name}: field '{field}' references '{ref_type}' but only {', '.join(allowed)} are allowed"

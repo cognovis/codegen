@@ -9,6 +9,7 @@ import {
     type SnapshotProfileTypeSchema,
 } from "@root/typeschema/types";
 import type { TypeSchemaIndex } from "@root/typeschema/utils";
+import { pyLiteral } from "./naming-utils";
 import { pyFieldName } from "./profile-naming";
 
 // ---------------------------------------------------------------------------
@@ -106,8 +107,14 @@ const collectRegularFieldValidation = (
     if (field.valueConstraint) {
         const fn = field.valueConstraint.validateOnly ? "validate_pattern_value" : "validate_fixed_value";
         helpers.add(fn);
-        const value = JSON.stringify(field.valueConstraint.value);
-        errorLines.push(`errors.extend(${fn}(self._resource, profile_name, ${JSON.stringify(pyName)}, ${value}))`);
+        const value = pyLiteral(field.valueConstraint.value);
+        // A constraint on a repeating element applies to every repetition, so
+        // the helper needs the declared arity: the instance shape alone cannot
+        // tell an array-valued element from a wrong value on a single one.
+        const repeating = field.array ? ", True" : "";
+        errorLines.push(
+            `errors.extend(${fn}(self._resource, profile_name, ${JSON.stringify(pyName)}, ${value}${repeating}))`,
+        );
     }
     if (isNotChoiceDeclarationField(field)) {
         if (field.enum) {
@@ -122,10 +129,12 @@ const collectRegularFieldValidation = (
                 `warnings.extend(validate_must_support(self._resource, profile_name, ${JSON.stringify(pyName)}))`,
             );
         }
-        if (field.reference && field.reference.resource.length > 0) {
-            helpers.add("validate_reference");
-            const allowed = field.reference.resource.map((ref) => tsIndex.findLastSpecializationByIdentifier(ref).name);
-            pushListValidation(errorLines, "errors", "validate_reference", [JSON.stringify(pyName)], allowed);
+        if (field.reference) {
+            const allowed = tsIndex.referenceAllowedTypes(field.reference);
+            if (allowed.length > 0) {
+                helpers.add("validate_reference");
+                pushListValidation(errorLines, "errors", "validate_reference", [JSON.stringify(pyName)], allowed);
+            }
         }
         if (fieldSlicing?.slices) {
             collectSliceValidation(field, fieldSlicing, pyName, helpers, errorLines, tsIndex, formatName);
@@ -188,13 +197,13 @@ const collectSliceValidation = (
             const max = slice.max ?? 0;
             helpers.add("validate_slice_cardinality");
             errorLines.push(
-                `errors.extend(validate_slice_cardinality(self._resource, profile_name, ${JSON.stringify(name)}, ${JSON.stringify(match)}, ${JSON.stringify(sliceName)}, ${min}, ${max}))`,
+                `errors.extend(validate_slice_cardinality(self._resource, profile_name, ${JSON.stringify(name)}, ${pyLiteral(match)}, ${JSON.stringify(sliceName)}, ${min}, ${max}))`,
             );
         }
         const { requiredFields, choiceGroups } = collectSliceRequirements(slice, match, field, tsIndex, formatName);
         if (requiredFields.length === 0 && choiceGroups.length === 0) continue;
         helpers.add("validate_slice_fields");
-        const args = [JSON.stringify(name), JSON.stringify(match), JSON.stringify(sliceName)];
+        const args = [JSON.stringify(name), pyLiteral(match), JSON.stringify(sliceName)];
         if (choiceGroups.length === 0) {
             pushListValidation(errorLines, "errors", "validate_slice_fields", args, requiredFields);
             continue;
