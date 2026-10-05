@@ -41,8 +41,6 @@ filter_unconventional = true
 split_commits = false
 # regex for preprocessing the commit messages
 commit_preprocessors = [
-  # remove Cognovis bead references from the scope, e.g. fix(fmgt-4bg): -> fix:
-  { pattern = '\((fmgt|clc|cg)-[a-z0-9]+\)', replace = "" },
 ]
 # regex for parsing and grouping commits
 commit_parsers = [
