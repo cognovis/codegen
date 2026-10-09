@@ -11,7 +11,7 @@ from fhir_types.hl7_fhir_r4_core.base import Reference
 from fhir_types.hl7_fhir_r4_core.provenance import ProvenanceAgent
 from fhir_types.profile_helpers import (
     apply_slice_match, build_resource, ensure_profile, get_array_slice, matches_value, set_array_slice, strip_match_keys, \
-    validate_reference, validate_required
+    validate_required
 )
 
 
@@ -133,10 +133,6 @@ class UscoreProvenanceProfile:
         errors: list[str] = []
         warnings: list[str] = []
         errors.extend(validate_required(self._resource, profile_name, "target"))
-        errors.extend(
-            validate_reference(self._resource, profile_name, "target", [
-                "Bundle","Observation","OperationOutcome","Organization","Patient","Provenance"
-        ]))
         errors.extend(validate_required(self._resource, profile_name, "recorded"))
         errors.extend(validate_required(self._resource, profile_name, "agent"))
         return {"errors": errors, "warnings": warnings}
