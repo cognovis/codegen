@@ -1,18 +1,36 @@
 #!/bin/bash
 set -e
 
-# Resolve git-cliff: prefer the binary on PATH, fall back to the npm package
-if command -v git-cliff >/dev/null 2>&1; then
+# Resolve git-cliff. A binary on PATH is preferred, but only if it actually runs:
+# a version-manager shim for a tool that is not installed satisfies `command -v`
+# and then errors on invocation. That used to surface as a silently empty derived
+# version, because the derivation discarded stderr. Probe before trusting it, and
+# pin the fallback so a release cannot quietly change changelog tooling.
+CLIFF_FALLBACK="npx --yes git-cliff@2.14.2"
+if command -v git-cliff >/dev/null 2>&1 && git-cliff --version >/dev/null 2>&1; then
     CLIFF="git-cliff"
+elif $CLIFF_FALLBACK --version >/dev/null 2>&1; then
+    CLIFF="$CLIFF_FALLBACK"
 else
-    CLIFF="bunx git-cliff"
+    echo "❌ Error: no working git-cliff available"
+    echo 'Tried the git-cliff on PATH and the pinned fallback: npx --yes git-cliff@2.14.2'
+    echo 'Install git-cliff or make that npm package reachable, then retry.'
+    exit 1
 fi
+echo "Using git-cliff: $CLIFF ($($CLIFF --version))"
 
 VERSION=$1
 
-# Derive the next version from conventional commits when none is given
+# Derive the next version from conventional commits when none is given.
+# stderr is deliberately not discarded: a derivation that cannot answer must say
+# so rather than yield an empty version that later checks have to catch.
 if [ -z "$VERSION" ]; then
-    VERSION=$($CLIFF --bumped-version 2>/dev/null | sed 's/^v//')
+    VERSION=$($CLIFF --bumped-version | sed 's/^v//')
+    if [ -z "$VERSION" ]; then
+        echo "❌ Error: could not derive the next version from conventional commits"
+        echo 'Pass the version explicitly: bun run release <version>'
+        exit 1
+    fi
     echo "Derived next version from commits: $VERSION"
 fi
 
@@ -95,9 +113,18 @@ echo "📦 Releasing version $VERSION..."
 echo "Updating package.json..."
 npm version $VERSION --no-git-tag-version
 
-# Generate the changelog for this release
+# Add this release's section to the changelog.
+#
+# Additive on purpose: generate only the unreleased commits and prepend them,
+# leaving every committed byte of earlier sections untouched. A full `-o`
+# regeneration cannot reproduce this file. Two independent reasons, either of
+# which alone rewrites history: `cliff.toml` carries no commit_preprocessors
+# since 29b55443, so internal tracker IDs that were deliberately stripped would
+# reappear in historical entries; and the tag_pattern that confines derivation to
+# this fork's lineage makes the inherited v0.0.* tags unrecognized, so the 11
+# sections 0.0.2 through 0.0.12 would collapse into 0.1.0.
 echo "Generating CHANGELOG.md..."
-$CLIFF --tag "v$VERSION" -o CHANGELOG.md
+$CLIFF --unreleased --tag "v$VERSION" --prepend CHANGELOG.md
 
 # Commit the changes
 echo "Committing changes..."

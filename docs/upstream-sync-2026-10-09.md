@@ -101,7 +101,11 @@ The adversarial review of this integration found five defects that originate in 
 
 Defects 1, 2 and 4 are the reason the `make test-python-r4-us-core-example` bullet above no longer claims the rootless-model and accessor-collision scenarios as consumer evidence: the example never reaches either code path, and the in-memory tests that do reach them pin the current behaviour rather than the correct one. Defect 3 is the one with a plausible consumer-visible effect; it is assessed against the real cognovis-fhir TypeScript path in the handover notes rather than decided here.
 
-## Release-safety defect this synchronization exposed
+## Release-safety defects this synchronization exposed
+
+Preparing this integration's release surfaced two defects in the release path. The first, below, would have published a backwards `latest`; the second, after it, would have rewritten committed changelog history on every release. Both are repaired.
+
+### Backwards version derivation
 
 Deriving the release version for this integration surfaced a defect that would have published a backwards `latest`. It is recorded here rather than as a standing fork bug because **the synchronization is what makes it reachable**: the trigger is upstream's release tags arriving in this repository, which only happens once a sync runs.
 
@@ -118,7 +122,18 @@ Repaired in both halves, so neither a tag-selection mistake nor any other deriva
 
 **Safety net** — `scripts/release.sh` now refuses any version that does not strictly exceed the `package.json` version it replaces, before it writes anything, on both the derived and the explicit-argument path. The comparison implements semver precedence rather than string or version-sort order, so a prerelease correctly ranks below the release of the same core version, and it fails closed: a version neither side can parse is not treated as progress. Observed behaviour, exercised directly without tagging or pushing — `0.0.22` rejected, `0.2.4` rejected as not strictly greater, `0.2.4-rc.1` rejected, `0.2.5` and `0.3.0` accepted (each then stopping at the pre-existing main-branch check, which is left intact along with the clean-tree check).
 
-One caveat about reproducing this on a given host. `scripts/release.sh` resolves git-cliff by preferring the binary on `PATH`; on this host a mise shim satisfies `command -v git-cliff` but fails when invoked, and because line 15 discards stderr the derived version comes out **empty**, which the pre-existing semver regex already rejects. The `v0.0.22` derivation is therefore reproduced with `npx --yes git-cliff@2.14.2`, and the defect is live on any host or runner where git-cliff resolves properly. The brittle resolution itself is left alone here: it is outside this repair, it fails closed, and changing it is a separate decision.
+A note on reproducing this. `scripts/release.sh` used to resolve git-cliff by preferring whatever `command -v git-cliff` found; on this host that is a version-manager shim for a tool that is not installed, which errors on invocation. Because the derivation discarded stderr, the derived version came out **empty** instead of `v0.0.22`, and the pre-existing semver regex rejected it — the defect was masked here while remaining live on any host or runner where git-cliff resolves properly. The `v0.0.22` derivation is therefore reproduced with `npx --yes git-cliff@2.14.2`. That masking is itself repaired, below.
+
+### The changelog regeneration was destructive
+
+Checking that the `0.3.0` changelog section would be purely additive showed that it would not be: `scripts/release.sh` generated the changelog with `--tag "v$VERSION" -o CHANGELOG.md`, a **full regeneration**, which rewrote 2430 lines of already-committed history. Two independent causes, either of which rewrites the file on its own:
+
+- **No commit preprocessing.** `cliff.toml` carries `commit_preprocessors = []` since `29b55443 chore: remove retired tracker changelog preprocessing`. The committed `CHANGELOG.md` predates that removal and was generated with the tracker IDs stripped, so a regeneration reintroduces them into historical entries — `- Refresh generated resource descriptors` becomes `- **fmgt-thqw:** Refresh generated resource descriptors`, and `fmgt-qgrx` and `fmgt-4bg` likewise. Measured alone, against the pre-`tag_pattern` configuration, this accounts for 824 rewritten lines. Letting a release undo that deliberate decision as a side effect is not acceptable collateral.
+- **Inherited sections become unrecognized.** The `tag_pattern` above deliberately excludes upstream's `v0.0.*` line, so the 11 inherited sections `0.0.2` through `0.0.12` lose their tags and their commits collapse into `0.1.0`. No content is lost, but 11 section headers disappear and `0.1.0` swells. This is why restoring `commit_preprocessors` alone could not fix the regeneration: the structure would still be rewritten.
+
+Repaired by making the documented path additive instead: `scripts/release.sh` now runs `$CLIFF --unreleased --tag "v$VERSION" --prepend CHANGELOG.md`, which generates only the unreleased commits and prepends them. Neither cause can reach committed history any more, because committed history is no longer regenerated. Proven on the `0.3.0` section this release adds: excising it from the resulting `CHANGELOG.md` leaves a zero-line diff against the previously committed file.
+
+The resolver was repaired in the same change, so the documented path is actually usable and cannot fail quietly. `scripts/release.sh` now probes that the git-cliff it found really runs (`git-cliff --version`) before trusting it, falls back to the pinned `npx --yes git-cliff@2.14.2` — pinned so that a release cannot silently change changelog tooling — and exits with a clear message if neither works. It also no longer discards the derivation's stderr, and fails loudly rather than continuing with an empty version. On this host it selects the pinned fallback and reports `git-cliff 2.14.2`, and the derivation answers `0.2.5` where it previously answered nothing.
 
 ## Residual risk
 
