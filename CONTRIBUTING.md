@@ -34,8 +34,9 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 ### Prerequisites
 
-- **Bun** runtime v1.0+ (primary development runtime)
-- **Node.js** 18+ (for compatibility testing)
+- **Bun**: the latest release (primary development runtime; update with `bun upgrade`)
+- **Node.js**: the latest LTS (for npm and pnpm compatibility testing)
+- **Python**: 3.14 on its latest patch (for the Python SDK examples)
 - **Git** for version control
 
 ### Installation
@@ -53,6 +54,8 @@ bun test
 bun run typecheck
 bun run lint
 ```
+
+Before a push, the managed global pre-push hook runs `scripts/dev/preflight.sh`, which runs the Library toolchains check (`python3 .agents/standards/toolchains/scripts/check_toolchain_versions.py`); the `Toolchains` CI workflow runs the same check.
 
 ### IDE Setup
 
@@ -344,7 +347,7 @@ export async function transformFHIRSchema(
 Maintainers follow this process:
 
 1. Start from a clean, up-to-date `main` checkout and run `bun run release`. The script derives the version (or accepts an explicit version), updates `package.json`, regenerates `CHANGELOG.md`, commits the release, and pushes its `v<version>` tag. The tagged commit must be an ancestor of the current `origin/main`; this permits later main commits but rejects an unmerged or arbitrary tag.
-2. The tag triggers the stable release workflow. It runs the full test suite, builds the package, packs one named tarball, and verifies that exact tarball before publishing it to `https://npm.cognovis.de` under the `latest` tag. The workflow uses pinned Bun 1.3.14 and npm 11.8.0 so a verified rerun uses the same release tooling.
+2. The tag triggers the stable release workflow. It runs the full test suite, builds the package, packs one named tarball, and verifies that exact tarball before publishing it to `https://npm.cognovis.de` under the `latest` tag. The workflow uses the latest released Bun and the latest Node LTS (Node remains only because the npm CLI requires it), with npm pinned to 11.8.0.
 3. The workflow verifies the stable package after publication: the registry metadata and a newly downloaded tarball must match the checked tarball's `shasum` and `integrity`. It uploads the resulting package-identity evidence as the workflow artifact and writes the package, version, commit, checksums, and registry tarball URL to the job summary.
 4. Inspect the successful tag workflow and its `codegen-v<version>-release-evidence` artifact before handing the release to downstream consumers. A pre-existing version is only accepted on a rerun when its registry bytes already match the newly packed tarball; the workflow skips a second publish only in that case and fails on a mismatch.
 

@@ -104,11 +104,14 @@ describe("stable release artifact contract (codegen-8ja)", () => {
         expect(releaseWorkflow).not.toContain('rg -q "E404"');
     });
 
-    it("pins release tooling and permits a tagged main ancestor when main advances", () => {
+    it("runs the latest Bun and Node LTS, pins npm, and permits a tagged main ancestor when main advances", () => {
         const releaseSection = releaseWorkflow.slice(releaseWorkflow.indexOf("\n  release:\n"));
 
         expect(releaseSection).toContain("oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2");
-        expect(releaseSection).toContain('bun-version: "1.3.14"');
+        expect(releaseSection).toContain("bun-version: latest");
+        expect(releaseWorkflow).not.toMatch(/bun-version: "?\d/);
+        expect(releaseSection).toContain("node-version: lts/*\n          check-latest: true");
+        expect(releaseWorkflow).not.toMatch(/node-version: "?\d/);
         expect(releaseWorkflow).toContain("npm install -g npm@11.8.0");
         expect(releaseSection).toContain('git merge-base --is-ancestor "$TAG_COMMIT" origin/main^{commit}');
         expect(releaseSection).not.toContain('test "$TAG_COMMIT" = "$MAIN_COMMIT"');
@@ -122,8 +125,9 @@ describe("stable release artifact contract (codegen-8ja)", () => {
         expect(tarballVerifier).toContain("trap 'rm -r \"$verification_dir\"' EXIT");
     });
 
-    it("documents the pinned workflow and ancestor-based tag admission", () => {
-        expect(contributingGuide).toContain("Bun 1.3.14 and npm 11.8.0");
+    it("documents the release toolchains and ancestor-based tag admission", () => {
+        expect(contributingGuide).toContain("the latest released Bun and the latest Node LTS");
+        expect(contributingGuide).toContain("npm pinned to 11.8.0");
         expect(contributingGuide).toContain("ancestor of the current `origin/main`");
     });
 

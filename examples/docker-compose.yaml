@@ -15,7 +15,7 @@ services:
       POSTGRES_DB: aidbox
       POSTGRES_PASSWORD: dUlxYF5hJp
   aidbox:
-    image: healthsamurai/aidboxone@sha256:2987a3eaa9c6f4b9e4da5060291caa9bd04dba9efd107e97553fdbc4dbcbbae8
+    image: healthsamurai/aidboxone:2608
     pull_policy: always
     depends_on:
     - postgres

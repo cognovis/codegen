@@ -114,7 +114,7 @@ test-csharp-sdk: typecheck prepare-aidbox-runme
 	cd examples/csharp && dotnet build
 	cd examples/csharp && dotnet test
 
-PYTHON=python3.13
+PYTHON=python3.14
 PYTHON_R4_US_CORE_EXAMPLE=./examples/python-r4-us-core
 
 generate-python-r4-us-core-sdk:

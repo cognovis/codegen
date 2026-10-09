@@ -4,7 +4,8 @@
 #
 # The overlay is the complete, allowlisted set of repository paths that make the
 # Cognovis distribution differ from upstream. It carries package identity, the
-# publish pipeline, the Bun shebang, and changelog tooling -- never generator
+# publish pipeline, the Bun shebang, changelog tooling, and toolchain currency
+# (latest Bun, Node LTS, Python 3.14, the toolchains check) -- never generator
 # behavior. The authoritative allowlist lives in the `overlay-allowlist` fenced
 # block in COGNOVIS.md; this script reads that same block, so the document and
 # the tool can never drift apart.
@@ -201,6 +202,32 @@ patch_gitignore() {
     info "patched  .gitignore (.intake/)"
 }
 
+# Shared JS for the workflow patches: every oven-sh/setup-bun step requests the
+# latest released Bun (toolchains standard, rule 1). A step that already carries
+# `with: bun-version: latest` is left alone; a step with any other `with:` block
+# is an unsupported shape and fails closed rather than being half-patched.
+# shellcheck disable=SC2016  # the JS body is deliberately unexpanded by the shell
+BUN_LATEST_JS='
+    const pinBunLatest = (source, label) => {
+        // The step key may sit under `- name:` or be the list item itself (`- uses:`).
+        const step = /^( *)(- )?uses: oven-sh\/setup-bun@v2\n/gm;
+        let count = 0;
+        const patched = source.replace(step, (line, lead, dash, offset) => {
+            count += 1;
+            const indent = dash ? `${lead}  ` : lead;
+            const rest = source.slice(offset + line.length);
+            const latest = `${indent}with:\n${indent}  bun-version: latest\n`;
+            if (rest.startsWith(latest)) return line;
+            if (rest.startsWith(`${indent}with:`)) {
+                throw new Error(`${label}: setup-bun step has an unsupported with: block`);
+            }
+            return line + latest;
+        });
+        if (count === 0) throw new Error(`${label}: no oven-sh/setup-bun@v2 step found`);
+        return patched;
+    };
+'
+
 patch_ci_workflow() {
     local target="$1"
     guard_write ".github/workflows/ci.yml"
@@ -208,7 +235,8 @@ patch_ci_workflow() {
     local tmp="${file}.overlay-tmp"
     test -f "${file}" || die "expected upstream .github/workflows/ci.yml"
 
-    bun -e '
+    # shellcheck disable=SC2016  # the JS body is deliberately unexpanded by the shell
+    bun -e "${BUN_LATEST_JS}"'
         const fs = require("node:fs");
         const [file, output] = process.argv.slice(1);
         let source = fs.readFileSync(file, "utf8");
@@ -238,6 +266,35 @@ patch_ci_workflow() {
             throw new Error("package-managers Bun setup did not match the supported workflow shape");
         }
 
+        source = pinBunLatest(source, "ci.yml");
+
+        // Node stays only for the npm and pnpm consumer legs, on the latest LTS.
+        const nodeComment = [
+            "      # Node stays on the latest LTS: the npm and pnpm consumer legs require it",
+            "      # for the npm and pnpm CLIs and for the `node generate.mjs` consumer run.",
+        ].join("\n");
+        const nodeStep = [
+            "      - name: Setup Node.js",
+            "        if: matrix.package-manager != '\''bun'\''",
+            "        uses: actions/setup-node@v5",
+            "        with:",
+        ].join("\n");
+        const nodeLts = [
+            nodeComment,
+            nodeStep,
+            "          node-version: lts/*",
+            "          check-latest: true",
+            "",
+        ].join("\n");
+        const upstreamNode = new RegExp(
+            `${nodeStep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\n          node-version: "?[0-9]+"?\n`,
+        );
+        if (upstreamNode.test(source)) {
+            source = source.replace(upstreamNode, nodeLts);
+        } else if (!source.includes(nodeLts)) {
+            throw new Error("package-managers Node setup did not match the supported workflow shape");
+        }
+
         fs.writeFileSync(output, source);
     ' "${file}" "${tmp}"
 
@@ -248,6 +305,50 @@ patch_ci_workflow() {
     fi
     mv "${tmp}" "${file}"
     info "patched  .github/workflows/ci.yml"
+}
+
+# The SDK test workflow stays upstream's; the overlay only moves its toolchain
+# requests to the latest Bun and Python 3.14 on its latest patch.
+patch_sdk_tests_workflow() {
+    local target="$1"
+    guard_write ".github/workflows/sdk-tests.yml"
+    local file="${target}/.github/workflows/sdk-tests.yml"
+    local tmp="${file}.overlay-tmp"
+    test -f "${file}" || die "expected upstream .github/workflows/sdk-tests.yml"
+
+    # shellcheck disable=SC2016  # the JS body is deliberately unexpanded by the shell
+    bun -e "${BUN_LATEST_JS}"'
+        const fs = require("node:fs");
+        const [file, output] = process.argv.slice(1);
+        let source = pinBunLatest(fs.readFileSync(file, "utf8"), "sdk-tests.yml");
+
+        // Matches `- uses:` list items and `uses:` under `- name:` alike; group 2
+        // is the indent of the step keys either way.
+        const step =
+            /^( *(?:- )?)uses: actions\/setup-python@v6\n( +)with:\n\2  python-version: "?[0-9.]+"?\n(?:\2  check-latest: true\n)?/gm;
+        let count = 0;
+        source = source.replace(step, (_match, lead, indent) => {
+            count += 1;
+            return (
+                `${lead}uses: actions/setup-python@v6\n${indent}with:\n` +
+                `${indent}  python-version: "3.14"\n${indent}  check-latest: true\n`
+            );
+        });
+        const total = (source.match(/uses: actions\/setup-python@/g) || []).length;
+        if (count === 0 || count !== total) {
+            throw new Error("sdk-tests.yml: setup-python steps did not match the supported workflow shape");
+        }
+
+        fs.writeFileSync(output, source);
+    ' "${file}" "${tmp}"
+
+    if cmp -s "${file}" "${tmp}"; then
+        rm -f "${tmp}"
+        info "skipped  .github/workflows/sdk-tests.yml (already patched)"
+        return 0
+    fi
+    mv "${tmp}" "${file}"
+    info "patched  .github/workflows/sdk-tests.yml"
 }
 
 apply_overlay() {
@@ -270,11 +371,20 @@ apply_overlay() {
     # ... and its sync runbook, for the same reason.
     copy_owned "scripts/sync-upstream.sh" "${target}"
     chmod +x "${target}/scripts/sync-upstream.sh"
+    # Toolchain currency: the CI check and the pre-push preflight that run the
+    # Library toolchains check (.agents/ itself is installed per machine).
+    copy_owned ".github/workflows/toolchains.yml" "${target}"
+    copy_owned "scripts/dev/preflight.sh" "${target}"
+    chmod +x "${target}/scripts/dev/preflight.sh"
 
-    # Identity patches against files upstream continues to own.
+    # Identity and toolchain patches against files upstream continues to own.
     patch_package_json "${target}"
     patch_gitignore "${target}"
     patch_ci_workflow "${target}"
+    patch_sdk_tests_workflow "${target}"
+    patch_sed "Makefile" "${target}" \
+        's|^PYTHON=python3\.13$|PYTHON=python3.14|' \
+        'PYTHON=python3.14'
     patch_sed "src/cli/index.ts" "${target}" \
         '1s|^#!/usr/bin/env node$|#!/usr/bin/env bun|' \
         '#!/usr/bin/env bun'
@@ -466,7 +576,7 @@ EOF
 # --- entry point -----------------------------------------------------------
 
 usage() {
-    sed -n '3,21p' "${BASH_SOURCE[0]}" | sed 's|^# \{0,1\}||'
+    sed -n '3,22p' "${BASH_SOURCE[0]}" | sed 's|^# \{0,1\}||'
 }
 
 main() {

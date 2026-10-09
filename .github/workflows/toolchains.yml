@@ -1,0 +1,20 @@
+name: Toolchains
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  toolchain-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # Library toolchains standard: fails when a toolchain declaration outside
+      # the lockfile is older than the latest release.
+      - name: Check toolchain versions
+        run: python3 .agents/standards/toolchains/scripts/check_toolchain_versions.py

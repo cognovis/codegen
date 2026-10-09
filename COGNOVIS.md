@@ -30,10 +30,14 @@ package.json
 .gitignore
 .github/workflows/ci.yml
 .github/workflows/release.yml
+.github/workflows/sdk-tests.yml
+.github/workflows/toolchains.yml
+Makefile
 scripts/release.sh
 scripts/verify-release-tarball.sh
 scripts/apply-cognovis-overlay.sh
 scripts/sync-upstream.sh
+scripts/dev/preflight.sh
 CONTRIBUTING.md
 cliff.toml
 CHANGELOG.md
@@ -48,13 +52,17 @@ tsup.config.ts
 |---|---|---|
 | `package.json` | patch | `name` (`@cognovis/codegen`), the `prepare` script, and `allowScripts` — and nothing else. Dependencies and version stay upstream's; the release script owns the version. There is deliberately **no `allowScripts` field** — see [npm 12 and git installs](#npm-12-and-git-installs) — and `--verify` asserts it stays absent here and in the applied tree. |
 | `.gitignore` | patch | Appends `.intake/`. The `Library-managed project installs` block is not reapplied: although it is committed on `main` — the agent tooling writes it in place — it enumerates per-machine install paths, so a fresh apply deliberately drops it and `library` regenerates it on whatever machine next installs those files. |
-| `.github/workflows/ci.yml` | patch | The consumer smoke-test import, `@atomic-ehr/codegen` to `@cognovis/codegen`, and Bun setup for every package-manager leg because the Cognovis CLI distribution uses a Bun shebang. Upstream keeps ownership of the job matrix. |
+| `.github/workflows/ci.yml` | patch | The consumer smoke-test import, `@atomic-ehr/codegen` to `@cognovis/codegen`, Bun setup for every package-manager leg because the Cognovis CLI distribution uses a Bun shebang, `bun-version: latest` on every `setup-bun` step, and the package-managers Node setup on the latest LTS (`node-version: lts/*`, `check-latest: true`), which stays because the npm and pnpm legs need Node for their CLIs and the `node generate.mjs` consumer run. Upstream keeps ownership of the job matrix. |
+| `.github/workflows/sdk-tests.yml` | patch | Toolchain requests only (Library toolchains standard): `bun-version: latest` on every `setup-bun` step, and `python-version: "3.14"` with `check-latest: true` on every `setup-python` step. Upstream keeps ownership of the jobs. |
+| `.github/workflows/toolchains.yml` | copy | CI job that runs the Library toolchains check (`.agents/standards/toolchains/scripts/check_toolchain_versions.py`) on push and pull request. Does not exist upstream. `.agents/` is installed per machine and is not part of the overlay, so in a fresh upstream-plus-overlay tree the job has no checker to run until the Library standard is installed. |
+| `Makefile` | patch | **`PYTHON=` only**: `python3.13` becomes `python3.14`, the Python minimum of the Library toolchains standard. Every target stays upstream's. |
 | `.github/workflows/release.yml` | copy | The whole publish pipeline: `npm.cognovis.de`, the `@cognovis` scope, `COGNOVIS_NPM_TOKEN`, and the GitHub release step. Upstream edits to this file are intentionally discarded. |
 | `scripts/release.sh` | copy | Version derivation and `git-cliff` changelog generation. Supersedes the upstream script. |
 | `scripts/verify-release-tarball.sh` | copy | Post-pack smoke that installs the named tarball and runs `atomic-codegen generate --config` against a sliced-choice fixture. Does not exist upstream. |
 | `CONTRIBUTING.md` | copy | The maintainer release section: `bun run release`, `npm.cognovis.de`, and the package-identity evidence contract. Upstream's npmjs.org release steps are intentionally discarded. |
 | `scripts/apply-cognovis-overlay.sh` | copy | The overlay applicator itself. It is an overlay path for the same reason as every other entry here: it differs from upstream, it will never be sent upstream, and contract decision 1 leaves no third category. Copying it means a fresh upstream checkout plus the overlay can reapply and re-verify itself without this repository. |
 | `scripts/sync-upstream.sh` | copy | The upstream sync runbook in executable form (see [Syncing with upstream](#syncing-with-upstream)). Fork-only for the same reason as the applicator: upstream has no upstream to merge from. |
+| `scripts/dev/preflight.sh` | copy | Pre-push preflight run by the managed global pre-push hook (`~/.githooks/pre-push`) when a repository ships it. Runs the Library toolchains check and preserves its exit code. Does not exist upstream; like `toolchains.yml`, it needs the per-machine `.agents/` install. |
 | `cliff.toml` | copy | Changelog configuration. Does not exist upstream. |
 | `CHANGELOG.md` | generated | Allowlisted so it is never mistaken for an upstream file, but **not written by the apply script** — `git-cliff` regenerates it during a release. |
 | `COGNOVIS.md` | copy | This contract. Does not exist upstream. |
