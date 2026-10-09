@@ -7,7 +7,7 @@
       "dependencies": {
         "@atomic-ehr/fhir-canonical-manager": "0.0.28",
         "@atomic-ehr/fhirschema": "0.0.14",
-        "brace-expansion": "^5.0.9",
+        "brace-expansion": "^5.0.12",
         "mustache": "^4.2.0",
         "picocolors": "^1.1.1",
         "yaml": "^2.9.0",
@@ -26,12 +26,12 @@
     },
   },
   "overrides": {
-    "brace-expansion": "^5.0.9",
+    "brace-expansion": "^5.0.12",
     "esbuild": ">=0.28.1",
     "minimatch": ">=10.2.3",
     "picomatch": ">=4.0.4",
     "rollup": ">=4.59.0",
-    "smol-toml": ">=1.7.1",
+    "smol-toml": ">=1.9.0",
   },
   "packages": {
     "@atomic-ehr/fhir-canonical-manager": ["@atomic-ehr/fhir-canonical-manager@0.0.28", "", { "peerDependencies": { "typescript": "^5" }, "bin": { "fcm": "dist/cli/index.js" } }, "sha512-kWGhl/9kvp5Dpemc5FRSQu+dP8XCeOxwYfrWXIhY0YnqEfSLH46hMJpWgyeH3u2/VE6uDyE0Le1u+LLTTGP3ag=="],

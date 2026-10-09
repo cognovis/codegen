@@ -50,7 +50,7 @@
   "dependencies": {
     "@atomic-ehr/fhir-canonical-manager": "0.0.28",
     "@atomic-ehr/fhirschema": "0.0.14",
-    "brace-expansion": "^5.0.9",
+    "brace-expansion": "^5.0.12",
     "mustache": "^4.2.0",
     "picocolors": "^1.1.1",
     "yaml": "^2.9.0",
@@ -69,8 +69,8 @@
   "overrides": {
     "minimatch": ">=10.2.3",
     "rollup": ">=4.59.0",
-    "smol-toml": ">=1.7.1",
-    "brace-expansion": "^5.0.9",
+    "smol-toml": ">=1.9.0",
+    "brace-expansion": "^5.0.12",
     "picomatch": ">=4.0.4",
     "esbuild": ">=0.28.1"
   }
