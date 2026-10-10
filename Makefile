@@ -43,7 +43,7 @@ typecheck:
 	$(TYPECHECK)
 
 test: typecheck
-	@find test -name "*.test.ts" -not -path "*/multi-package/*" | sort | \
+	@find test -name "*.test.ts" \( -not -path "*/multi-package/*" -o -name "multi-root*.test.ts" \) | sort | \
 		xargs -P $(TEST_JOBS) -I{} sh -c 'out=$$(bun test --timeout $(TEST_TIMEOUT) "$$1" 2>&1); st=$$?; printf "==> %s\n%s\n" "$$1" "$$out"; [ $$st -eq 0 ] || exit 255' _ {}
 
 test-multi-package: typecheck

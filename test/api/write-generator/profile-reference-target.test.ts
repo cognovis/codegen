@@ -50,10 +50,14 @@ describe("Reference target validation", async () => {
         expect(() => profile.from({ ...resource, focus: { reference: "Organization/synthetic" } })).not.toThrow();
     });
 
-    it("rejects a reference to a type that is not a resource", () => {
-        expect(() => profile.from({ ...resource, focus: { reference: "NotAResource/synthetic" } })).toThrow(
-            "field 'focus' references 'NotAResource'",
-        );
+    // `Task.focus` is Reference(Any): the declared target set is open, so there is
+    // no closed list to check against. The concrete resources the index holds are
+    // not the constraint — tree shaking changes them — so emitting them as one
+    // rejects valid references, which is the regression the tree-shaken block
+    // below pins. An unknown type is consequently not caught here.
+    it("emits no reference check for an open declared target", () => {
+        expect(profileSource).not.toContain('validateReference(res, profileName, "focus"');
+        expect(() => profile.from({ ...resource, focus: { reference: "NotAResource/synthetic" } })).not.toThrow();
     });
 
     it("accepts a matching explicit reference target", () => {
@@ -62,6 +66,59 @@ describe("Reference target validation", async () => {
 
     it("rejects a mismatching explicit reference target", () => {
         expect(() => profile.from({ ...resource, requester: { reference: "Organization/synthetic" } })).toThrow(
+            "field 'requester' references 'Organization' but only Practitioner are allowed",
+        );
+    });
+});
+
+/**
+ * The same profile under tree shaking, which is how the cognovis-fhir release
+ * generates. Shaking removes most resources from the index, so the family behind
+ * `Reference(Any)` is a small subset of FHIR's resources. Expanding it into a
+ * closed allow-list therefore rejects references that the profile permits — the
+ * defect the verifier reproduced on `Provenance.target` with `Organization/org-1`.
+ * An explicit target list is unaffected by shaking, because concrete targets are
+ * never expanded, and must still be enforced.
+ */
+describe("Reference target validation under tree shaking", async () => {
+    const result = await new APIBuilder({ logger: mkSilentLogger() })
+        .localStructureDefinitions({
+            package: { name: "example.test.referencetarget", version: "0.1.0" },
+            path: Path.join(__dirname, "../../assets/profile-reference-target"),
+            dependencies: [{ name: "hl7.fhir.r4.core", version: "4.0.1" }],
+        })
+        .typeSchema({
+            treeShake: {
+                "example.test.referencetarget": {
+                    "http://example.test/StructureDefinition/reference-target-task": {},
+                },
+            },
+        })
+        .typescript({ inMemoryOnly: true, generateProfile: true, withDebugComment: false })
+        .generate();
+    if (!result.success) throw new Error("Profile generation failed");
+    const files = result.filesGenerated.typescript ?? {};
+    const shakenPath = Object.keys(files).find((key) => key.includes("Task_ReferenceTargetTask"));
+    if (!shakenPath) throw new Error("Generated Task profile is missing");
+    const shakenSource = files[shakenPath] ?? "";
+    const shakenProfile = instantiateProfile(shakenSource);
+    const resource = {
+        resourceType: "Task",
+        meta: { profile: ["http://example.test/StructureDefinition/reference-target-task"] },
+        status: "requested",
+        intent: "order",
+    };
+
+    it("shakes Organization out of the index", () => {
+        expect(Object.keys(files).some((key) => key.includes("Organization"))).toBeFalse();
+    });
+
+    it("accepts a permitted reference whose type the shaken index does not hold", () => {
+        expect(() => shakenProfile.from({ ...resource, focus: { reference: "Organization/org-1" } })).not.toThrow();
+    });
+
+    it("still rejects a mismatching explicit reference target", () => {
+        expect(() => shakenProfile.from({ ...resource, requester: { reference: "Organization/org-1" } })).toThrow(
             "field 'requester' references 'Organization' but only Practitioner are allowed",
         );
     });

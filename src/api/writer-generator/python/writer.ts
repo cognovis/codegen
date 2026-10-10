@@ -23,8 +23,8 @@ import {
     type TypeIdentifier,
 } from "@typeschema/types.ts";
 import { resolveGeneratorAsset } from "../assets";
-import { pyReferenceTypeParam } from "./naming-utils";
-import { generateNewProfiles } from "./profile";
+import { pyReferenceFamilyName, pyReferenceTypeParam } from "./naming-utils";
+import { collectProfileClassNames, generateNewProfiles } from "./profile";
 
 export const resolvePyAssets = (fn: string) => resolveGeneratorAsset(import.meta.url, "python", fn);
 
@@ -94,6 +94,8 @@ interface FieldInfo {
     name: string;
     type: string;
     defaultValue: string;
+    /** Trailing `# <Family>` when a family target widened the annotation away. */
+    comment?: string;
 }
 
 type TypeSchemaPackageGroups = {
@@ -169,14 +171,15 @@ export class Python extends Writer<PythonGeneratorOptions> {
 
         for (const [packageName, packageResources] of Object.entries(groups.groupedResources)) {
             this.cd(`/${snakeCase(packageName)}`, () => {
+                const packageProfiles = profilesByPackage[packageName] ?? [];
                 this.generateResourcePackageContent(
                     packageName,
                     packageResources,
                     groups.groupedComplexTypes[packageName] || [],
+                    collectProfileClassNames(packageProfiles),
                 );
 
-                const packageProfiles = profilesByPackage[packageName];
-                if (packageProfiles && packageProfiles.length > 0) {
+                if (packageProfiles.length > 0) {
                     generateNewProfiles(this, tsIndex, packageProfiles);
                 }
             });
@@ -190,6 +193,7 @@ export class Python extends Writer<PythonGeneratorOptions> {
             if (!packageProfiles || packageProfiles.length === 0) continue;
             this.cd(`/${snakeCase(packageName)}`, () => {
                 generateNewProfiles(this, tsIndex, packageProfiles);
+                this.generateProfileOnlyPackageInit(collectProfileClassNames(packageProfiles));
             });
         }
     }
@@ -198,10 +202,11 @@ export class Python extends Writer<PythonGeneratorOptions> {
         packageName: string,
         packageResources: SpecializationTypeSchema[],
         packageComplexTypes: SpecializationTypeSchema[],
+        profileNames: string[] = [],
     ): void {
         const pyPackageName = pyFhirPackageByName(this.opts.rootPackageName, packageName);
 
-        this.generateResourcePackageInit(pyPackageName, packageResources, packageComplexTypes);
+        this.generateResourcePackageInit(pyPackageName, packageResources, packageComplexTypes, profileNames);
 
         const hasAnyResourceGenericParams = packageResources.some((s) => collectResourceGenericTypeVars(s).length > 0);
         if (hasAnyResourceGenericParams) {
@@ -286,13 +291,36 @@ export class Python extends Writer<PythonGeneratorOptions> {
         fullPyPackageName: string,
         packageResources: SpecializationTypeSchema[],
         packageComplexTypes?: SpecializationTypeSchema[],
+        profileNames: string[] = [],
     ): void {
         this.cat("__init__.py", () => {
             this.generateDisclaimer();
             this.importComplexTypes(fullPyPackageName, packageComplexTypes);
             const allResourceNames = this.importResources(fullPyPackageName, true, packageResources);
+            this.importPackageProfiles(profileNames);
             this.line();
-            this.generateExportsDeclaration(packageComplexTypes, allResourceNames);
+            this.generateExportsDeclaration(packageComplexTypes, [...allResourceNames, ...profileNames]);
+        });
+    }
+
+    /** Re-export a package's profile classes from its `__init__.py`, so they are
+     *  reachable as `<package>.<ProfileClass>` and not only by module path.
+     *  Explicit, so strict mypy (`no_implicit_reexport`) sees the names. */
+    private importPackageProfiles(profileNames: string[]): void {
+        if (profileNames.length === 0) return;
+        this.pyImportFrom(".profiles", ...profileNames);
+    }
+
+    /** A package that carries only profiles still needs its own barrel; the
+     *  resource-package path never runs for it. */
+    private generateProfileOnlyPackageInit(profileNames: string[]): void {
+        this.cat("__init__.py", () => {
+            this.generateDisclaimer();
+            this.importPackageProfiles(profileNames);
+            this.line();
+            this.squareBlock(["__all__", "="], () => {
+                for (const name of profileNames) this.line(`'${name}',`);
+            });
         });
     }
 
@@ -420,6 +448,12 @@ export class Python extends Writer<PythonGeneratorOptions> {
         const bases: string[] = [];
         if (schema.base) bases.push(schema.base.name);
         bases.push(...this.injectSuperClasses(schema.identifier.url));
+        // A schema with no base and no injected root still gets a pydantic body,
+        // so without a model root every Field(...) and the model_config would be
+        // inert class attributes. Reached by a logical model specializing a root
+        // the package does not ship — R4's virtual `Base`, say, which leaves the
+        // schema rootless — and by anything else that resolves to no parent.
+        if (bases.length === 0) bases.push(this.forFhirpyClient ? "FhirpyBaseModel" : "BaseModel");
         if (schema.identifier.name in GENERIC_FIELD_REWRITES) bases.push("Generic[T]");
         const params = schema.generic?.params ?? [];
         if (params.length > 0) {
@@ -501,7 +535,7 @@ export class Python extends Writer<PythonGeneratorOptions> {
             if ("choices" in field && field.choices) continue;
 
             const fieldInfo = this.buildFieldInfo(fieldName, field, schema);
-            this.line(`${fieldInfo.name}: ${fieldInfo.type}${fieldInfo.defaultValue}`);
+            this.line(`${fieldInfo.name}: ${fieldInfo.type}${fieldInfo.defaultValue}${fieldInfo.comment ?? ""}`);
 
             if (withExtensions && "type" in field && isPrimitiveIdentifier(field.type)) {
                 this.addPrimitiveExtensionField(fieldName, field.array ?? false);
@@ -535,11 +569,13 @@ export class Python extends Writer<PythonGeneratorOptions> {
         const pyFieldName = fixReservedWords(this.nameFormatFunction(fieldName));
         const fieldType = this.determineFieldType(field, fieldName, schema);
         const defaultValue = this.getFieldDefaultValue(field, fieldName);
+        const family = this.tsIndex && "reference" in field ? pyReferenceFamilyName(field, this.tsIndex) : undefined;
 
         return {
             name: pyFieldName,
             type: fieldType,
             defaultValue: defaultValue,
+            comment: family ? `  # ${family}` : undefined,
         };
     }
 
