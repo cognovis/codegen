@@ -26,9 +26,9 @@ class UscoreEthnicityExtension:
 
     canonical_url: str = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
 
-    _omb_category_slice_match: dict[str, Any] = {"url":"ombCategory"}
-    _detailed_slice_match: dict[str, Any] = {"url":"detailed"}
-    _text_slice_match: dict[str, Any] = {"url":"text"}
+    _extension_omb_category_slice_match: dict[str, Any] = {"url":"ombCategory"}
+    _extension_detailed_slice_match: dict[str, Any] = {"url":"detailed"}
+    _extension_text_slice_match: dict[str, Any] = {"url":"text"}
 
     def __init__(self, resource: Extension) -> None:
         self._resource = resource
@@ -47,7 +47,7 @@ class UscoreEthnicityExtension:
 
     @classmethod
     def create_resource(cls, *, extension: list[Extension] | None = None) -> Extension:
-        extension_with_defaults = ensure_slice_defaults(list(extension or []), cls._text_slice_match)
+        extension_with_defaults = ensure_slice_defaults(list(extension or []), cls._extension_text_slice_match)
 
         return build_resource(Extension, url="http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity", extension=extension_with_defaults)
 
@@ -149,7 +149,7 @@ class UscoreEthnicityExtension:
     @overload
     def get_extension_omb_category(self, mode: Literal["raw"]) -> Extension | None: ...
     def get_extension_omb_category(self, mode: Literal["raw"] | None = None) -> dict[str, Any] | Extension | None:
-        match = self.__class__._omb_category_slice_match
+        match = self.__class__._extension_omb_category_slice_match
         item = get_array_slice(getattr(self._resource, "extension", None), match)
         if mode == "raw":
             return cast('Extension | None', item)
@@ -161,7 +161,7 @@ class UscoreEthnicityExtension:
     @overload
     def get_extension_detailed(self, mode: Literal["raw"]) -> Extension | None: ...
     def get_extension_detailed(self, mode: Literal["raw"] | None = None) -> dict[str, Any] | Extension | None:
-        match = self.__class__._detailed_slice_match
+        match = self.__class__._extension_detailed_slice_match
         item = get_array_slice(getattr(self._resource, "extension", None), match)
         if mode == "raw":
             return cast('Extension | None', item)
@@ -173,7 +173,7 @@ class UscoreEthnicityExtension:
     @overload
     def get_extension_text(self, mode: Literal["raw"]) -> Extension | None: ...
     def get_extension_text(self, mode: Literal["raw"] | None = None) -> dict[str, Any] | Extension | None:
-        match = self.__class__._text_slice_match
+        match = self.__class__._extension_text_slice_match
         item = get_array_slice(getattr(self._resource, "extension", None), match)
         if mode == "raw":
             return cast('Extension | None', item)
@@ -181,7 +181,7 @@ class UscoreEthnicityExtension:
         return strip_match_keys(item_dict, ["url"])
 
     def set_extension_omb_category(self, value: dict[str, Any] | None = None) -> "UscoreEthnicityExtension":
-        match = self.__class__._omb_category_slice_match
+        match = self.__class__._extension_omb_category_slice_match
         wrapped = wrap_slice_choice((value or {}), "valueCoding")
         merged = apply_slice_match(wrapped, match)
         element = Extension(**merged)
@@ -191,7 +191,7 @@ class UscoreEthnicityExtension:
         return self
 
     def set_extension_detailed(self, value: dict[str, Any] | None = None) -> "UscoreEthnicityExtension":
-        match = self.__class__._detailed_slice_match
+        match = self.__class__._extension_detailed_slice_match
         wrapped = wrap_slice_choice((value or {}), "valueCoding")
         merged = apply_slice_match(wrapped, match)
         element = Extension(**merged)
@@ -201,7 +201,7 @@ class UscoreEthnicityExtension:
         return self
 
     def set_extension_text(self, value: dict[str, Any] | None = None) -> "UscoreEthnicityExtension":
-        match = self.__class__._text_slice_match
+        match = self.__class__._extension_text_slice_match
         merged = apply_slice_match((value or {}), match)
         element = Extension(**merged)
         items = getattr(self._resource, "extension", None) or []
