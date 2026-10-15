@@ -1,0 +1,17 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "SyntheticRoot",
+  "url": "http://example.org/fhir/python/StructureDefinition/SyntheticRoot",
+  "version": "0.0.1",
+  "name": "SyntheticRoot",
+  "status": "draft",
+  "description": "A complex type with no base definition, so the generated model has no parent to inherit a pydantic root from. It declares no elements on purpose: a field would need a cross-package import that base.py does not emit, a separate defect this type must not depend on.",
+  "fhirVersion": "4.0.1",
+  "kind": "complex-type",
+  "abstract": false,
+  "type": "SyntheticRoot",
+  "derivation": "specialization",
+  "differential": {
+    "element": [{ "id": "SyntheticRoot", "path": "SyntheticRoot", "min": 0, "max": "*" }]
+  }
+}

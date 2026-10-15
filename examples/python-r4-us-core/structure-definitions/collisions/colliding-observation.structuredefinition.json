@@ -1,0 +1,52 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "colliding-observation",
+  "url": "http://example.org/fhir/python/StructureDefinition/colliding-observation",
+  "version": "0.0.1",
+  "name": "CollidingObservation",
+  "status": "draft",
+  "description": "Two component slices whose names snake-case to the same Python accessor.",
+  "fhirVersion": "4.0.1",
+  "kind": "resource",
+  "abstract": false,
+  "type": "Observation",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Observation",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "Observation.component",
+        "path": "Observation.component",
+        "slicing": { "discriminator": [{ "type": "pattern", "path": "code" }], "rules": "open" }
+      },
+      {
+        "id": "Observation.component:alleleDatabase",
+        "path": "Observation.component",
+        "sliceName": "alleleDatabase",
+        "min": 0,
+        "max": "1"
+      },
+      {
+        "id": "Observation.component:alleleDatabase.code",
+        "path": "Observation.component.code",
+        "patternCodeableConcept": {
+          "coding": [{ "system": "http://example.org/fhir/python/CodeSystem/synthetic", "code": "first" }]
+        }
+      },
+      {
+        "id": "Observation.component:allele_database",
+        "path": "Observation.component",
+        "sliceName": "allele_database",
+        "min": 0,
+        "max": "1"
+      },
+      {
+        "id": "Observation.component:allele_database.code",
+        "path": "Observation.component.code",
+        "patternCodeableConcept": {
+          "coding": [{ "system": "http://example.org/fhir/python/CodeSystem/synthetic", "code": "second" }]
+        }
+      }
+    ]
+  }
+}

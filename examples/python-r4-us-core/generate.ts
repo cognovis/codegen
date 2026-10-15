@@ -22,6 +22,20 @@ const builder = new APIBuilder({ logger })
         path: Path.join(__dirname, "../typescript-custom-packages/structure-definitions"),
         dependencies: [{ name: "hl7.fhir.r4.core", version: "4.0.1" }],
     })
+    // Python-only synthetic inputs, kept out of the TypeScript example's shared
+    // folder. Two packages because they need opposite shapes: the collision
+    // profiles must be a package with profiles, while the rootless type and the
+    // resource must sit in a package with resources and no profiles at all.
+    .localStructureDefinitions({
+        package: { name: "example.synthetic.collisions", version: "0.0.1" },
+        path: Path.join(__dirname, "structure-definitions/collisions"),
+        dependencies: [{ name: "hl7.fhir.r4.core", version: "4.0.1" }],
+    })
+    .localStructureDefinitions({
+        package: { name: "example.synthetic.types", version: "0.0.1" },
+        path: Path.join(__dirname, "structure-definitions/types"),
+        dependencies: [{ name: "hl7.fhir.r4.core", version: "4.0.1" }],
+    })
     .python({
         allowExtraFields: false,
         primitiveTypeExtension: true,
@@ -57,6 +71,18 @@ const builder = new APIBuilder({ logger })
             },
             "example.folder.structures": {
                 "http://example.org/fhir/StructureDefinition/ExampleTypedBundle": {},
+            },
+            "example.synthetic.collisions": {
+                // Two component slices that snake-case to one accessor name.
+                "http://example.org/fhir/python/StructureDefinition/colliding-observation": {},
+                // Four of them, more than the name candidates can tell apart.
+                "http://example.org/fhir/python/StructureDefinition/exhausting-observation": {},
+            },
+            "example.synthetic.types": {
+                // A complex type with no base, so its model has no inherited root.
+                "http://example.org/fhir/python/StructureDefinition/SyntheticRoot": {},
+                // A resource in a package without profiles.
+                "http://example.org/fhir/python/StructureDefinition/SyntheticRecord": {},
             },
         },
     })

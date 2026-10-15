@@ -1,0 +1,80 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "exhausting-observation",
+  "url": "http://example.org/fhir/python/StructureDefinition/exhausting-observation",
+  "version": "0.0.1",
+  "name": "ExhaustingObservation",
+  "status": "draft",
+  "description": "Four component slices that snake-case to one accessor, more than the name candidates can tell apart.",
+  "fhirVersion": "4.0.1",
+  "kind": "resource",
+  "abstract": false,
+  "type": "Observation",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Observation",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "Observation.component",
+        "path": "Observation.component",
+        "slicing": { "discriminator": [{ "type": "pattern", "path": "code" }], "rules": "open" }
+      },
+      {
+        "id": "Observation.component:alleleDatabase",
+        "path": "Observation.component",
+        "sliceName": "alleleDatabase",
+        "min": 0,
+        "max": "1"
+      },
+      {
+        "id": "Observation.component:alleleDatabase.code",
+        "path": "Observation.component.code",
+        "patternCodeableConcept": {
+          "coding": [{ "system": "http://example.org/fhir/python/CodeSystem/synthetic", "code": "c0" }]
+        }
+      },
+      {
+        "id": "Observation.component:allele_database",
+        "path": "Observation.component",
+        "sliceName": "allele_database",
+        "min": 0,
+        "max": "1"
+      },
+      {
+        "id": "Observation.component:allele_database.code",
+        "path": "Observation.component.code",
+        "patternCodeableConcept": {
+          "coding": [{ "system": "http://example.org/fhir/python/CodeSystem/synthetic", "code": "c1" }]
+        }
+      },
+      {
+        "id": "Observation.component:allele__database",
+        "path": "Observation.component",
+        "sliceName": "allele__database",
+        "min": 0,
+        "max": "1"
+      },
+      {
+        "id": "Observation.component:allele__database.code",
+        "path": "Observation.component.code",
+        "patternCodeableConcept": {
+          "coding": [{ "system": "http://example.org/fhir/python/CodeSystem/synthetic", "code": "c2" }]
+        }
+      },
+      {
+        "id": "Observation.component:allele___database",
+        "path": "Observation.component",
+        "sliceName": "allele___database",
+        "min": 0,
+        "max": "1"
+      },
+      {
+        "id": "Observation.component:allele___database.code",
+        "path": "Observation.component.code",
+        "patternCodeableConcept": {
+          "coding": [{ "system": "http://example.org/fhir/python/CodeSystem/synthetic", "code": "c3" }]
+        }
+      }
+    ]
+  }
+}
