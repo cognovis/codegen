@@ -19,6 +19,7 @@ import {
     isResourceTypeSchema,
     isSpecializationTypeSchema,
     type NestedTypeSchema,
+    type SnapshotProfileTypeSchema,
     type SpecializationTypeSchema,
     type TypeIdentifier,
 } from "@typeschema/types.ts";
@@ -131,13 +132,20 @@ export class Python extends Writer<PythonGeneratorOptions> {
             groupedComplexTypes: groupByPackages(tsIndex.collectComplexTypes()),
             groupedResources: groupByPackages(tsIndex.collectResources()),
         };
+        // Which packages get a `profiles` subpackage. Computed once, so the root
+        // init's profile imports and the subpackages actually emitted cannot drift.
+        const profilesByPackage = this.opts.generateProfile ? groupByPackages(tsIndex.collectSnapshotProfiles()) : {};
         const hasProfiles = (this.opts.generateProfile ?? false) && tsIndex.collectSnapshotProfiles().length > 0;
-        this.generateRootPackages(groups, hasProfiles);
-        this.generateSDKPackages(tsIndex, groups);
+        this.generateRootPackages(groups, profilesByPackage, hasProfiles);
+        this.generateSDKPackages(tsIndex, groups, profilesByPackage);
     }
 
-    private generateRootPackages(groups: TypeSchemaPackageGroups, hasProfiles: boolean): void {
-        this.generateRootInitFile(groups);
+    private generateRootPackages(
+        groups: TypeSchemaPackageGroups,
+        profilesByPackage: Record<string, SnapshotProfileTypeSchema[]>,
+        hasProfiles: boolean,
+    ): void {
+        this.generateRootInitFile(groups, profilesByPackage);
         if (this.forFhirpyClient) {
             if (this.fieldFormat === "camelCase") {
                 this.copyAssets(resolvePyAssets("fhirpy_base_model_camel_case.py"), "fhirpy_base_model.py");
@@ -153,9 +161,13 @@ export class Python extends Writer<PythonGeneratorOptions> {
         this.copyAssets(resolvePyAssets("requirements.txt"), "requirements.txt");
     }
 
-    private generateSDKPackages(tsIndex: TypeSchemaIndex, groups: TypeSchemaPackageGroups): void {
+    private generateSDKPackages(
+        tsIndex: TypeSchemaIndex,
+        groups: TypeSchemaPackageGroups,
+        profilesByPackage: Record<string, SnapshotProfileTypeSchema[]>,
+    ): void {
         this.generateComplexTypesPackages(groups.groupedComplexTypes);
-        this.generateResourcePackages(tsIndex, groups);
+        this.generateResourcePackages(tsIndex, groups, profilesByPackage);
     }
 
     private generateComplexTypesPackages(groupedComplexTypes: Record<string, SpecializationTypeSchema[]>): void {
@@ -166,9 +178,11 @@ export class Python extends Writer<PythonGeneratorOptions> {
         }
     }
 
-    private generateResourcePackages(tsIndex: TypeSchemaIndex, groups: TypeSchemaPackageGroups): void {
-        const profilesByPackage = this.opts.generateProfile ? groupByPackages(tsIndex.collectSnapshotProfiles()) : {};
-
+    private generateResourcePackages(
+        tsIndex: TypeSchemaIndex,
+        groups: TypeSchemaPackageGroups,
+        profilesByPackage: Record<string, SnapshotProfileTypeSchema[]>,
+    ): void {
         for (const [packageName, packageResources] of Object.entries(groups.groupedResources)) {
             this.cd(`/${snakeCase(packageName)}`, () => {
                 const packageProfiles = profilesByPackage[packageName] ?? [];
@@ -218,13 +232,16 @@ export class Python extends Writer<PythonGeneratorOptions> {
         }
     }
 
-    private generateRootInitFile(groups: TypeSchemaPackageGroups): void {
+    private generateRootInitFile(
+        groups: TypeSchemaPackageGroups,
+        profilesByPackage: Record<string, SnapshotProfileTypeSchema[]>,
+    ): void {
         this.cd("/", () => {
             this.cat("__init__.py", () => {
                 this.generateDisclaimer();
                 const pydanticModels: string[] = this.collectAndImportAllModels(groups);
                 this.generateModelRebuilds(pydanticModels);
-                this.importProfileRegistrations(groups);
+                this.importProfileRegistrations(groups, profilesByPackage);
             });
         });
     }
@@ -248,10 +265,21 @@ export class Python extends Writer<PythonGeneratorOptions> {
         }
     }
 
-    private importProfileRegistrations(groups: TypeSchemaPackageGroups): void {
-        if (!this.opts.generateProfile) return;
+    /** Import each resource package's `profiles` subpackage for its side effects —
+     *  but only where one was emitted. A package without profiles gets no such
+     *  subpackage (a custom-resource package, or R4 core under a tree shake that
+     *  leaves it no profile), and importing it anyway makes `import fhir_types`
+     *  raise ModuleNotFoundError, which breaks the whole SDK. */
+    private importProfileRegistrations(
+        groups: TypeSchemaPackageGroups,
+        profilesByPackage: Record<string, SnapshotProfileTypeSchema[]>,
+    ): void {
+        const packagesWithProfiles = Object.keys(groups.groupedResources).filter(
+            (packageName) => (profilesByPackage[packageName]?.length ?? 0) > 0,
+        );
+        if (packagesWithProfiles.length === 0) return;
         this.line();
-        for (const packageName of Object.keys(groups.groupedResources)) {
+        for (const packageName of packagesWithProfiles) {
             const profilesPackage = `${pyFhirPackageByName(this.opts.rootPackageName, packageName)}.profiles`;
             this.line(`import ${profilesPackage}  # noqa: F401`);
         }
@@ -259,9 +287,18 @@ export class Python extends Writer<PythonGeneratorOptions> {
 
     private generateBasePy(_packageName: string, packageComplexTypes: SpecializationTypeSchema[]): void {
         const hasGenericTypes = packageComplexTypes.some((s) => s.identifier.name in GENERIC_FIELD_REWRITES);
+        // A rootless type falls back to the client's model root (see getSuperClasses).
+        // Resource modules always import it; base.py must import it whenever one of
+        // its types — a nested one included — takes that fallback, or the module
+        // raises NameError on import. Asking getSuperClasses keeps the import and the
+        // emitted class line from disagreeing.
+        const usesFhirpyRoot = packageComplexTypes.some((schema) =>
+            [schema, ...(schema.nested ?? [])].some((type) => this.getSuperClasses(type).includes("FhirpyBaseModel")),
+        );
         this.cat("base.py", () => {
             this.generateDisclaimer();
             this.generateDefaultImports(hasGenericTypes);
+            if (usesFhirpyRoot) this.generateFhirBaseModelImport();
             if (hasGenericTypes) {
                 this.line();
                 // Covariant: the parameter says what a value holds, and callers

@@ -12,7 +12,7 @@ import {
 } from "@root/typeschema/types";
 import type { TypeSchemaIndex } from "@root/typeschema/utils";
 import { pyLiteral, pyReferenceTypeParam, pyTypeFromIdentifier } from "./naming-utils";
-import { pyFieldName, pySliceStaticName, pySnakeName } from "./profile-naming";
+import { pyFieldName, pySliceMatchName, pySnakeName, type ResolvedProfileMethods } from "./profile-naming";
 import { collectRequiredSliceNames } from "./profile-slices";
 import type { Python } from "./writer";
 
@@ -262,6 +262,7 @@ export const generateCreateResource = (
     isResourceBase: boolean,
     hasParams: boolean,
     factoryInfo: ProfileFactoryInfo,
+    resolvedNames: ResolvedProfileMethods,
 ): void => {
     const fmt = w.nameFormatFunction;
     w.line("@classmethod");
@@ -273,7 +274,9 @@ export const generateCreateResource = (
     w.indentBlock(() => {
         for (const f of factoryInfo.sliceAutoFields) {
             const fieldName = pyFieldName(f.name, fmt);
-            const matchRefs = f.sliceNames.map((s) => `cls.${pySliceStaticName(s)}`);
+            // The same constant the slice's own accessors read, so a factory default
+            // can never land under another slice's discriminator.
+            const matchRefs = f.sliceNames.map((s) => `cls.${pySliceMatchName(resolvedNames, f.name, s)}`);
             if (matchRefs.length === 1) {
                 w.line(`${fieldName}_with_defaults = ensure_slice_defaults(list(${fieldName} or []), ${matchRefs[0]})`);
             } else {

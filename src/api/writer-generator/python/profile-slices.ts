@@ -12,7 +12,7 @@ import {
 } from "@typeschema/types.ts";
 import type { TypeSchemaIndex } from "@typeschema/utils.ts";
 import { pyLiteral, pyTypeFromIdentifier } from "./naming-utils";
-import { pyFieldName, pySliceStaticName } from "./profile-naming";
+import { pyFieldName, pySliceKey, pySliceMatchName, type ResolvedProfileMethods } from "./profile-naming";
 import type { Python } from "./writer";
 
 export type SliceDef = {
@@ -48,9 +48,13 @@ export const collectRequiredSliceNames = (
     return names.length > 0 ? names : undefined;
 };
 
-export const generateStaticSliceFields = (w: Python, sliceDefs: SliceDef[]): void => {
+export const generateStaticSliceFields = (
+    w: Python,
+    sliceDefs: SliceDef[],
+    resolvedNames: ResolvedProfileMethods,
+): void => {
     for (const sliceDef of sliceDefs) {
-        const staticName = pySliceStaticName(sliceDef.sliceName);
+        const staticName = pySliceMatchName(resolvedNames, sliceDef.fieldName, sliceDef.sliceName);
         w.line(`${staticName}: dict[str, Any] = ${pyLiteral(sliceDef.match)}`);
     }
     if (sliceDefs.length > 0) w.line();
@@ -162,15 +166,12 @@ const sliceElementRetType = (sliceDef: SliceDef): string =>
         ? `${sliceDef.elementTypeName}[${sliceDef.typeDiscriminatorResource}]`
         : (sliceDef.elementTypeName ?? "Any");
 
-export const generateSliceGetters = (
-    w: Python,
-    sliceDefs: SliceDef[],
-    sliceBaseNames: Record<string, string>,
-): void => {
+export const generateSliceGetters = (w: Python, sliceDefs: SliceDef[], resolvedNames: ResolvedProfileMethods): void => {
     for (const sliceDef of sliceDefs) {
         const baseName =
-            sliceBaseNames[`${sliceDef.fieldName}:${sliceDef.sliceName}`] ?? sliceDef.nameCandidates.recommended;
-        const staticName = pySliceStaticName(sliceDef.sliceName);
+            resolvedNames.slices[pySliceKey(sliceDef.fieldName, sliceDef.sliceName)] ??
+            sliceDef.nameCandidates.recommended;
+        const staticName = pySliceMatchName(resolvedNames, sliceDef.fieldName, sliceDef.sliceName);
         const fieldName = pyFieldName(sliceDef.fieldName, w.nameFormatFunction);
         const matchKeys = JSON.stringify(Object.keys(sliceDef.match));
 
@@ -243,12 +244,13 @@ export const generateSliceSetters = (
     w: Python,
     className: string,
     sliceDefs: SliceDef[],
-    sliceBaseNames: Record<string, string>,
+    resolvedNames: ResolvedProfileMethods,
 ): void => {
     for (const sliceDef of sliceDefs) {
         const baseName =
-            sliceBaseNames[`${sliceDef.fieldName}:${sliceDef.sliceName}`] ?? sliceDef.nameCandidates.recommended;
-        const staticName = pySliceStaticName(sliceDef.sliceName);
+            resolvedNames.slices[pySliceKey(sliceDef.fieldName, sliceDef.sliceName)] ??
+            sliceDef.nameCandidates.recommended;
+        const staticName = pySliceMatchName(resolvedNames, sliceDef.fieldName, sliceDef.sliceName);
         const fieldName = pyFieldName(sliceDef.fieldName, w.nameFormatFunction);
         if (sliceDef.isTypeDiscriminated) {
             const retType = sliceElementRetType(sliceDef);

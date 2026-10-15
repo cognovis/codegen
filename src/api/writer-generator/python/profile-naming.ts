@@ -80,11 +80,8 @@ export const pyProfileModuleName = (
 // Slice / extension method base names + collision resolution
 // ---------------------------------------------------------------------------
 
-/** Static class attribute name for a slice's match constant. */
-export const pySliceStaticName = (name: string): string => {
-    const cleaned = name.replace(/\[x]/g, "").replace(/[^a-zA-Z0-9_]/g, "_");
-    return `_${snakeCase(cleaned)}_slice_match`;
-};
+/** Key of one slice in the resolved name maps: its field and its slice name. */
+export const pySliceKey = (fieldName: string, sliceName: string): string => `${fieldName}:${sliceName}`;
 
 /** The FHIR `value[x]` field name for a TypeIdentifier, formatted per the active
  *  field-naming mode (e.g. `value_coding` for snake_case, `valueCoding` for camelCase). */
@@ -94,7 +91,16 @@ export const pyValueFieldName = (id: TypeIdentifier, formatName: (s: string) => 
 export type ResolvedProfileMethods = {
     extensions: Record<string, string>;
     slices: Record<string, string>;
+    /** Static class attribute holding each slice's match, keyed like `slices`. */
+    sliceMatches: Record<string, string>;
     allBaseNames: Set<string>;
+};
+
+/** Look up a slice's match constant; every slice that is emitted has one. */
+export const pySliceMatchName = (resolved: ResolvedProfileMethods, fieldName: string, sliceName: string): string => {
+    const name = resolved.sliceMatches[pySliceKey(fieldName, sliceName)];
+    if (!name) throw new Error(`No match constant resolved for slice ${pySliceKey(fieldName, sliceName)}`);
+    return name;
 };
 
 /**
@@ -106,6 +112,14 @@ export type ResolvedProfileMethods = {
  * Python name and the module would declare it twice — Python keeps the last
  * definition, silently shadowing the earlier accessor. Fall through the
  * remaining candidates, which are field-qualified, to find a free one.
+ *
+ * The candidates can run out: four slices `alleleDatabase`, `allele_database`,
+ * `allele__database` and `allele___database` all snake-case alike, and there are
+ * fewer field-qualified candidates than that. Returning the preferred name then
+ * would hand out a reserved name and shadow an earlier accessor again, so suffix
+ * it instead, as the TypeScript writer does for colliding profile names: the
+ * first free one of `<preferred>_2`, `<preferred>_3`, ... The caller reserves
+ * whatever this returns.
  */
 const pyAccessorBaseName = (candidates: readonly string[], recommended: string, reserved: Set<string>): string => {
     const preferred = snakeCase(recommended);
@@ -114,7 +128,9 @@ const pyAccessorBaseName = (candidates: readonly string[], recommended: string, 
         const name = snakeCase(candidate);
         if (!reserved.has(name)) return name;
     }
-    return preferred;
+    let suffix = 2;
+    while (reserved.has(`${preferred}_${suffix}`)) suffix += 1;
+    return `${preferred}_${suffix}`;
 };
 
 export const resolveProfileMethodBaseNames = (
@@ -134,13 +150,20 @@ export const resolveProfileMethodBaseNames = (
         extensionsRecord[`${ext.url}:${ext.path}`] = name;
     }
 
+    // Each slice's match constant is named from its own accessor base name. Those are
+    // collision-free, so the constants are too. Naming the constant from the raw slice
+    // name instead let two slices whose names snake-case alike declare one constant
+    // twice; Python keeps the last, so both slices' accessors read and wrote the
+    // second slice, and one slice's data overwrote the other's.
     const slicesRecord: Record<string, string> = {};
+    const sliceMatches: Record<string, string> = {};
     for (const s of sliceDefs) {
         const name = pyAccessorBaseName(s.nameCandidates.candidates, s.nameCandidates.recommended, reserved);
         reserved.add(name);
-        slicesRecord[`${s.fieldName}:${s.sliceName}`] = name;
+        slicesRecord[pySliceKey(s.fieldName, s.sliceName)] = name;
+        sliceMatches[pySliceKey(s.fieldName, s.sliceName)] = `_${name}_slice_match`;
     }
 
     const allBaseNames = new Set([...Object.values(extensionsRecord), ...Object.values(slicesRecord)]);
-    return { extensions: extensionsRecord, slices: slicesRecord, allBaseNames };
+    return { extensions: extensionsRecord, slices: slicesRecord, sliceMatches, allBaseNames };
 };

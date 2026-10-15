@@ -366,7 +366,15 @@ const generateClassBody = (ctx: ProfileGenContext): void => {
 
     generateFromResourceMethod(w, annotatedBaseTypeName, className, isResourceBase);
     generateApplyMethod(w, annotatedBaseTypeName, className, isResourceBase);
-    generateCreateResource(w, baseTypeName, annotatedBaseTypeName, isResourceBase, hasParams, factoryInfo);
+    generateCreateResource(
+        w,
+        baseTypeName,
+        annotatedBaseTypeName,
+        isResourceBase,
+        hasParams,
+        factoryInfo,
+        resolvedNames,
+    );
     w.line();
     generateCreateMethod(w, className, hasParams, factoryInfo);
 
@@ -381,8 +389,8 @@ const generateClassBody = (ctx: ProfileGenContext): void => {
     if (extensions.length > 0) generateExtensionMethods(w, tsIndex, flatProfile, className, resolvedNames.extensions);
 
     if (sliceDefs.length > 0) {
-        generateSliceGetters(w, sliceDefs, resolvedNames.slices);
-        generateSliceSetters(w, className, sliceDefs, resolvedNames.slices);
+        generateSliceGetters(w, sliceDefs, resolvedNames);
+        generateSliceSetters(w, className, sliceDefs, resolvedNames);
     }
 
     generateValidateMethod(w, className, errorLines, warningLines);
@@ -459,7 +467,7 @@ const generateProfileModule = (w: Python, tsIndex: TypeSchemaIndex, flatProfile:
         if (isResourceBase) w.line(`resource_type: str = ${JSON.stringify(baseTypeName)}`);
         w.line(`canonical_url: str = ${JSON.stringify(canonicalUrl)}`);
         w.line();
-        generateStaticSliceFields(w, sliceDefs);
+        generateStaticSliceFields(w, sliceDefs, resolvedNames);
         generateClassBody({
             w,
             tsIndex,
