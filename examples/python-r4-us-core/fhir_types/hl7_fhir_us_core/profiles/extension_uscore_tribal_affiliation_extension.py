@@ -23,8 +23,8 @@ class UscoreTribalAffiliationExtension:
 
     canonical_url: str = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation"
 
-    _tribal_affiliation_slice_match: dict[str, Any] = {"url":"tribalAffiliation"}
-    _is_enrolled_slice_match: dict[str, Any] = {"url":"isEnrolled"}
+    _extension_tribal_affiliation_slice_match: dict[str, Any] = {"url":"tribalAffiliation"}
+    _extension_is_enrolled_slice_match: dict[str, Any] = {"url":"isEnrolled"}
 
     def __init__(self, resource: Extension) -> None:
         self._resource = resource
@@ -43,7 +43,7 @@ class UscoreTribalAffiliationExtension:
 
     @classmethod
     def create_resource(cls, *, extension: list[Extension] | None = None) -> Extension:
-        extension_with_defaults = ensure_slice_defaults(list(extension or []), cls._tribal_affiliation_slice_match)
+        extension_with_defaults = ensure_slice_defaults(list(extension or []), cls._extension_tribal_affiliation_slice_match)
 
         return build_resource(Extension, url="http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation", extension=extension_with_defaults)
 
@@ -121,7 +121,7 @@ class UscoreTribalAffiliationExtension:
     @overload
     def get_extension_tribal_affiliation(self, mode: Literal["raw"]) -> Extension | None: ...
     def get_extension_tribal_affiliation(self, mode: Literal["raw"] | None = None) -> dict[str, Any] | Extension | None:
-        match = self.__class__._tribal_affiliation_slice_match
+        match = self.__class__._extension_tribal_affiliation_slice_match
         item = get_array_slice(getattr(self._resource, "extension", None), match)
         if mode == "raw":
             return cast('Extension | None', item)
@@ -133,7 +133,7 @@ class UscoreTribalAffiliationExtension:
     @overload
     def get_extension_is_enrolled(self, mode: Literal["raw"]) -> Extension | None: ...
     def get_extension_is_enrolled(self, mode: Literal["raw"] | None = None) -> dict[str, Any] | Extension | None:
-        match = self.__class__._is_enrolled_slice_match
+        match = self.__class__._extension_is_enrolled_slice_match
         item = get_array_slice(getattr(self._resource, "extension", None), match)
         if mode == "raw":
             return cast('Extension | None', item)
@@ -141,7 +141,7 @@ class UscoreTribalAffiliationExtension:
         return strip_match_keys(item_dict, ["url"])
 
     def set_extension_tribal_affiliation(self, value: dict[str, Any] | None = None) -> "UscoreTribalAffiliationExtension":
-        match = self.__class__._tribal_affiliation_slice_match
+        match = self.__class__._extension_tribal_affiliation_slice_match
         wrapped = wrap_slice_choice((value or {}), "valueCodeableConcept")
         merged = apply_slice_match(wrapped, match)
         element = Extension(**merged)
@@ -151,7 +151,7 @@ class UscoreTribalAffiliationExtension:
         return self
 
     def set_extension_is_enrolled(self, value: dict[str, Any] | None = None) -> "UscoreTribalAffiliationExtension":
-        match = self.__class__._is_enrolled_slice_match
+        match = self.__class__._extension_is_enrolled_slice_match
         merged = apply_slice_match((value or {}), match)
         element = Extension(**merged)
         items = getattr(self._resource, "extension", None) or []

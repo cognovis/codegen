@@ -56,15 +56,16 @@ describe("effectiveResource", async () => {
         expect(effectiveOf(reference).map((ref): string => ref.name)).toContain("Patient");
     });
 
-    it("feeds referenceAllowedTypes with concrete types only", () => {
+    // The expansion above feeds the *types*. Validation is a different question:
+    // a declared target that is abstract admits any resource, and the members this
+    // index holds are not that set — tree shaking shrinks them — so no allow-list
+    // can be derived from it. A concrete declared target still yields one.
+    it("feeds referenceAllowedTypes with concrete types, and nothing for an open target", () => {
         const concrete: string[] = index.referenceAllowedTypes(referenceOf("Observation", "subject"));
         expect(concrete).toContain("Patient");
         expect(concrete).not.toContain("Resource");
 
-        const abstract: string[] = index.referenceAllowedTypes(referenceOf("Provenance", "target"));
-        expect(abstract).toContain("Patient");
-        expect(abstract).not.toContain("Resource");
-        expect(abstract).not.toContain("DomainResource");
+        expect(index.referenceAllowedTypes(referenceOf("Provenance", "target"))).toEqual([]);
     });
 
     it("covers a profile target through the base resource it resolved to", () => {

@@ -33,6 +33,21 @@ footer = """
 trim = true
 
 [git]
+# Consider only this fork's own release lineage.
+#
+# A synchronization fetches upstream with a plain `git fetch`, which brings
+# upstream's release tags into the shared repository. Without this pattern
+# git-cliff ranks `v0.0.21` alongside the fork's `v0.2.4` and
+# `--bumped-version` answers `v0.0.22`, which `scripts/release.sh` would then
+# publish as `latest` — moving the dist-tag backwards.
+#
+# Matched:   v0.1.0 … v0.2.4, v0.3.0, v0.10.0, v1.0.0, v999.x.y, with an
+#            optional prerelease suffix.
+# Excluded:  upstream's `v0.0.*` line (minor 0 never matches), the calendar
+#            tags `v2026.04.*` (a major is at most three digits), and anything
+#            not shaped like `v<semver>` such as `cognovis/v2026.05.0`,
+#            `archive/*` and `untagged-*`.
+tag_pattern = '^v(0\.[1-9][0-9]*\.[0-9]+|[1-9][0-9]{0,2}\.[0-9]+\.[0-9]+)(-[0-9A-Za-z.-]+)?$'
 # parse the commits based on https://www.conventionalcommits.org
 conventional_commits = true
 # filter out the commits that are not conventional

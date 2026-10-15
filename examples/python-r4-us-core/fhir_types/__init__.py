@@ -23,6 +23,9 @@ from fhir_types.hl7_fhir_r4_core.patient import (
 )
 from fhir_types.hl7_fhir_r4_core.provenance import Provenance, ProvenanceAgent, ProvenanceEntity
 from fhir_types.hl7_fhir_r4_core.resource import Resource
+from fhir_types.example_synthetic_types.base import SyntheticRoot
+
+from fhir_types.example_synthetic_types.synthetic_record import SyntheticRecord
 
 Address.model_rebuild()
 Age.model_rebuild()
@@ -78,6 +81,8 @@ RelatedArtifact.model_rebuild()
 Resource.model_rebuild()
 SampledData.model_rebuild()
 Signature.model_rebuild()
+SyntheticRecord.model_rebuild()
+SyntheticRoot.model_rebuild()
 Timing.model_rebuild()
 TriggerDefinition.model_rebuild()
 UsageContext.model_rebuild()

@@ -3,6 +3,7 @@ import {
     type Field,
     isChoiceDeclarationField,
     isChoiceInstanceField,
+    isNestedIdentifier,
     isNotChoiceDeclarationField,
     isResourceIdentifier,
     type RegularField,
@@ -11,7 +12,7 @@ import {
 } from "@root/typeschema/types";
 import type { TypeSchemaIndex } from "@root/typeschema/utils";
 import { pyLiteral, pyReferenceTypeParam, pyTypeFromIdentifier } from "./naming-utils";
-import { pyFieldName, pySliceStaticName, pySnakeName } from "./profile-naming";
+import { pyFieldName, pySliceMatchName, pySnakeName, type ResolvedProfileMethods } from "./profile-naming";
 import { collectRequiredSliceNames } from "./profile-slices";
 import type { Python } from "./writer";
 
@@ -46,7 +47,11 @@ export const fieldPyType = (
     resolveRef?: TypeSchemaIndex["findLastSpecializationByIdentifier"],
     tsIndex?: TypeSchemaIndex,
 ): string => {
-    const resolved = resolveRef ? resolveRef(field.type) : field.type;
+    // A nested backbone element is its own generated class (ObservationComponent,
+    // ProvenanceAgent), so it must not be resolved: the last specialization of a
+    // nested identifier is BackboneElement, which is what the model field is
+    // declared *against*, not what it accepts.
+    const resolved = resolveRef && !isNestedIdentifier(field.type) ? resolveRef(field.type) : field.type;
     let base = pyTypeFromIdentifier(resolved);
     if (base === "str" && field.enum && !field.enum.isOpen && field.enum.values.length > 0) {
         const literal = `Literal[${field.enum.values.map((v) => JSON.stringify(v)).join(", ")}]`;
@@ -257,6 +262,7 @@ export const generateCreateResource = (
     isResourceBase: boolean,
     hasParams: boolean,
     factoryInfo: ProfileFactoryInfo,
+    resolvedNames: ResolvedProfileMethods,
 ): void => {
     const fmt = w.nameFormatFunction;
     w.line("@classmethod");
@@ -268,7 +274,9 @@ export const generateCreateResource = (
     w.indentBlock(() => {
         for (const f of factoryInfo.sliceAutoFields) {
             const fieldName = pyFieldName(f.name, fmt);
-            const matchRefs = f.sliceNames.map((s) => `cls.${pySliceStaticName(s)}`);
+            // The same constant the slice's own accessors read, so a factory default
+            // can never land under another slice's discriminator.
+            const matchRefs = f.sliceNames.map((s) => `cls.${pySliceMatchName(resolvedNames, f.name, s)}`);
             if (matchRefs.length === 1) {
                 w.line(`${fieldName}_with_defaults = ensure_slice_defaults(list(${fieldName} or []), ${matchRefs[0]})`);
             } else {

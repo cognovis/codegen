@@ -686,9 +686,28 @@ export const mkTypeSchemaIndex = (
         return (schema.typeFamily?.resources?.length ?? 0) > 0;
     };
 
-    /** Every resourceType a referent of this field may carry. Falls back to expanding on
-     *  demand for a reference this index has not populated — one read from a file, say. */
+    /** True when a *declared* reference target leaves the referent type open: an abstract
+     *  resource, as `Reference(Any)` declares `Resource`, or a family root. What the
+     *  family expands to is the set of concrete resources this index happens to hold,
+     *  which tree shaking changes, so it is not the constraint the profile states. */
+    const isOpenReferenceTarget = (id: TypeIdentifier): boolean => {
+        const schema = resolveType(id);
+        if (!schema) return false;
+        if ("abstractResource" in schema && schema.abstractResource === true) return true;
+        return isFamilyType(id);
+    };
+
+    /** Every resourceType a referent of this field may carry, or none when the declared
+     *  target set is open and so admits any resource. Falls back to expanding on demand
+     *  for a reference this index has not populated — one read from a file, say.
+     *
+     *  Returning nothing for an open target is what keeps validation from contradicting
+     *  the profile: both writers emit a check only for a non-empty list, so an open
+     *  target yields no check in either language. The type side stays as it is — it
+     *  renders a family target as `string /* Resource *\/` from the same expansion, so
+     *  `effectiveResource` keeps its meaning and generated types are untouched. */
     const referenceAllowedTypes = (reference: FieldReference): Name[] => {
+        if (reference.resource.some(isOpenReferenceTarget)) return [];
         const targets = reference.effectiveResource ?? expandAbstractTargets(reference.resource, resolveType);
         return [...new Set(targets.map((target) => target.name))];
     };

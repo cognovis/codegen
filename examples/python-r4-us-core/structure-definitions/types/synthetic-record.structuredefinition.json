@@ -1,0 +1,27 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "SyntheticRecord",
+  "url": "http://example.org/fhir/python/StructureDefinition/SyntheticRecord",
+  "version": "0.0.1",
+  "name": "SyntheticRecord",
+  "status": "draft",
+  "description": "A resource in a package that carries no profiles, so the root package must not import a profiles subpackage for it.",
+  "fhirVersion": "4.0.1",
+  "kind": "resource",
+  "abstract": false,
+  "type": "SyntheticRecord",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/DomainResource",
+  "derivation": "specialization",
+  "differential": {
+    "element": [
+      { "id": "SyntheticRecord", "path": "SyntheticRecord", "min": 0, "max": "*" },
+      {
+        "id": "SyntheticRecord.title",
+        "path": "SyntheticRecord.title",
+        "min": 0,
+        "max": "1",
+        "type": [{ "code": "string" }]
+      }
+    ]
+  }
+}

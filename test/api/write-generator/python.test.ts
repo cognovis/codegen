@@ -69,6 +69,22 @@ describe("Python Writer Generator", async () => {
         });
     });
 
+    describe("observation.py", () => {
+        const observationPy = files["generated/hl7_fhir_r4_core/observation.py"];
+        // A family target widens the annotation to a bare Reference; the name it
+        // was widened from is kept at end of line, since Python cannot comment
+        // inside an annotation.
+        it("names the family a reference was widened from", () => {
+            expect(observationPy).toContain(
+                'focus: PyList[Reference] | None = Field(None, alias="focus", serialization_alias="focus")  # Resource',
+            );
+        });
+        it("leaves a narrow reference without the comment", () => {
+            expect(observationPy).toContain("subject: Reference[Literal[");
+            expect(observationPy).not.toMatch(/subject: Reference\[Literal\[[^\n]*# \w/);
+        });
+    });
+
     describe("patient.py", () => {
         const patientPy = files["generated/hl7_fhir_r4_core/patient.py"];
         it("generates CodeableConcept fields with enum bindings", () => {
@@ -186,6 +202,16 @@ describe("Python US Core Example", async () => {
 
     it("generates US Core profiles index", () => {
         expect(files["generated/hl7_fhir_us_core/profiles/__init__.py"]).toMatchSnapshot();
+    });
+
+    // TypeScript emits an index.ts for every package; the set below records which
+    // packages get the Python equivalent.
+    it("emits these package barrels", () => {
+        expect(
+            Object.keys(files)
+                .filter((key) => key.endsWith("__init__.py"))
+                .sort(),
+        ).toMatchSnapshot();
     });
 });
 

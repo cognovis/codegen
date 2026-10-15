@@ -180,7 +180,8 @@ describe("flat TypeScript output for a local multi-root diamond", async () => {
         expect(nodeNext.exitCode).toBe(0);
         expect(bundler.output).toBe("");
         expect(bundler.exitCode).toBe(0);
-    });
+        // Two full tsc runs over the projected output do not fit in bun's 5 s default.
+    }, 30_000);
 
     it("loads a generated profile in Node ESM and rejects invalid input", async () => {
         const transpiler = new Bun.Transpiler({ loader: "ts" });

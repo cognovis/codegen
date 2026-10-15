@@ -92,8 +92,13 @@ const addTypeImport = (
     typeId: TypeIdentifier,
 ): void => {
     const ids: TypeIdentifier[] = [typeId];
-    const resolved = resolveRef(typeId);
-    if (resolved !== typeId) ids.push(resolved);
+    // A nested backbone element is annotated as itself, not as its base, so the
+    // base would be an unused import. Everything else may be annotated either
+    // way (a reference target resolves to its base resource), so both are needed.
+    if (!isNestedIdentifier(typeId)) {
+        const resolved = resolveRef(typeId);
+        if (resolved !== typeId) ids.push(resolved);
+    }
     for (const id of ids) {
         if (isPrimitiveIdentifier(id) || PRIMITIVE_TYPE_MAP[id.name] !== undefined) continue;
         const name = deriveResourceName(id);
@@ -361,7 +366,15 @@ const generateClassBody = (ctx: ProfileGenContext): void => {
 
     generateFromResourceMethod(w, annotatedBaseTypeName, className, isResourceBase);
     generateApplyMethod(w, annotatedBaseTypeName, className, isResourceBase);
-    generateCreateResource(w, baseTypeName, annotatedBaseTypeName, isResourceBase, hasParams, factoryInfo);
+    generateCreateResource(
+        w,
+        baseTypeName,
+        annotatedBaseTypeName,
+        isResourceBase,
+        hasParams,
+        factoryInfo,
+        resolvedNames,
+    );
     w.line();
     generateCreateMethod(w, className, hasParams, factoryInfo);
 
@@ -376,8 +389,8 @@ const generateClassBody = (ctx: ProfileGenContext): void => {
     if (extensions.length > 0) generateExtensionMethods(w, tsIndex, flatProfile, className, resolvedNames.extensions);
 
     if (sliceDefs.length > 0) {
-        generateSliceGetters(w, sliceDefs, resolvedNames.slices);
-        generateSliceSetters(w, className, sliceDefs, resolvedNames.slices);
+        generateSliceGetters(w, sliceDefs, resolvedNames);
+        generateSliceSetters(w, className, sliceDefs, resolvedNames);
     }
 
     generateValidateMethod(w, className, errorLines, warningLines);
@@ -401,7 +414,7 @@ const generateProfileModule = (w: Python, tsIndex: TypeSchemaIndex, flatProfile:
     const annotatedBaseTypeName =
         typedResources.length > 0 ? `${baseTypeName}[${typedResources.join(" | ")}, Resource]` : baseTypeName;
     const extensions = flatProfile.extensions ?? [];
-    const resolvedNames = resolveProfileMethodBaseNames(extensions, sliceDefs);
+    const resolvedNames = resolveProfileMethodBaseNames(extensions, sliceDefs, Object.keys(flatProfile.fields));
     const errorLines: string[] = [];
     const warningLines: string[] = [];
     const validationHelpers = collectValidateBody(flatProfile, tsIndex, errorLines, warningLines, w.nameFormatFunction);
@@ -454,7 +467,7 @@ const generateProfileModule = (w: Python, tsIndex: TypeSchemaIndex, flatProfile:
         if (isResourceBase) w.line(`resource_type: str = ${JSON.stringify(baseTypeName)}`);
         w.line(`canonical_url: str = ${JSON.stringify(canonicalUrl)}`);
         w.line();
-        generateStaticSliceFields(w, sliceDefs);
+        generateStaticSliceFields(w, sliceDefs, resolvedNames);
         generateClassBody({
             w,
             tsIndex,
@@ -495,6 +508,11 @@ const generateProfilesInit = (w: Python, tsIndex: TypeSchemaIndex, profiles: Sna
         });
     });
 };
+
+/** Profile class names a package exports, deduped and sorted — the names its
+ *  `__init__.py` re-exports from `.profiles`. */
+export const collectProfileClassNames = (profiles: SnapshotProfileTypeSchema[]): string[] =>
+    [...new Set(profiles.map(pyProfileClassName))].sort();
 
 /** Entry point called from `python/writer.ts` when `generateProfile` is true. */
 export const generateNewProfiles = (

@@ -385,6 +385,14 @@ apply_overlay() {
     patch_sed "Makefile" "${target}" \
         's|^PYTHON=python3\.13$|PYTHON=python3.14|' \
         'PYTHON=python3.14'
+    # The multi-root pair is the only coverage of three retained fork divergences
+    # (one version per package, the #packageVersionMismatch drift warning, and the
+    # shared-canonical rejection). Upstream's `test` target skips all of
+    # multi-package/, so without this the pair runs in no target CI or the release
+    # workflow executes. The three heavy fixtures stay in `test-multi-package`.
+    patch_sed "Makefile" "${target}" \
+        's#-not -path "\*/multi-package/\*"#\\( -not -path "*/multi-package/*" -o -name "multi-root*.test.ts" \\)#' \
+        'multi-root*.test.ts'
     patch_sed "src/cli/index.ts" "${target}" \
         '1s|^#!/usr/bin/env node$|#!/usr/bin/env bun|' \
         '#!/usr/bin/env bun'
