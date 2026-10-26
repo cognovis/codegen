@@ -7,9 +7,16 @@ on:
 permissions:
   contents: read
 
+# Only PR runs cancel active duplicates; default-branch pushes stay independent.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.ref_type }}-${{ github.head_ref || github.ref_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.run_id || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# External workflows require approval in repository settings.
+# Default fork routing uses GitHub hosts; internal jobs use our runners.
 jobs:
   toolchain-versions:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "X64", "docker"]') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6

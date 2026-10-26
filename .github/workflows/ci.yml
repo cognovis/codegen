@@ -7,9 +7,16 @@ on:
 permissions:
   contents: read
 
+# Only PR runs cancel active duplicates; default-branch pushes stay independent.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.ref_type }}-${{ github.head_ref || github.ref_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.run_id || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# External workflows require approval in repository settings.
+# Default fork routing uses GitHub hosts; internal jobs use our runners.
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "X64", "docker"]') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -32,7 +39,7 @@ jobs:
         run: bun run build
 
   security:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "X64", "docker"]') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -49,7 +56,7 @@ jobs:
         run: bun audit
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "X64", "docker"]') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -72,7 +79,7 @@ jobs:
           path: "*.tgz"
 
   package-managers:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "X64", "docker"]') }}
     needs: build
 
     strategy:
@@ -85,6 +92,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: package-tarball
+          path: ${{ runner.temp }}/package-artifact
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -107,9 +115,10 @@ jobs:
           version: latest
 
       - name: Install package
+        working-directory: ${{ runner.temp }}/package-artifact
         run: |
           TARBALL=$(ls *.tgz)
-          mkdir /tmp/test-install && cd /tmp/test-install
+          mkdir "$RUNNER_TEMP/test-install" && cd "$RUNNER_TEMP/test-install"
           echo '{}' > package.json
 
           if [ "${{ matrix.package-manager }}" == "bun" ]; then
@@ -121,7 +130,7 @@ jobs:
           fi
 
       - name: Generate FHIR R4 type tree
-        working-directory: /tmp/test-install
+        working-directory: ${{ runner.temp }}/test-install
         run: |
           cat > generate.mjs <<'SCRIPT'
           import { APIBuilder } from "@cognovis/codegen";
@@ -153,14 +162,14 @@ jobs:
 
       - name: Verify output
         run: |
-          if [ ! -f /tmp/test-install/output/type-tree.json ]; then
+          if [ ! -f "$RUNNER_TEMP/test-install/output/type-tree.json" ]; then
             echo "type-tree.json not found"
             exit 1
           fi
-          echo "type-tree.json exists ($(wc -c < /tmp/test-install/output/type-tree.json) bytes)"
+          echo "type-tree.json exists ($(wc -c < "$RUNNER_TEMP/test-install/output/type-tree.json") bytes)"
 
       - name: Run CLI
-        working-directory: /tmp/test-install
+        working-directory: ${{ runner.temp }}/test-install
         run: |
           cat > codegen.json <<'CONFIG'
           {
@@ -201,8 +210,8 @@ jobs:
 
       - name: Verify CLI output
         run: |
-          if [ ! -f /tmp/test-install/cli-output/hl7-fhir-r4-core/Patient.ts ]; then
+          if [ ! -f "$RUNNER_TEMP/test-install/cli-output/hl7-fhir-r4-core/Patient.ts" ]; then
             echo "CLI generation output missing"
             exit 1
           fi
-          echo "CLI output OK ($(find /tmp/test-install/cli-output -name '*.ts' | wc -l) TypeScript files)"
+          echo "CLI output OK ($(find "$RUNNER_TEMP/test-install/cli-output" -name '*.ts' | wc -l) TypeScript files)"

@@ -6,8 +6,16 @@ on:
   push:
   pull_request:
 
+# Only PR runs cancel active duplicates; default-branch pushes stay independent.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.ref_type }}-${{ github.head_ref || github.ref_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.run_id || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# External workflows require approval in repository settings.
+# Default fork routing uses GitHub hosts; internal jobs use our runners.
 jobs:
   test-csharp-sdk:
+    # This credentialed Aidbox test needs a fresh Docker host and fixed port.
     runs-on: ubuntu-latest
 
     steps:
@@ -45,7 +53,7 @@ jobs:
           fi
 
   test-typescript-r4-us-core-example:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "X64", "docker"]') }}
 
     steps:
       - uses: actions/checkout@v6
@@ -75,6 +83,7 @@ jobs:
           fi
 
   test-python-sdk:
+    # This credentialed Aidbox test needs a fresh Docker host and fixed port.
     runs-on: ubuntu-latest
 
     steps:
@@ -99,7 +108,7 @@ jobs:
           make test-python-sdk
 
   test-python-r4-us-core-example:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "X64", "docker"]') }}
 
     steps:
       - uses: actions/checkout@v6
@@ -134,7 +143,7 @@ jobs:
           fi
 
   test-typescript-custom-packages-example:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "X64", "docker"]') }}
 
     steps:
       - uses: actions/checkout@v6
@@ -151,7 +160,7 @@ jobs:
         run: make test-typescript-custom-packages-example
 
   test-on-the-fly-example:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "X64", "docker"]') }}
 
     steps:
       - uses: actions/checkout@v6
@@ -168,7 +177,7 @@ jobs:
         run: make test-on-the-fly-example
 
   test-mustache-java-r4-example:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "X64", "docker"]') }}
 
     strategy:
       matrix:
