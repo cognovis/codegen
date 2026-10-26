@@ -3,6 +3,7 @@ import * as Path from "node:path";
 import type { CodegenLog } from "@root/utils/log";
 import * as YAML from "yaml";
 import { compareCollisionSources } from "./collision-order";
+import { assignRecommendedBaseNames } from "./core/name-candidates";
 import type { IrReport } from "./ir/types";
 import type { Register } from "./register";
 import {
@@ -765,7 +766,19 @@ export const mkTypeSchemaIndex = (
         for (const anySchema of constraintSchemas.slice().reverse()) {
             const schema = anySchema as SpecializationTypeSchema;
             // Leaf-most slicing wins per field, mirroring the field merge below.
-            if (schema.slicing) Object.assign(mergedSlicing, schema.slicing);
+            for (const [name, slicing] of Object.entries(schema.slicing ?? {})) {
+                mergedSlicing[name] = {
+                    ...slicing,
+                    slices: slicing.slices
+                        ? Object.fromEntries(
+                              Object.entries(slicing.slices).map(([name, slice]) => [
+                                  name,
+                                  { ...slice, nameCandidates: { ...slice.nameCandidates } },
+                              ]),
+                          )
+                        : undefined,
+                };
+            }
             if (!schema.fields) continue;
 
             for (const [fieldName, fieldConstraints] of Object.entries(schema.fields)) {
@@ -808,9 +821,9 @@ export const mkTypeSchemaIndex = (
                     if (!acc[key] || ext.url?.includes("/")) acc[key] = ext;
                     return acc;
                 }, {}),
-        );
+        ).map((ext) => ({ ...ext, nameCandidates: { ...ext.nameCandidates } }));
 
-        return {
+        const flat: ProfileTypeSchema = {
             ...schema,
             base: nonConstraintSchema.identifier,
             fields: narrowedFields,
@@ -818,6 +831,10 @@ export const mkTypeSchemaIndex = (
             dependencies: dependencies,
             extensions: mergedExtensions.length > 0 ? mergedExtensions : undefined,
         };
+        // Inheritance can bring independently named members into the same snapshot.
+        // Resolve on snapshot-owned copies so a child cannot rename its parent's API.
+        assignRecommendedBaseNames(flat);
+        return flat;
     };
 
     const buildProfileSnapshot = (schema: ProfileTypeSchema): SnapshotProfileTypeSchema => {

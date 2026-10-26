@@ -1,4 +1,8 @@
 import { describe, expect, it } from "bun:test";
+import { spawnSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import { APIBuilder } from "@root/api/builder";
 import { mkErrorLogger, mkR4Register, type PFS, registerFs } from "@typeschema-test/utils";
 
@@ -97,4 +101,103 @@ describe("complex extension applied at two paths", async () => {
             "public getContactNoted(mode: 'vflat'): DualNotedPatient_ContactNotedVFlat | undefined;",
         );
     });
+});
+
+describe("extension accessor collisions introduced by profile inheritance", () => {
+    it("compiles qualified child accessors while preserving the parent API and repeatable output", async () => {
+        // Dental Core 0.10.0 inherits surface at bodySite and adds surface at component.
+        // Each differential can use Surface alone; the combined snapshot cannot.
+        const register = await mkR4Register();
+        const surfaceUrl = "http://example.org/StructureDefinition/surface";
+        const parentUrl = "http://example.org/StructureDefinition/dental-finding";
+        registerFs(register, {
+            derivation: "constraint",
+            type: "Extension",
+            name: "SurfaceExtension",
+            kind: "complex-type",
+            url: surfaceUrl,
+            base: "http://hl7.org/fhir/StructureDefinition/Extension",
+            package_meta: pkg,
+            elements: { valueCode: { type: "code" } },
+        });
+        registerFs(register, {
+            derivation: "constraint",
+            type: "Observation",
+            name: "DentalFinding",
+            kind: "resource",
+            url: parentUrl,
+            base: "http://hl7.org/fhir/StructureDefinition/Observation",
+            package_meta: pkg,
+            elements: { bodySite: { extensions: { surface: { url: surfaceUrl, min: 0, max: 1 } } } },
+        });
+        registerFs(register, {
+            derivation: "constraint",
+            type: "Observation",
+            name: "DentalPeriodontalAssessment",
+            kind: "resource",
+            url: "http://example.org/StructureDefinition/dental-periodontal-assessment",
+            base: parentUrl,
+            package_meta: pkg,
+            elements: { component: { extensions: { surface: { url: surfaceUrl, min: 0, max: 1 } } } },
+        });
+        const generate = () =>
+            new APIBuilder({ register, logger: mkErrorLogger() })
+                .typescript({ inMemoryOnly: true, withDebugComment: false, generateProfile: true })
+                .generate();
+        const result = await generate();
+        expect(result.success).toBeTrue();
+        const files = result.filesGenerated.typescript!;
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "inherited-extension-accessors-"));
+        try {
+            for (const [relPath, content] of Object.entries(files)) {
+                const absPath = path.join(tmpDir, relPath);
+                fs.mkdirSync(path.dirname(absPath), { recursive: true });
+                fs.writeFileSync(absPath, content);
+            }
+            fs.writeFileSync(
+                path.join(tmpDir, "tsconfig.json"),
+                JSON.stringify({
+                    compilerOptions: {
+                        strict: true,
+                        module: "esnext",
+                        moduleResolution: "bundler",
+                        target: "esnext",
+                        skipLibCheck: true,
+                        noEmit: true,
+                    },
+                }),
+            );
+            const compile = () =>
+                spawnSync(process.execPath, [Bun.resolveSync("typescript/bin/tsc", import.meta.dir), "-p", tmpDir], {
+                    encoding: "utf8",
+                    timeout: 20_000,
+                });
+            const generatedCompile = compile();
+            expect(generatedCompile.status, `${generatedCompile.stdout}${generatedCompile.stderr}`).toBe(0);
+            const childPath = Object.keys(files).find((name) =>
+                name.endsWith("profiles/Observation_DentalPeriodontalAssessment.ts"),
+            )!;
+            const parentPath = Object.keys(files).find((name) =>
+                name.endsWith("profiles/Observation_DentalFinding.ts"),
+            )!;
+            fs.writeFileSync(
+                path.join(tmpDir, "consumer.ts"),
+                `import { DentalPeriodontalAssessmentProfile } from "./${childPath.replace(/\.ts$/, "")}";
+import { DentalFindingProfile } from "./${parentPath.replace(/\.ts$/, "")}";
+declare const child: DentalPeriodontalAssessmentProfile;
+declare const parent: DentalFindingProfile;
+child.setBodySiteSurface("buccal").setComponentSurface("lingual");
+const bodySite: string | undefined = child.getBodySiteSurface();
+const component: string | undefined = child.getComponentSurface();
+parent.setSurface("buccal");
+const inherited: string | undefined = parent.getSurface();
+`,
+            );
+            const consumerCompile = compile();
+            expect(consumerCompile.status, `${consumerCompile.stdout}${consumerCompile.stderr}`).toBe(0);
+            expect((await generate()).filesGenerated.typescript).toEqual(files);
+        } finally {
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        }
+    }, 30_000);
 });
